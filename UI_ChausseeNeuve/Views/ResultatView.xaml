@@ -1,0 +1,323 @@
+<UserControl x:Class="UI_ChausseeNeuve.Views.ResultatView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:UI_ChausseeNeuve.ViewModels"
+             MinWidth="800"
+             MinHeight="600">
+
+        <UserControl.DataContext>
+                <vm:ResultatViewModel/>
+        </UserControl.DataContext>
+
+        <!-- Interface moderne pour l'affichage des résultats -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      Background="{StaticResource PrimaryBg}">
+                <StackPanel Orientation="Vertical"
+                            Margin="20">
+
+                        <!-- Section 1: En-tête avec actions -->
+                        <Border Style="{StaticResource SectionCardStyle}">
+                                <Grid>
+                                        <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0">
+                                                <TextBlock Text="Résultats de calcul"
+                                                           Style="{StaticResource SectionTitleStyle}"/>
+                                                <TextBlock Text="{Binding CalculationDuration}"
+                                                           Style="{StaticResource InfoTextStyle}"
+                                                           Margin="0,5,0,0"/>
+                                        </StackPanel>
+
+                                        <Button Grid.Column="1"
+                                                Content="🔄 Recalculer"
+                                                Style="{StaticResource PrimaryActionButtonStyle}"
+                                                Command="{Binding Path=DataContext.CalculateStructureCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                IsEnabled="{Binding IsCalculationInProgress, Converter={StaticResource InverseBooleanConverter}}"
+                                                Margin="10,0,0,0"/>
+                                </Grid>
+                        </Border>
+
+                        <!-- Section 2: Validation globale -->
+                        <Border Style="{StaticResource SectionCardStyle}">
+                                <StackPanel>
+                                        <TextBlock Text="Validation de la structure"
+                                                   Style="{StaticResource SectionTitleStyle}"/>
+
+                                        <Border Background="{Binding ValidationColor, Converter={StaticResource ColorToBrushConverter}}"
+                                                CornerRadius="8"
+                                                Padding="15"
+                                                Margin="0,10,0,0">
+                                                <TextBlock Text="{Binding ValidationMessage}"
+                                                           FontSize="16"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="White"
+                                                           HorizontalAlignment="Center"/>
+                                        </Border>
+                                </StackPanel>
+                        </Border>
+
+                        <!-- Section 3: Tableau des résultats détaillés -->
+                        <Border Style="{StaticResource SectionCardStyle}">
+                                <StackPanel>
+                                        <TextBlock Text="Résultats détaillés par couche"
+                                                   Style="{StaticResource SectionTitleStyle}"/>
+
+                                        <!-- En-tête du tableau -->
+                                        <Grid Margin="0,15,0,5">
+                                                <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="80"/>
+                                                        <!-- Interface -->
+                                                        <ColumnDefinition Width="80"/>
+                                                        <!-- Matériau -->
+                                                        <ColumnDefinition Width="80"/>
+                                                        <!-- Niveau -->
+                                                        <ColumnDefinition Width="80"/>
+                                                        <!-- Module -->
+                                                        <ColumnDefinition Width="80"/>
+                                                        <!-- Poisson -->
+                                                        <ColumnDefinition Width="80"/>
+                                                        <!-- σT -->
+                                                        <ColumnDefinition Width="80"/>
+                                                        <!-- εT -->
+                                                        <ColumnDefinition Width="80"/>
+                                                        <!-- σZ -->
+                                                        <ColumnDefinition Width="80"/>
+                                                        <!-- εZ -->
+                                                        <ColumnDefinition Width="100"/>
+                                                        <!-- Val. Adm. -->
+                                                        <ColumnDefinition Width="60"/>
+                                                        <!-- Statut -->
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Grid.Column="0"
+                                                           Text="Interface"
+                                                           Style="{StaticResource TableHeaderStyle}"/>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="Matériau"
+                                                           Style="{StaticResource TableHeaderStyle}"/>
+                                                <TextBlock Grid.Column="2"
+                                                           Text="Niveau (cm)"
+                                                           Style="{StaticResource TableHeaderStyle}"/>
+                                                <TextBlock Grid.Column="3"
+                                                           Text="Module (MPa)"
+                                                           Style="{StaticResource TableHeaderStyle}"/>
+                                                <TextBlock Grid.Column="4"
+                                                           Text="ν"
+                                                           Style="{StaticResource TableHeaderStyle}"/>
+                                                <TextBlock Grid.Column="5"
+                                                           Text="σT (MPa)"
+                                                           Style="{StaticResource TableHeaderStyle}"/>
+                                                <TextBlock Grid.Column="6"
+                                                           Text="εT (μdef)"
+                                                           Style="{StaticResource TableHeaderStyle}"/>
+                                                <TextBlock Grid.Column="7"
+                                                           Text="σZ (MPa)"
+                                                           Style="{StaticResource TableHeaderStyle}"/>
+                                                <TextBlock Grid.Column="8"
+                                                           Text="εZ (μdef)"
+                                                           Style="{StaticResource TableHeaderStyle}"/>
+                                                <TextBlock Grid.Column="9"
+                                                           Text="Val. Adm."
+                                                           Style="{StaticResource TableHeaderStyle}"/>
+                                                <TextBlock Grid.Column="10"
+                                                           Text="✓"
+                                                           Style="{StaticResource TableHeaderStyle}"/>
+                                        </Grid>
+
+                                        <!-- Lignes de données -->
+                                        <ItemsControl ItemsSource="{Binding Resultats}">
+                                                <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                                <Border Background="{Binding CouleurValidation, Converter={StaticResource ColorToBrushConverter}}"
+                                                                        CornerRadius="4"
+                                                                        Margin="0,2"
+                                                                        Padding="5">
+                                                                        <Grid>
+                                                                                <Grid.ColumnDefinitions>
+                                                                                        <ColumnDefinition Width="80"/>
+                                                                                        <ColumnDefinition Width="80"/>
+                                                                                        <ColumnDefinition Width="80"/>
+                                                                                        <ColumnDefinition Width="80"/>
+                                                                                        <ColumnDefinition Width="80"/>
+                                                                                        <ColumnDefinition Width="80"/>
+                                                                                        <ColumnDefinition Width="80"/>
+                                                                                        <ColumnDefinition Width="80"/>
+                                                                                        <ColumnDefinition Width="80"/>
+                                                                                        <ColumnDefinition Width="100"/>
+                                                                                        <ColumnDefinition Width="60"/>
+                                                                                </Grid.ColumnDefinitions>
+
+                                                                                <TextBlock Grid.Column="0"
+                                                                                           Text="{Binding Interface}"
+                                                                                           Style="{StaticResource TableCellStyle}"/>
+                                                                                <TextBlock Grid.Column="1"
+                                                                                           Text="{Binding Materiau}"
+                                                                                           Style="{StaticResource TableCellStyle}"/>
+
+                                                                                <!-- Niveaux avec format spécial -->
+                                                                                <StackPanel Grid.Column="2"
+                                                                                            Orientation="Vertical">
+                                                                                        <TextBlock Text="{Binding NiveauSup, StringFormat='{}{0:F0}'}"
+                                                                                                   Style="{StaticResource TableCellStyle}"
+                                                                                                   FontSize="10"/>
+                                                                                        <TextBlock Text="{Binding NiveauInf, StringFormat='{}{0:F0}'}"
+                                                                                                   Style="{StaticResource TableCellStyle}"
+                                                                                                   FontSize="10"/>
+                                                                                </StackPanel>
+
+                                                                                <TextBlock Grid.Column="3"
+                                                                                           Text="{Binding Module, StringFormat='{}{0:F0}'}"
+                                                                                           Style="{StaticResource TableCellStyle}"/>
+                                                                                <TextBlock Grid.Column="4"
+                                                                                           Text="{Binding CoefficientPoisson, StringFormat='{}{0:F2}'}"
+                                                                                           Style="{StaticResource TableCellStyle}"/>
+
+                                                                                <!-- Contraintes σT avec valeurs sup/inf -->
+                                                                                <StackPanel Grid.Column="5"
+                                                                                            Orientation="Vertical">
+                                                                                        <TextBlock Text="{Binding SigmaTSup, StringFormat='{}{0:F2}'}"
+                                                                                                   Style="{StaticResource TableCellStyle}"
+                                                                                                   FontSize="10"/>
+                                                                                        <TextBlock Text="{Binding SigmaTInf, StringFormat='{}{0:F2}'}"
+                                                                                                   Style="{StaticResource TableCellStyle}"
+                                                                                                   FontSize="10"/>
+                                                                                </StackPanel>
+
+                                                                                <!-- Déformations εT avec valeurs sup/inf -->
+                                                                                <StackPanel Grid.Column="6"
+                                                                                            Orientation="Vertical">
+                                                                                        <TextBlock Text="{Binding EpsilonTSup, StringFormat='{}{0:F1}'}"
+                                                                                                   Style="{StaticResource TableCellStyle}"
+                                                                                                   FontSize="10"/>
+                                                                                        <TextBlock Text="{Binding EpsilonTInf, StringFormat='{}{0:F1}'}"
+                                                                                                   Style="{StaticResource TableCellStyle}"
+                                                                                                   FontSize="10"/>
+                                                                                </StackPanel>
+
+                                                                                <TextBlock Grid.Column="7"
+                                                                                           Text="{Binding SigmaZ, StringFormat='{}{0:F2}'}"
+                                                                                           Style="{StaticResource TableCellStyle}"/>
+                                                                                <TextBlock Grid.Column="8"
+                                                                                           Text="{Binding EpsilonZ, StringFormat='{}{0:F1}'}"
+                                                                                           Style="{StaticResource TableCellStyle}"/>
+                                                                                <TextBlock Grid.Column="9"
+                                                                                           Text="{Binding ValeurAdmissible, StringFormat='{}{0:F1}'}"
+                                                                                           Style="{StaticResource TableCellStyle}"/>
+
+                                                                                <!-- Indicateur de validation -->
+                                                                                <Border Grid.Column="10"
+                                                                                        Background="{Binding EstValide, Converter={StaticResource BooleanToValidationColorConverter}}"
+                                                                                        CornerRadius="12"
+                                                                                        Width="24"
+                                                                                        Height="24">
+                                                                                        <TextBlock Text="{Binding EstValide, Converter={StaticResource BooleanToCheckmarkConverter}}"
+                                                                                                   Foreground="White"
+                                                                                                   FontWeight="Bold"
+                                                                                                   HorizontalAlignment="Center"
+                                                                                                   VerticalAlignment="Center"/>
+                                                                                </Border>
+                                                                        </Grid>
+                                                                </Border>
+                                                        </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <!-- Message si aucun résultat -->
+                                        <Border Visibility="{Binding Resultats.Count, Converter={StaticResource CountToVisibilityConverter}}"
+                                                Background="{StaticResource CardBg}"
+                                                CornerRadius="8"
+                                                Padding="20"
+                                                Margin="0,10,0,0">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                        <TextBlock Text="📊"
+                                                                   FontSize="48"
+                                                                   HorizontalAlignment="Center"
+                                                                   Opacity="0.5"/>
+                                                        <TextBlock Text="Aucun résultat disponible"
+                                                                   Style="{StaticResource InfoTextStyle}"
+                                                                   HorizontalAlignment="Center"
+                                                                   Margin="0,10,0,0"/>
+                                                        <TextBlock Text="Configurez votre structure et lancez le calcul pour voir les résultats."
+                                                                   Style="{StaticResource InfoTextStyle}"
+                                                                   FontSize="12"
+                                                                   HorizontalAlignment="Center"
+                                                                   Opacity="0.7"
+                                                                   Margin="0,5,0,0"/>
+                                                </StackPanel>
+                                        </Border>
+                                </StackPanel>
+                        </Border>
+
+                        <!-- Section 4: Légende et informations -->
+                        <Border Style="{StaticResource SectionCardStyle}">
+                                <StackPanel>
+                                        <TextBlock Text="Légende et informations"
+                                                   Style="{StaticResource SectionTitleStyle}"/>
+
+                                        <Grid Margin="0,10,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- Colonne 1: Notations -->
+                                                <StackPanel Grid.Column="0"
+                                                            Margin="0,0,10,0">
+                                                        <TextBlock Text="Notations :"
+                                                                   FontWeight="SemiBold"
+                                                                   Margin="0,0,0,5"/>
+                                                        <TextBlock Text="• σT : Contrainte de traction horizontale"
+                                                                   Style="{StaticResource InfoTextStyle}"/>
+                                                        <TextBlock Text="• εT : Déformation de traction horizontale"
+                                                                   Style="{StaticResource InfoTextStyle}"/>
+                                                        <TextBlock Text="• σZ : Contrainte de compression verticale"
+                                                                   Style="{StaticResource InfoTextStyle}"/>
+                                                        <TextBlock Text="• εZ : Déformation de compression verticale"
+                                                                   Style="{StaticResource InfoTextStyle}"/>
+                                                        <TextBlock Text="• ν : Coefficient de Poisson"
+                                                                   Style="{StaticResource InfoTextStyle}"/>
+                                                </StackPanel>
+
+                                                <!-- Colonne 2: Critères -->
+                                                <StackPanel Grid.Column="1"
+                                                            Margin="10,0,0,0">
+                                                        <TextBlock Text="Critères de validation :"
+                                                                   FontWeight="SemiBold"
+                                                                   Margin="0,0,0,5"/>
+                                                        <TextBlock Text="• Fatigue par flexion (εT)"
+                                                                   Style="{StaticResource InfoTextStyle}"/>
+                                                        <TextBlock Text="• Fatigue par traction (σT)"
+                                                                   Style="{StaticResource InfoTextStyle}"/>
+                                                        <TextBlock Text="• Orniérage (εZ)"
+                                                                   Style="{StaticResource InfoTextStyle}"/>
+                                                        <TextBlock Text="• Conformité aux normes NF P 98-086"
+                                                                   Style="{StaticResource InfoTextStyle}"/>
+                                                </StackPanel>
+                                        </Grid>
+                                </StackPanel>
+                        </Border>
+
+                        <!-- Indicateur de calcul en cours -->
+                        <Border Visibility="{Binding IsCalculationInProgress, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Background="{StaticResource AccentBlue}"
+                                CornerRadius="8"
+                                Padding="15">
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Center">
+                                        <TextBlock Text="⏳"
+                                                   FontSize="24"
+                                                   Margin="0,0,10,0"/>
+                                        <TextBlock Text="Calcul en cours..."
+                                                   Foreground="White"
+                                                   FontSize="16"
+                                                   FontWeight="SemiBold"
+                                                   VerticalAlignment="Center"/>
+                                </StackPanel>
+                        </Border>
+
+                </StackPanel>
+        </ScrollViewer>
+</UserControl>

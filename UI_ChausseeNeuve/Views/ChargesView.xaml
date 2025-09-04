@@ -1,0 +1,258 @@
+<UserControl x:Class="UI_ChausseeNeuve.Views.ChargesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:UI_ChausseeNeuve.ViewModels"
+             xmlns:m="clr-namespace:ChausseeNeuve.Domain.Models;assembly=ChausseeNeuve.Domain"
+             xmlns:c="clr-namespace:UI_ChausseeNeuve.Converters"
+             xmlns:local="clr-namespace:UI_ChausseeNeuve.Views"
+             MinWidth="800"
+             MinHeight="600">
+
+    <!-- Resources are centralized in Resources/Theme.xaml -->
+
+    <!-- Conteneur principal avec StackPanel vertical -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  Background="{StaticResource PrimaryBg}">
+        <StackPanel Orientation="Vertical"
+                    Margin="20">
+
+            <!-- Section 1: Sélection de la Charge de Référence -->
+            <Border Style="{StaticResource SectionCardStyle}">
+                <StackPanel>
+                    <TextBlock Text="Charge de référence"
+                               Style="{StaticResource SectionTitleStyle}"/>
+
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center">
+                        <RadioButton Content="Jumelage français"
+                                     Style="{StaticResource ModernRadioButtonStyle}"
+                                     IsChecked="{Binding IsJumelageFrancaisSelected, Mode=OneWay}"
+                                     Command="{Binding SelectChargeTypeCommand}"
+                                     CommandParameter="{x:Static m:ChargeType.JumelageFrancais}"/>
+
+                        <RadioButton Content="Autre jumelage"
+                                     Style="{StaticResource ModernRadioButtonStyle}"
+                                     IsChecked="{Binding IsAutreJumelageSelected, Mode=OneWay}"
+                                     Command="{Binding SelectChargeTypeCommand}"
+                                     CommandParameter="{x:Static m:ChargeType.AutreJumelage}"/>
+
+                        <RadioButton Content="Roue isolée"
+                                     Style="{StaticResource ModernRadioButtonStyle}"
+                                     IsChecked="{Binding IsRoueIsoleeSelected, Mode=OneWay}"
+                                     Command="{Binding SelectChargeTypeCommand}"
+                                     CommandParameter="{x:Static m:ChargeType.RoueIsolee}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Section 2: Paramètres Associés et Profils de Calcul -->
+            <Border Style="{StaticResource SectionCardStyle}">
+                <StackPanel>
+                    <StackPanel>
+                        <TextBlock Text="Paramètres associés"
+                                   Style="{StaticResource SectionTitleStyle}"/>
+                        <Separator Background="{StaticResource CardBorder}"
+                                Margin="0,-10,0,15"/>
+                    </StackPanel>
+
+                    <!-- Tableau des paramètres (unifié) -->
+                    <Grid Margin="0,10,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- En-têtes du tableau -->
+                        <Grid Grid.Row="0"
+                                Margin="0,0,0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <!-- Type -->
+                                <ColumnDefinition Width="*"/>
+                                <!-- Rayon -->
+                                <ColumnDefinition Width="*"/>
+                                <!-- Pression -->
+                                <ColumnDefinition Width="*"/>
+                                <!-- Poids -->
+                                <ColumnDefinition Width="1.5*"/>
+                                <!-- Distance -->
+                                <ColumnDefinition Width="20"/>
+                                <!-- Séparateur visuel -->
+                                <ColumnDefinition Width="*"/>
+                                <!-- X -->
+                                <ColumnDefinition Width="*"/>
+                                <!-- Y -->
+                            </Grid.ColumnDefinitions>
+
+                            <Label Content="Type"
+                                   Grid.Column="0"
+                                   Style="{StaticResource ParameterLabelStyle}"/>
+                            <Label Content="Rayon&#xA;(m)"
+                                   Grid.Column="1"
+                                   Style="{StaticResource ParameterLabelStyle}"/>
+                            <Label Content="Pression&#xA;(MPa)"
+                                   Grid.Column="2"
+                                   Style="{StaticResource ParameterLabelStyle}"/>
+                            <Label Content="Poids&#xA;(MN)"
+                                   Grid.Column="3"
+                                   Style="{StaticResource ParameterLabelStyle}"/>
+                            <Label Content="Distance entre roues&#xA;jumelées (m)"
+                                   Grid.Column="4"
+                                   Style="{StaticResource ParameterLabelStyle}"/>
+                            <Label Content=""
+                                   Grid.Column="5"/>
+                            <Label Content="X&#xA;(m)"
+                                   Grid.Column="6"
+                                   Style="{StaticResource ParameterLabelStyle}"/>
+                            <Label Content="Y&#xA;(m)"
+                                   Grid.Column="7"
+                                   Style="{StaticResource ParameterLabelStyle}"/>
+                        </Grid>
+
+                        <!-- Valeurs -->
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="1.5*"/>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Type (lecture seule) -->
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding ChargeReference.Type, Converter={StaticResource EnumDesc}}"
+                                     IsReadOnly="True"
+                                     Style="{StaticResource ModernTextBoxStyle}"
+                                     Height="28"/>
+
+                            <!-- Rayon -->
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding ChargeReference.RayonMetres, StringFormat=F3}"
+                                     IsEnabled="{Binding IsRayonEnabled}"
+                                     Style="{StaticResource ModernTextBoxStyle}"
+                                     Height="28"/>
+
+                            <!-- Pression -->
+                            <TextBox Grid.Column="2"
+                                     Text="{Binding ChargeReference.PressionMPa, StringFormat=F3}"
+                                     IsEnabled="{Binding IsPressionEnabled}"
+                                     Style="{StaticResource ModernTextBoxStyle}"
+                                     Height="28"/>
+
+                            <!-- Poids -->
+                            <TextBox Grid.Column="3"
+                                     Text="{Binding ChargeReference.PoidsMN, StringFormat=F4}"
+                                     IsEnabled="{Binding IsPoidsEnabled}"
+                                     Style="{StaticResource ModernTextBoxStyle}"
+                                     Height="28"/>
+
+                            <!-- Distance entre roues -->
+                            <TextBox Grid.Column="4"
+                                     Text="{Binding ChargeReference.DistanceRouesMetres, StringFormat=F3}"
+                                     IsEnabled="{Binding IsDistanceRouesEnabled}"
+                                     Style="{StaticResource ModernTextBoxStyle}"
+                                     Height="28"/>
+
+                            <!-- Separator column left intentionally empty -->
+
+                            <!-- Position X -->
+                            <TextBox Grid.Column="6"
+                                     Text="{Binding ChargeReference.PositionX, StringFormat=F3}"
+                                     IsEnabled="{Binding IsPositionXEnabled}"
+                                     Style="{StaticResource ModernTextBoxStyle}"
+                                     Height="28"/>
+
+                            <!-- Position Y -->
+                            <TextBox Grid.Column="7"
+                                     Text="{Binding ChargeReference.PositionY, StringFormat=F3}"
+                                     IsEnabled="{Binding IsPositionYEnabled}"
+                                     Style="{StaticResource ModernTextBoxStyle}"
+                                     Height="28"/>
+                        </Grid>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Section 3: Schéma Explicatif -->
+            <Border Style="{StaticResource SectionCardStyle}">
+                <StackPanel>
+                    <TextBlock Text="Schéma explicatif"
+                               Style="{StaticResource SectionTitleStyle}"/>
+
+                    <Border Background="{StaticResource HeaderBg}"
+                            CornerRadius="5"
+                            Padding="20"
+                            HorizontalAlignment="Center">
+                        <Grid Width="300"
+                              Height="200">
+                            <!-- Image pour jumelage français -->
+                            <Image x:Name="JumelageImage"
+                                   Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/charge.png"
+                                   Stretch="Uniform"
+                                   Visibility="{Binding IsJumelageFrancaisSelected, Converter={StaticResource BoolToVisibility}, FallbackValue=Visible}"/>
+
+                            <!-- Image pour autre jumelage -->
+                            <Image x:Name="AutreJumelageImage"
+                                   Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/charge.png"
+                                   Stretch="Uniform"
+                                   Visibility="{Binding IsAutreJumelageSelected, Converter={StaticResource BoolToVisibility}, FallbackValue=Collapsed}"/>
+
+                            <!-- Image pour roue isolée -->
+                            <Image x:Name="RoueIsoleeImage"
+                                   Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/charge.png"
+                                   Stretch="Uniform"
+                                   Visibility="{Binding IsRoueIsoleeSelected, Converter={StaticResource BoolToVisibility}, FallbackValue=Collapsed}"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Description technique -->
+                    <TextBlock Text="{Binding SchemaDescription}"
+                               Style="{StaticResource SectionTitleStyle}"
+                               FontSize="12"
+                               FontWeight="Normal"
+                               TextWrapping="Wrap"
+                               Margin="0,10,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Bouton d'action -->
+            <Border Style="{StaticResource SectionCardStyle}"
+                    Margin="10,5">
+                <Button Content="Passer à Valeurs Admissibles"
+                        FontFamily="Century Gothic"
+                        FontSize="14"
+                        FontWeight="Medium"
+                        Background="#FF595959"
+                        BorderBrush="{StaticResource CardBorder}"
+                        Foreground="{StaticResource TextWhite}"
+                        Padding="20,8"
+                        HorizontalAlignment="Center">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver"
+                                         Value="True">
+                                    <Setter Property="Background"
+                                            Value="#FF707070"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

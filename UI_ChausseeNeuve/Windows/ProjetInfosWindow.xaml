@@ -1,0 +1,67 @@
+<Window x:Class="UI_ChausseeNeuve.Windows.ProjetInfosWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Informations du projet"
+        Height="700" Width="1120"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource GrayBgBrush}"
+        FontSize="18">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- En-tête centré -->
+        <Border Background="#FF1A1A1A" Padding="12" BorderBrush="#33000000" BorderThickness="0,0,0,1" Margin="0,0,0,12">
+            <TextBlock x:Name="TitleBlock"
+                       Style="{StaticResource HeaderText}"
+                       Text="Entrez les informations de votre projet chaussée neuve"/>
+        </Border>
+
+        <!-- Carte centrale -->
+        <Border Grid.Row="1" Style="{StaticResource Card}" Background="#FF7F7F7F">
+            <Grid Margin="8" Background="#FF7F7F7F">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="260"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="100"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Titre du projet -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Titre du projet" VerticalAlignment="Top" Margin="0,2,8,0" FontSize="20" FontWeight="Bold"/>
+                <TextBox  Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource RoundedTextBox}" Margin="0,0,0,16"
+                          Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" CaretBrush="Black" BorderBrush="#FFB7BDC6"/>
+
+                <!-- Auteur -->
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Auteur" VerticalAlignment="Top" Margin="0,2,8,0" FontSize="20" FontWeight="Bold"/>
+                <TextBox  Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource RoundedTextBox}" Margin="0,0,0,16"
+                          Text="{Binding Author, UpdateSourceTrigger=PropertyChanged}" CaretBrush="Black" BorderBrush="#FFB7BDC6"/>
+
+                <!-- Emplacement du projet -->
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Emplacement du projet" VerticalAlignment="Top" Margin="0,6,8,0" FontSize="20" FontWeight="Bold"/>
+                <TextBox  Grid.Row="2" Grid.Column="1" Style="{StaticResource RoundedTextBox}" Margin="0,0,12,16"
+                          x:Name="LocationBox" Text="{Binding Location, UpdateSourceTrigger=PropertyChanged}" CaretBrush="Black" BorderBrush="#FFB7BDC6"/>
+                <Button   Grid.Row="2" Grid.Column="2" Width="60" Height="36" Style="{StaticResource PrimaryButton}" Click="Browse_Click" HorizontalAlignment="Left" Margin="40,4,0,20" Background="#FF1A1A1A"/>
+
+                <!-- Description -->
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Description du projet" VerticalAlignment="Top" Margin="0,0,8,0" FontSize="20" FontWeight="Bold"/>
+                <TextBox  Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource RoundedTextBoxMulti}"
+                          Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" CaretBrush="Black" BorderBrush="#FF7F7F7F" SelectionBrush="#FF7F7F7F"/>
+            </Grid>
+        </Border>
+
+        <!-- Boutons bas -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,31,2,-7" Width="314">
+            <Button Content="RETOUR" Width="125" Style="{StaticResource PrimaryButton}" Click="Back_Click" Height="34" FontSize="22" FontWeight="Bold" Background="#FF1A1A1A"/>
+            <Button Content="CREER" Width="121" Style="{StaticResource PrimaryButton}" Click="Create_Click" Height="34" FontSize="22" FontWeight="Bold" Background="#FF1A1A1A"/>
+        </StackPanel>
+    </Grid>
+</Window>
