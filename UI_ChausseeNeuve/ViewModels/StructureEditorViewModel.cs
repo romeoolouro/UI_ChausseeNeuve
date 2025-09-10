@@ -160,10 +160,25 @@ namespace UI_ChausseeNeuve.ViewModels
 
         private void InitializeDefaultStructure(PavementStructure pavementStructure)
         {
-            pavementStructure.Layers.Add(new Layer { Order = 1, Role = LayerRole.Roulement, Family = MaterialFamily.BetonBitumineux, MaterialName = "EB-BBSG 0/10", Thickness_m = 0.040, Modulus_MPa = 5000, Poisson = 0.35, InterfaceWithBelow = InterfaceType.Collee });
-            pavementStructure.Layers.Add(new Layer { Order = 2, Role = LayerRole.Base, Family = MaterialFamily.GNT, MaterialName = "GNT (suppl.)", Thickness_m = 0.120, Modulus_MPa = 800, Poisson = 0.35, InterfaceWithBelow = InterfaceType.Collee });
-            pavementStructure.Layers.Add(new Layer { Order = 3, Role = LayerRole.Fondation, Family = MaterialFamily.GNT, MaterialName = "GNT 1", Thickness_m = 0.300, Modulus_MPa = 600, Poisson = 0.35, InterfaceWithBelow = InterfaceType.Collee });
-            pavementStructure.Layers.Add(new Layer { Order = 4, Role = LayerRole.Plateforme, Family = MaterialFamily.GNT, MaterialName = "Plateforme", Thickness_m = 0.000, Modulus_MPa = 50, Poisson = 0.35, InterfaceWithBelow = null });
+            // Structure compatible avec votre exemple C++
+            // nbrecouche = 4, Young[0] = 7000, Young[1] = 23000, Young[2] = 23000, Young[3] = 120
+            // epais[0] = 0.06, epais[1] = 0.15, epais[2] = 0.15, epais[3] = 10000000
+            pavementStructure.Layers.Add(new Layer { Order = 1, Role = LayerRole.Roulement, Family = MaterialFamily.BetonBitumineux, MaterialName = "EB-BBSG 0/10", Thickness_m = 0.060, Modulus_MPa = 7000, Poisson = 0.35, InterfaceWithBelow = InterfaceType.Collee });
+            pavementStructure.Layers.Add(new Layer { Order = 2, Role = LayerRole.Base, Family = MaterialFamily.MTLH, MaterialName = "MTLH Base", Thickness_m = 0.150, Modulus_MPa = 23000, Poisson = 0.25, InterfaceWithBelow = InterfaceType.SemiCollee });
+            pavementStructure.Layers.Add(new Layer { Order = 3, Role = LayerRole.Fondation, Family = MaterialFamily.MTLH, MaterialName = "MTLH Fondation", Thickness_m = 0.150, Modulus_MPa = 23000, Poisson = 0.25, InterfaceWithBelow = InterfaceType.Collee });
+            
+            // La plateforme sera automatiquement initialisée avec l'épaisseur fixe de 10,000,000 m grâce au setter du Role
+            var platformLayer = new Layer 
+            { 
+                Order = 4, 
+                Role = LayerRole.Plateforme, // Ceci déclenche automatiquement l'épaisseur fixe
+                Family = MaterialFamily.GNT, 
+                MaterialName = "Plateforme", 
+                Modulus_MPa = 120,  // Valeur compatible avec votre exemple C++
+                Poisson = 0.35, 
+                InterfaceWithBelow = null 
+            };
+            pavementStructure.Layers.Add(platformLayer);
         }
 
         private void UpdateAppState()
@@ -176,6 +191,9 @@ namespace UI_ChausseeNeuve.ViewModels
             }
             pavementStructure.NE = _ne;
             pavementStructure.StructureType = _selectedStructureType;
+            
+            // Notifier le changement de structure pour synchroniser les résultats
+            AppState.NotifyStructureChanged();
         }
 
         private void LayerChanged(object? sender, PropertyChangedEventArgs e)

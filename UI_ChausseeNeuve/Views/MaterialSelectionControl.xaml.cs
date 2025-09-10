@@ -33,8 +33,6 @@ namespace UI_ChausseeNeuve.Views
             if (sender is ListBox listBox && listBox.SelectedItem != null && listBox.SelectedItem is MaterialItem materialItem)
             {
                 // Notification via ToastService si nécessaire
-                // Since DataContext is the material view model, we need to access the parent view model
-                // The CurrentMaterialViewModel property contains the same instance, so we can use that
                 var parent = VisualTreeHelper.GetParent(this) as FrameworkElement;
                 while (parent != null && !(parent.DataContext is BibliothequeViewModel))
                 {
@@ -47,50 +45,65 @@ namespace UI_ChausseeNeuve.Views
             }
         }
 
+        // Helper to get the current MaterialViewModel from parent BibliothequeViewModel
+        private MaterialViewModelBase? GetCurrentMaterialVM()
+        {
+            var parent = VisualTreeHelper.GetParent(this) as FrameworkElement;
+            while (parent != null && !(parent.DataContext is BibliothequeViewModel))
+            {
+                parent = VisualTreeHelper.GetParent(parent) as FrameworkElement;
+            }
+            if (parent?.DataContext is BibliothequeViewModel bibVM)
+            {
+                return bibVM.CurrentMaterialViewModel as MaterialViewModelBase;
+            }
+            return null;
+        }
+
         // Ajout des handlers pour les flèches température
         private void OnTemperatureDown(object sender, RoutedEventArgs e)
         {
-            var vm = this.DataContext as dynamic;
-            if (vm?.TemperatureOptions != null && vm?.SelectedTemperature != null)
+            var vm = GetCurrentMaterialVM();
+            if (vm == null) return;
+
+            int min = vm.TemperatureOptions != null && vm.TemperatureOptions.Length > 0 ? vm.TemperatureOptions.Min() : -10;
+            if (vm.SelectedTemperature > min)
             {
-                var options = (int[])vm.TemperatureOptions;
-                int idx = Array.IndexOf(options, vm.SelectedTemperature);
-                if (idx > 0)
-                    vm.SelectedTemperature = options[idx - 1];
+                vm.SelectedTemperature -= 1;
             }
         }
         private void OnTemperatureUp(object sender, RoutedEventArgs e)
         {
-            var vm = this.DataContext as dynamic;
-            if (vm?.TemperatureOptions != null && vm?.SelectedTemperature != null)
+            var vm = GetCurrentMaterialVM();
+            if (vm == null) return;
+
+            int max = vm.TemperatureOptions != null && vm.TemperatureOptions.Length > 0 ? vm.TemperatureOptions.Max() : 40;
+            if (vm.SelectedTemperature < max)
             {
-                var options = (int[])vm.TemperatureOptions;
-                int idx = Array.IndexOf(options, vm.SelectedTemperature);
-                if (idx < options.Length - 1)
-                    vm.SelectedTemperature = options[idx + 1];
+                vm.SelectedTemperature += 1;
             }
         }
         // Ajout des handlers pour les flèches fréquence
         private void OnFrequenceDown(object sender, RoutedEventArgs e)
         {
-            var vm = this.DataContext as dynamic;
-            if (vm?.FrequenceOptions != null && vm?.SelectedFrequence != null)
+            var vm = GetCurrentMaterialVM();
+            if (vm == null) return;
+
+            int min = vm.FrequenceOptions != null && vm.FrequenceOptions.Length > 0 ? vm.FrequenceOptions.Min() : 5;
+            if (vm.SelectedFrequence > min)
             {
-                var options = (int[])vm.FrequenceOptions;
-                int idx = Array.IndexOf(options, vm.SelectedFrequence);
-                if (idx > 0)
-                    vm.SelectedFrequence = options[idx - 1];
+                vm.SelectedFrequence -= 1;
             }
         }
         private void OnFrequenceUp(object sender, RoutedEventArgs e)
         {
-            var vm = this.DataContext as dynamic;
-            if (vm?.FrequenceOptions != null && vm?.SelectedFrequence != null)
+            var vm = GetCurrentMaterialVM();
+            if (vm == null) return;
+
+            int max = vm.FrequenceOptions != null && vm.FrequenceOptions.Length > 0 ? vm.FrequenceOptions.Max() : 20;
+            if (vm.SelectedFrequence < max)
             {
-                var options = (int[])vm.FrequenceOptions;
-                int idx = Array.IndexOf(options, vm.SelectedFrequence);
-                if (idx < options.Length - 1)
-                    vm.SelectedFrequence = options[idx + 1];
+                vm.SelectedFrequence += 1;
             }
         }
     }

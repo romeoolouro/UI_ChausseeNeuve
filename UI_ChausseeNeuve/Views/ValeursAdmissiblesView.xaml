@@ -1,288 +1,278 @@
-<UserControl x:Class="UI_ChausseeNeuve.Views.ValeursAdmissiblesView"
+﻿<UserControl x:Class="UI_ChausseeNeuve.Views.ValeursAdmissiblesView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:UI_ChausseeNeuve.ViewModels"
+             xmlns:c="clr-namespace:UI_ChausseeNeuve.Converters"
              MinWidth="800"
              MinHeight="600">
 
+    <UserControl.Resources>
+        <!-- Ajout des converters locaux -->
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <c:SimpleInverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        <c:SimpleCountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
+    </UserControl.Resources>
+
     <UserControl.DataContext>
-        <vm:ValeursAdmissiblesViewModel/>
+        <vm:ValeursAdmissiblesViewModel />
     </UserControl.DataContext>
 
-    <!-- Interface moderne pour les valeurs admissibles -->
-    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                  Background="{StaticResource PrimaryBg}">
-        <StackPanel Orientation="Vertical"
-                    Margin="20">
-
-            <!-- Section 1: Mode de calcul -->
-            <Border Style="{StaticResource SectionCardStyle}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="{StaticResource PrimaryBg}">
+        <StackPanel Margin="20">
+            
+            <!-- Section Mode de calcul -->
+            <Border Style="{StaticResource SectionCardStyle}" Margin="0,0,0,15">
                 <StackPanel>
-                    <TextBlock Text="Mode de calcul des valeurs admissibles"
-                               Style="{StaticResource SectionTitleStyle}"/>
-
-                    <StackPanel Orientation="Horizontal"
-                                HorizontalAlignment="Center"
-                                Margin="0,15,0,0">
-                        <RadioButton Content="Calcul manuel"
-                                     Style="{StaticResource ModernRadioButtonStyle}"
-                                     IsChecked="{Binding IsCalculationManual}"
-                                     Margin="0,0,20,0"/>
-
-                        <RadioButton Content="Saisie directe des valeurs"
-                                     Style="{StaticResource ModernRadioButtonStyle}"
-                                     IsChecked="{Binding IsDirectValue}"/>
+                    <TextBlock Text="Mode de calcul des valeurs admissibles" Style="{StaticResource SectionTitleStyle}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,15,0,0">
+                        <RadioButton Content="Calcul manuel" Style="{StaticResource ModernRadioButtonStyle}" IsChecked="{Binding IsCalculationManual}" Margin="0,0,20,0" />
+                        <RadioButton Content="Saisie directe des valeurs" Style="{StaticResource ModernRadioButtonStyle}" IsChecked="{Binding IsDirectValue}" />
                     </StackPanel>
                 </StackPanel>
             </Border>
 
-            <!-- Section 2: Paramètres de trafic (visible en mode calcul manuel) -->
-            <Border Style="{StaticResource SectionCardStyle}"
-                    Visibility="{Binding IsCalculationManual, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <!-- Section Paramètres de trafic -->
+            <Border Style="{StaticResource SectionCardStyle}" Margin="0,0,0,15" Visibility="{Binding IsCalculationManual, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <StackPanel>
-                    <TextBlock Text="Paramètres de trafic"
-                               Style="{StaticResource SectionTitleStyle}"/>
-
+                    <TextBlock Text="Paramètres de trafic" Style="{StaticResource SectionTitleStyle}" />
                     <Grid Margin="0,15,0,0">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                            <ColumnDefinition />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-
-                        <!-- Ligne 1: MJA -->
-                        <StackPanel Grid.Row="0"
-                                    Grid.Column="0"
-                                    Margin="0,0,10,10">
-                            <TextBlock Text="Trafic MJA (PL/jour)"
-                                       Style="{StaticResource LabelStyle}"/>
-                            <TextBox Text="{Binding TraficMJA, UpdateSourceTrigger=PropertyChanged}"
-                                     Style="{StaticResource ModernTextBoxStyle}"/>
+                        
+                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,10">
+                            <TextBlock Text="Trafic MJA (PL/jour)" Style="{StaticResource LabelStyle}" />
+                            <TextBox Text="{Binding TraficMJA, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" />
                         </StackPanel>
-
-                        <!-- Ligne 1: Taux d'accroissement -->
-                        <StackPanel Grid.Row="0"
-                                    Grid.Column="1"
-                                    Margin="5,0,5,10">
-                            <TextBlock Text="Taux d'accroissement (%)"
-                                       Style="{StaticResource LabelStyle}"/>
-                            <TextBox Text="{Binding TauxAccroissement, UpdateSourceTrigger=PropertyChanged}"
-                                     Style="{StaticResource ModernTextBoxStyle}"/>
+                        
+                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="5,0,5,10">
+                            <TextBlock Text="Taux d'accroissement (%)" Style="{StaticResource LabelStyle}" />
+                            <TextBox Text="{Binding TauxAccroissement, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" />
                         </StackPanel>
-
-                        <!-- Ligne 1: Durée de service -->
-                        <StackPanel Grid.Row="0"
-                                    Grid.Column="2"
-                                    Margin="10,0,0,10">
-                            <TextBlock Text="Durée de service (années)"
-                                       Style="{StaticResource LabelStyle}"/>
-                            <TextBox Text="{Binding DureeService, UpdateSourceTrigger=PropertyChanged}"
-                                     Style="{StaticResource ModernTextBoxStyle}"/>
+                        
+                        <StackPanel Grid.Row="0" Grid.Column="2" Margin="10,0,0,10">
+                            <TextBlock Text="Durée de service (années)" Style="{StaticResource LabelStyle}" />
+                            <TextBox Text="{Binding DureeService, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" />
                         </StackPanel>
-
-                        <!-- Ligne 2: Type de taux -->
-                        <StackPanel Grid.Row="1"
-                                    Grid.Column="0"
-                                    Margin="0,0,10,10">
-                            <TextBlock Text="Type de taux"
-                                       Style="{StaticResource LabelStyle}"/>
-                            <ComboBox ItemsSource="{Binding TypesTauxAccroissement}"
-                                      SelectedItem="{Binding TypeTauxAccroissement}"
-                                      Style="{StaticResource ModernComboBoxStyle}"/>
+                        
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,10">
+                            <TextBlock Text="Type de taux" Style="{StaticResource LabelStyle}" />
+                            <ComboBox ItemsSource="{Binding TypesTauxAccroissement}" SelectedItem="{Binding TypeTauxAccroissement}" Style="{StaticResource ModernComboBoxStyle}" />
                         </StackPanel>
-
-                        <!-- Ligne 2: Bouton calcul -->
-                        <StackPanel Grid.Row="1"
-                                    Grid.Column="1"
-                                    Margin="5,0,5,10">
-                            <TextBlock Text=" "
-                                       Style="{StaticResource LabelStyle}"/>
-                            <Button Content="🧮 Calculer TCPL"
-                                    Style="{StaticResource SecondaryActionButtonStyle}"
-                                    Command="{Binding CalculerTraficCumuleCommand}"/>
+                        
+                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="5,0,5,10">
+                            <TextBlock Text=" " Style="{StaticResource LabelStyle}" />
+                            <Button Content="🧮 Calculer TCPL" Style="{StaticResource PrimaryButton}" Command="{Binding CalculerTraficCumuleCommand}" />
                         </StackPanel>
-
-                        <!-- Ligne 2: Résultat TCPL -->
-                        <StackPanel Grid.Row="1"
-                                    Grid.Column="2"
-                                    Margin="10,0,0,10">
-                            <TextBlock Text="Trafic cumulé (PL)"
-                                       Style="{StaticResource LabelStyle}"/>
-                            <TextBox Text="{Binding TraficCumuleFormatted, Mode=OneWay}"
-                                     Style="{StaticResource ModernTextBoxStyle}"
-                                     IsReadOnly="True"
-                                     Background="{StaticResource CardBg}"/>
+                        
+                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="10,0,0,10">
+                            <TextBlock Text="Trafic cumulé (PL)" Style="{StaticResource LabelStyle}" />
+                            <TextBox Text="{Binding TraficCumuleFormatted, Mode=OneWay}" Style="{StaticResource ModernTextBoxStyle}" IsReadOnly="True" Background="{StaticResource CardBg}" />
                         </StackPanel>
                     </Grid>
                 </StackPanel>
             </Border>
 
-            <!-- Section 3: Tableau des valeurs admissibles -->
-            <Border Style="{StaticResource SectionCardStyle}">
+            <!-- Section Aide aux paramètres -->
+            <Border Style="{StaticResource SectionCardStyle}" Margin="0,0,0,15">
                 <StackPanel>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
+                        
+                        <TextBlock Grid.Column="0" Text="🎯 Aide aux paramètres de calcul des valeurs admissibles" Style="{StaticResource SectionTitleStyle}" />
+                        
+                        <!-- Bouton Documentation modal -->
+                        <Button Grid.Column="1" 
+                                Content="📚 Documentation" 
+                                Style="{StaticResource PrimaryButton}" 
+                                FontSize="12" 
+                                Padding="10,5"
+                                Margin="10,0,0,0"
+                                Click="DocumentationButton_Click"
+                                ToolTip="Ouvrir la documentation complète" />
+                    </Grid>
+                    
+                    <!-- Contenu centré horizontalement -->
+                    <StackPanel HorizontalAlignment="Center" Margin="0,15,0,0">
+                        <Grid MaxWidth="800">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Section gauche avec radio buttons -->
+                            <StackPanel Grid.Column="0" Margin="0,0,80,10" VerticalAlignment="Top">
+                                <TextBlock Text="⚙️ Paramètres de calcul" Style="{StaticResource LabelStyle}" Margin="0,0,0,10" />
+                                
+                                <RadioButton x:Name="CoefficientsCamRadio"
+                                           Content="Coefficients d'agressivité CAM" 
+                                           IsChecked="True" 
+                                           Style="{StaticResource ModernRadioButtonStyle}"
+                                           Margin="0,5,0,5" />
+                                
+                                <RadioButton x:Name="ValeursRisqueRadio"
+                                           Content="Valeurs des risques R" 
+                                           Style="{StaticResource ModernRadioButtonStyle}"
+                                           Margin="0,0,0,10" />
+                            </StackPanel>
+                            
+                            <!-- Section droite avec références normatives -->
+                            <StackPanel Grid.Column="1" Margin="50,0,0,10" VerticalAlignment="Top">
+                                <TextBlock Text="📋 Références normatives" Style="{StaticResource LabelStyle}" Margin="0,0,0,8" />
+                                
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                    <Button Content="Guide lcpc-setra 94" 
+                                          Style="{StaticResource PrimaryButton}" 
+                                          FontSize="11" 
+                                          Padding="8,4" 
+                                          Margin="0,0,5,0"
+                                          Click="LcpcSetraButton_Click"
+                                          IsEnabled="{Binding ElementName=CoefficientsCamRadio, Path=IsChecked}" />
+                                    
+                                    <Button Content="Catalogue 1998" 
+                                          Style="{StaticResource PrimaryButton}" 
+                                          FontSize="11" 
+                                          Padding="8,4" 
+                                          Margin="0,0,5,0"
+                                          Click="Catalogue1998Button_Click"
+                                          IsEnabled="{Binding ElementName=CoefficientsCamRadio, Path=IsChecked}" />
+                                    
+                                    <Button Content="Norme NF P98-086" 
+                                          Style="{StaticResource PrimaryButton}" 
+                                          FontSize="11" 
+                                          Padding="8,4"
+                                          Click="NormeNFP98Button_Click"
+                                          IsEnabled="{Binding ElementName=CoefficientsCamRadio, Path=IsChecked}" />
+                                </StackPanel>
+                                
+                                <!-- Information sur les CAM -->
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="ℹ️ Information :" Style="{StaticResource LabelStyle}" FontSize="11" />
+                                    <TextBlock Text="Les coefficients CAM permettent de tenir compte de l'agressivité du trafic selon le type de véhicules et la répartition des charges selon la norme NF P98-086." 
+                                             Style="{StaticResource InfoTextStyle}"
+                                             FontSize="10" 
+                                             TextWrapping="Wrap" 
+                                             Margin="0,3,0,5" />
+                                    <TextBlock Text="💡 Astuce : Vous pouvez appliquer des valeurs depuis les normes, puis les modifier manuellement dans le tableau selon vos besoins." 
+                                             Style="{StaticResource InfoTextStyle}"
+                                             FontSize="10" 
+                                             FontWeight="SemiBold"
+                                             Foreground="{StaticResource AccentGreen}"
+                                             TextWrapping="Wrap" 
+                                             Margin="0,0,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
 
-                        <TextBlock Grid.Column="0"
-                                   Text="Valeurs admissibles par couche"
-                                   Style="{StaticResource SectionTitleStyle}"/>
-
-                        <Button Grid.Column="1"
-                                Content="➕ Ajouter"
-                                Style="{StaticResource SecondaryActionButtonStyle}"
-                                Command="{Binding AjouterCoucheCommand}"
-                                Margin="10,0,5,0"/>
-
-                        <Button Grid.Column="2"
-                                Content="🧮 Calculer"
-                                Style="{StaticResource PrimaryActionButtonStyle}"
-                                Command="{Binding CalculerValeursAdmissiblesCommand}"
-                                IsEnabled="{Binding IsCalculating, Converter={StaticResource InverseBooleanConverter}}"
-                                Margin="5,0,0,0"/>
+            <!-- Section Tableau des valeurs admissibles -->
+            <Border Style="{StaticResource SectionCardStyle}" Margin="0,0,0,15">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Valeurs admissibles par couche (synchronisées avec la structure)" Style="{StaticResource SectionTitleStyle}" />
+                        <Button Grid.Column="1" Content="➕ Ajouter" Style="{StaticResource PrimaryButton}" Command="{Binding AjouterCoucheCommand}" Margin="10,0,5,0" />
+                        <Button Grid.Column="2" Content="🧮 Calculer" Style="{StaticResource PrimaryButton}" Command="{Binding CalculerValeursAdmissiblesCommand}" IsEnabled="{Binding IsCalculating, Converter={StaticResource InverseBooleanConverter}}" Margin="5,0,0,0" />
                     </Grid>
 
-                    <!-- En-tête du tableau -->
+                    <!-- Header du tableau -->
                     <Grid Margin="0,15,0,5">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80"/>
-                            <!-- Matériau -->
-                            <ColumnDefinition Width="60"/>
-                            <!-- Niveau -->
-                            <ColumnDefinition Width="80"/>
-                            <!-- Critère -->
-                            <ColumnDefinition Width="70"/>
-                            <!-- Sn -->
-                            <ColumnDefinition Width="70"/>
-                            <!-- Sh -->
-                            <ColumnDefinition Width="70"/>
-                            <!-- b -->
-                            <ColumnDefinition Width="70"/>
-                            <!-- kc -->
-                            <ColumnDefinition Width="70"/>
-                            <!-- kr -->
-                            <ColumnDefinition Width="70"/>
-                            <!-- Risque -->
-                            <ColumnDefinition Width="100"/>
-                            <!-- Val. Adm. -->
-                            <ColumnDefinition Width="50"/>
-                            <!-- Actions -->
+                            <ColumnDefinition Width="80" />   <!-- Matériau -->
+                            <ColumnDefinition Width="60" />   <!-- Niveau -->
+                            <ColumnDefinition Width="80" />   <!-- Critère -->
+                            <ColumnDefinition Width="80" />   <!-- Amplitude -->
+                            <ColumnDefinition Width="80" />   <!-- CAM -->
+                            <ColumnDefinition Width="90" />   <!-- Risque (%) -->
+                            <ColumnDefinition Width="70" />   <!-- -1/b -->
+                            <ColumnDefinition Width="70" />   <!-- Sn -->
+                            <ColumnDefinition Width="70" />   <!-- Sh -->
+                            <ColumnDefinition Width="70" />   <!-- kc -->
+                            <ColumnDefinition Width="70" />   <!-- kr -->
+                            <ColumnDefinition Width="70" />   <!-- ks -->
+                            <ColumnDefinition Width="70" />   <!-- kθ -->
+                            <ColumnDefinition Width="70" />   <!-- kd -->
+                            <ColumnDefinition Width="80" />   <!-- Val. Adm. -->
+                            <ColumnDefinition Width="40" />   <!-- Actions -->
                         </Grid.ColumnDefinitions>
-
-                        <TextBlock Grid.Column="0"
-                                   Text="Matériau"
-                                   Style="{StaticResource TableHeaderStyle}"/>
-                        <TextBlock Grid.Column="1"
-                                   Text="Niveau"
-                                   Style="{StaticResource TableHeaderStyle}"/>
-                        <TextBlock Grid.Column="2"
-                                   Text="Critère"
-                                   Style="{StaticResource TableHeaderStyle}"/>
-                        <TextBlock Grid.Column="3"
-                                   Text="Sn"
-                                   Style="{StaticResource TableHeaderStyle}"/>
-                        <TextBlock Grid.Column="4"
-                                   Text="Sh"
-                                   Style="{StaticResource TableHeaderStyle}"/>
-                        <TextBlock Grid.Column="5"
-                                   Text="b"
-                                   Style="{StaticResource TableHeaderStyle}"/>
-                        <TextBlock Grid.Column="6"
-                                   Text="kc"
-                                   Style="{StaticResource TableHeaderStyle}"/>
-                        <TextBlock Grid.Column="7"
-                                   Text="kr"
-                                   Style="{StaticResource TableHeaderStyle}"/>
-                        <TextBlock Grid.Column="8"
-                                   Text="Risque (%)"
-                                   Style="{StaticResource TableHeaderStyle}"/>
-                        <TextBlock Grid.Column="9"
-                                   Text="Val. Adm."
-                                   Style="{StaticResource TableHeaderStyle}"/>
-                        <TextBlock Grid.Column="10"
-                                   Text="🗑️"
-                                   Style="{StaticResource TableHeaderStyle}"/>
+                        <TextBlock Grid.Column="0" Text="Matériau" Style="{StaticResource TableHeaderStyle}" />
+                        <TextBlock Grid.Column="1" Text="Niveau" Style="{StaticResource TableHeaderStyle}" />
+                        <TextBlock Grid.Column="2" Text="Critère" Style="{StaticResource TableHeaderStyle}" />
+                        <TextBlock Grid.Column="3" Text="Amplitude" Style="{StaticResource TableHeaderStyle}" />
+                        <TextBlock Grid.Column="4" Text="CAM" Style="{StaticResource TableHeaderStyle}" />
+                        <TextBlock Grid.Column="5" Text="Risque (%)" Style="{StaticResource TableHeaderStyle}" />
+                        <TextBlock Grid.Column="6" Text="-1/b" Style="{StaticResource TableHeaderStyle}" />
+                        <TextBlock Grid.Column="7" Text="Sn" Style="{StaticResource TableHeaderStyle}" />
+                        <TextBlock Grid.Column="8" Text="Sh" Style="{StaticResource TableHeaderStyle}" />
+                        <TextBlock Grid.Column="9" Text="kc" Style="{StaticResource TableHeaderStyle}" />
+                        <TextBlock Grid.Column="10" Text="kr" Style="{StaticResource TableHeaderStyle}" />
+                        <TextBlock Grid.Column="11" Text="ks" Style="{StaticResource TableHeaderStyle}" />
+                        <TextBlock Grid.Column="12" Text="kθ" Style="{StaticResource TableHeaderStyle}" />
+                        <TextBlock Grid.Column="13" Text="kd" Style="{StaticResource TableHeaderStyle}" />
+                        <TextBlock Grid.Column="14" Text="Val. Adm." Style="{StaticResource TableHeaderStyle}" />
+                        <TextBlock Grid.Column="15" Text="🗑️" Style="{StaticResource TableHeaderStyle}" />
                     </Grid>
 
-                    <!-- Lignes de données -->
+                    <!-- Lignes du tableau -->
                     <ItemsControl ItemsSource="{Binding ValeursAdmissibles}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Background="{StaticResource CardBg}"
-                                        CornerRadius="4"
-                                        Margin="0,2"
-                                        Padding="5">
+                                <Border Background="{StaticResource CardBg}" CornerRadius="4" Margin="0,2" Padding="5">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="80"/>
-                                            <ColumnDefinition Width="60"/>
-                                            <ColumnDefinition Width="80"/>
-                                            <ColumnDefinition Width="70"/>
-                                            <ColumnDefinition Width="70"/>
-                                            <ColumnDefinition Width="70"/>
-                                            <ColumnDefinition Width="70"/>
-                                            <ColumnDefinition Width="70"/>
-                                            <ColumnDefinition Width="70"/>
-                                            <ColumnDefinition Width="100"/>
-                                            <ColumnDefinition Width="50"/>
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="60" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="90" />
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="40" />
                                         </Grid.ColumnDefinitions>
-
-                                        <TextBox Grid.Column="0"
-                                                 Text="{Binding Materiau, UpdateSourceTrigger=PropertyChanged}"
-                                                 Style="{StaticResource InlineTextBoxStyle}"/>
-
-                                        <TextBox Grid.Column="1"
-                                                 Text="{Binding Niveau, UpdateSourceTrigger=PropertyChanged}"
-                                                 Style="{StaticResource InlineTextBoxStyle}"/>
-
-                                        <ComboBox Grid.Column="2"
-                                                  ItemsSource="{x:Static vm:ValeurAdmissibleCouche.CriteresDisponibles}"
-                                                  SelectedItem="{Binding Critere}"
-                                                  Style="{StaticResource CompactComboBoxStyle}"/>
-
-                                        <TextBox Grid.Column="3"
-                                                 Text="{Binding Sn, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}"
-                                                 Style="{StaticResource InlineTextBoxStyle}"/>
-
-                                        <TextBox Grid.Column="4"
-                                                 Text="{Binding Sh, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}"
-                                                 Style="{StaticResource InlineTextBoxStyle}"/>
-
-                                        <TextBox Grid.Column="5"
-                                                 Text="{Binding B, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F3}'}"
-                                                 Style="{StaticResource InlineTextBoxStyle}"/>
-
-                                        <TextBox Grid.Column="6"
-                                                 Text="{Binding Kc, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}"
-                                                 Style="{StaticResource InlineTextBoxStyle}"/>
-
-                                        <TextBox Grid.Column="7"
-                                                 Text="{Binding Kr, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}"
-                                                 Style="{StaticResource InlineTextBoxStyle}"/>
-
-                                        <TextBox Grid.Column="8"
-                                                 Text="{Binding Risque, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F1}'}"
-                                                 Style="{StaticResource InlineTextBoxStyle}"/>
-
-                                        <TextBox Grid.Column="9"
-                                                 Text="{Binding ValeurAdmissible, StringFormat='{}{0:F3}'}"
-                                                 Style="{StaticResource InlineTextBoxStyle}"
-                                                 IsReadOnly="True"
-                                                 Background="{StaticResource SecondaryBg}"/>
-
-                                        <Button Grid.Column="10"
-                                                Content="🗑️"
-                                                Style="{StaticResource DeleteButtonStyle}"
-                                                Command="{Binding Path=DataContext.SupprimerCoucheCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                CommandParameter="{Binding}"/>
+                                        <TextBox Grid.Column="0" Text="{Binding Materiau, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InlineTextBoxStyle}" />
+                                        <TextBox Grid.Column="1" Text="{Binding Niveau, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InlineTextBoxStyle}" />
+                                        <ComboBox Grid.Column="2" ItemsSource="{Binding CriteresDisponibles}" SelectedItem="{Binding Critere}" Style="{StaticResource InlineComboBoxStyle}" />
+                                        <TextBox Grid.Column="3" Text="{Binding AmplitudeValue, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}" Style="{StaticResource InlineTextBoxStyle}" />
+                                        <TextBox Grid.Column="4" 
+                                                 Text="{Binding Cam, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F1}'}" 
+                                                 Style="{StaticResource InlineTextBoxStyle}" 
+                                                 ToolTip="Valeur CAM - Modifiable manuellement ou via les normes (Guide LCPC-SETRA, Catalogue 1998, etc.)"
+                                                 Background="{StaticResource InputBg}"
+                                                 Foreground="{StaticResource TextWhite}" />
+                                        <TextBox Grid.Column="5" Text="{Binding Risque, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F1}'}" Style="{StaticResource InlineTextBoxStyle}" />
+                                        <TextBox Grid.Column="6" Text="{Binding B, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F3}'}" Style="{StaticResource InlineTextBoxStyle}" />
+                                        <TextBox Grid.Column="7" Text="{Binding Sn, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}" Style="{StaticResource InlineTextBoxStyle}" />
+                                        <TextBox Grid.Column="8" Text="{Binding Sh, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}" Style="{StaticResource InlineTextBoxStyle}" />
+                                        <TextBox Grid.Column="9" Text="{Binding Kc, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}" Style="{StaticResource InlineTextBoxStyle}" />
+                                        <TextBox Grid.Column="10" Text="{Binding Kr, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}" Style="{StaticResource InlineTextBoxStyle}" />
+                                        <TextBox Grid.Column="11" Text="{Binding Ks, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}" Style="{StaticResource InlineTextBoxStyle}" />
+                                        <TextBox Grid.Column="12" Text="{Binding Ktheta, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}" Style="{StaticResource InlineTextBoxStyle}" />
+                                        <TextBox Grid.Column="13" Text="{Binding Kd, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}" Style="{StaticResource InlineTextBoxStyle}" />
+                                        <TextBox Grid.Column="14" Text="{Binding ValeurAdmissible, StringFormat='{}{0:F3}'}" Style="{StaticResource InlineTextBoxStyle}" IsReadOnly="True" Background="{StaticResource SecondaryBg}" />
+                                        <Button Grid.Column="15" Content="🗑️" Style="{StaticResource DeleteButtonStyle}" Command="{Binding Path=DataContext.SupprimerCoucheCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
                                     </Grid>
                                 </Border>
                             </DataTemplate>
@@ -290,118 +280,23 @@
                     </ItemsControl>
 
                     <!-- Message si aucune couche -->
-                    <Border Visibility="{Binding ValeursAdmissibles.Count, Converter={StaticResource CountToVisibilityConverter}}"
-                            Background="{StaticResource CardBg}"
-                            CornerRadius="8"
-                            Padding="20"
-                            Margin="0,10,0,0">
+                    <Border Visibility="{Binding ValeursAdmissibles.Count, Converter={StaticResource CountToVisibilityConverter}}" Background="{StaticResource CardBg}" CornerRadius="8" Padding="20" Margin="0,10,0,0">
                         <StackPanel HorizontalAlignment="Center">
-                            <TextBlock Text="📋"
-                                       FontSize="48"
-                                       HorizontalAlignment="Center"
-                                       Opacity="0.5"/>
-                            <TextBlock Text="Aucune couche configurée"
-                                       Style="{StaticResource InfoTextStyle}"
-                                       HorizontalAlignment="Center"
-                                       Margin="0,10,0,0"/>
-                            <TextBlock Text="Cliquez sur 'Ajouter' pour configurer les paramètres de calcul."
-                                       Style="{StaticResource InfoTextStyle}"
-                                       FontSize="12"
-                                       HorizontalAlignment="Center"
-                                       Opacity="0.7"
-                                       Margin="0,5,0,0"/>
+                            <TextBlock Text="📋" FontSize="48" Opacity="0.5" />
+                            <TextBlock Text="Aucune couche configurée" Style="{StaticResource InfoTextStyle}" Margin="0,10,0,0" />
+                            <TextBlock Text="Les valeurs se synchronisent automatiquement avec la structure de chaussée." Style="{StaticResource InfoTextStyle}" FontSize="12" Opacity="0.7" Margin="0,5,0,0" />
                         </StackPanel>
                     </Border>
                 </StackPanel>
             </Border>
 
-            <!-- Section 4: Documentation et formules -->
-            <Border Style="{StaticResource SectionCardStyle}">
-                <StackPanel>
-                    <TextBlock Text="Documentation - Formules de calcul"
-                               Style="{StaticResource SectionTitleStyle}"/>
-
-                    <Expander Header="📖 Formules et méthodologie"
-                              Style="{StaticResource ModernExpanderStyle}"
-                              Margin="0,10,0,0">
-                        <StackPanel Margin="15">
-
-                            <!-- Calcul du trafic cumulé -->
-                            <TextBlock Text="1. Calcul du trafic cumulé (TCPL)"
-                                       FontWeight="SemiBold"
-                                       Margin="0,0,0,10"/>
-
-                            <TextBlock Text="• Taux arithmétique: TCPL = 365 × MJA × DS × (1 + (DS-1) × TA/200)"
-                                       Style="{StaticResource InfoTextStyle}"/>
-                            <TextBlock Text="• Taux géométrique: TCPL = 365 × MJA × ((1+TA/100)^DS - 1) / (TA/100)"
-                                       Style="{StaticResource InfoTextStyle}"
-                                       Margin="0,0,0,15"/>
-
-                            <!-- Valeurs admissibles -->
-                            <TextBlock Text="2. Calcul des valeurs admissibles"
-                                       FontWeight="SemiBold"
-                                       Margin="0,0,0,10"/>
-
-                            <TextBlock Text="• Déformation horizontale: εt,adm = εt,6 × (N/10^6)^(-1/b) × kc × kr"
-                                       Style="{StaticResource InfoTextStyle}"/>
-                            <TextBlock Text="• Contrainte horizontale: σt,adm = σt,6 × (N/10^6)^(-1/b) × kc × kr"
-                                       Style="{StaticResource InfoTextStyle}"/>
-                            <TextBlock Text="• Déformation verticale: εz,adm = εz,6 × (N/10^6)^(-1/b) × kc × kr"
-                                       Style="{StaticResource InfoTextStyle}"
-                                       Margin="0,0,0,15"/>
-
-                            <!-- Paramètres -->
-                            <TextBlock Text="3. Paramètres"
-                                       FontWeight="SemiBold"
-                                       Margin="0,0,0,10"/>
-
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="• Sn : Valeur de référence à 10^6 cycles"
-                                               Style="{StaticResource InfoTextStyle}"/>
-                                    <TextBlock Text="• b : Pente de fatigue (négative)"
-                                               Style="{StaticResource InfoTextStyle}"/>
-                                    <TextBlock Text="• kc : Coefficient de calage"
-                                               Style="{StaticResource InfoTextStyle}"/>
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="1">
-                                    <TextBlock Text="• kr : Coefficient de risque"
-                                               Style="{StaticResource InfoTextStyle}"/>
-                                    <TextBlock Text="• DS : Durée de service (années)"
-                                               Style="{StaticResource InfoTextStyle}"/>
-                                    <TextBlock Text="• MJA : Trafic moyen journalier annuel"
-                                               Style="{StaticResource InfoTextStyle}"/>
-                                </StackPanel>
-                            </Grid>
-                        </StackPanel>
-                    </Expander>
-                </StackPanel>
-            </Border>
-
             <!-- Indicateur de calcul en cours -->
-            <Border Visibility="{Binding IsCalculating, Converter={StaticResource BooleanToVisibilityConverter}}"
-                    Background="{StaticResource AccentBlue}"
-                    CornerRadius="8"
-                    Padding="15">
-                <StackPanel Orientation="Horizontal"
-                            HorizontalAlignment="Center">
-                    <TextBlock Text="⏳"
-                               FontSize="24"
-                               Margin="0,0,10,0"/>
-                    <TextBlock Text="Calcul des valeurs admissibles en cours..."
-                               Foreground="White"
-                               FontSize="16"
-                               FontWeight="SemiBold"
-                               VerticalAlignment="Center"/>
+            <Border Visibility="{Binding IsCalculating, Converter={StaticResource BooleanToVisibilityConverter}}" Background="{StaticResource AccentBlue}" CornerRadius="8" Padding="15">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Text="⏳" FontSize="24" Margin="0,0,10,0" />
+                    <TextBlock Text="Calcul des valeurs admissibles en cours..." Foreground="White" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" />
                 </StackPanel>
             </Border>
-
         </StackPanel>
     </ScrollViewer>
 </UserControl>

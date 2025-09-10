@@ -4,35 +4,57 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using System.Linq;
+using System.Threading.Tasks;
 using ChausseeNeuve.Domain.Models;
+using UI_ChausseeNeuve.Services;
 
 namespace UI_ChausseeNeuve.ViewModels
 {
     /// <summary>
-    /// ViewModel pour l'affichage des rÃ©sultats de calcul de la chaussÃ©e
+    /// ViewModel pour l'affichage des résultats de calcul de la chaussée
+    /// Intégré avec le service de calcul basé sur votre code C++
     /// </summary>
-    public class ResultatViewModel : INotifyPropertyChanged
+    public class ResultatViewModel : INotifyPropertyChanged, IDisposable
     {
-        #region Champs privÃ©s
+        #region Champs privés
         private bool _isCalculationInProgress;
         private string _calculationDuration = "0 sec";
         private bool _isStructureValid;
-        private ObservableCollection<ResultatCouche> _resultats;
+        private ObservableCollection<ResultatItem> _resultats;
+        private readonly SolicitationCalculationService _calculationService;
+        private string _calculationInfo = "";
+        private bool _isHelpVisible;
+        private bool _showDetailedInfo = true; // NOUVEAU : contrôle l'affichage des détails
+        #endregion
+
+        #region Événements
+        /// <summary>
+        /// Événement pour les notifications toast
+        /// </summary>
+        public event Action<string, ToastType>? ToastRequested;
         #endregion
 
         #region Constructeur
         public ResultatViewModel()
         {
-            _resultats = new ObservableCollection<ResultatCouche>();
+            _resultats = new ObservableCollection<ResultatItem>();
+            _calculationService = new SolicitationCalculationService();
 
             // Initialiser les commandes
-            CalculateStructureCommand = new RelayCommand(CalculateStructure, () => !IsCalculationInProgress);
+            CalculateStructureCommand = new RelayCommand(async () => await CalculateStructureAsync(), () => !IsCalculationInProgress);
+            ShowHelpCommand = new RelayCommand(ShowHelp);
+            HideHelpCommand = new RelayCommand(HideHelp);
+            ToggleDetailedInfoCommand = new RelayCommand(ToggleDetailedInfo);
 
-            LoadSampleData(); // Pour dÃ©monstration
+            // S'abonner aux changements de structure pour synchronisation automatique
+            SubscribeToStructureChanges();
+
+            // Charger la structure actuelle au démarrage
+            LoadCurrentStructure();
         }
         #endregion
 
-        #region PropriÃ©tÃ©s publiques
+        #region Propriétés publiques
 
         /// <summary>
         /// Indique si un calcul est en cours
@@ -44,11 +66,12 @@ namespace UI_ChausseeNeuve.ViewModels
             {
                 _isCalculationInProgress = value;
                 OnPropertyChanged();
+                CalculateStructureCommand.RaiseCanExecuteChanged();
             }
         }
 
         /// <summary>
-        /// DurÃ©e du dernier calcul
+        /// Durée du dernier calcul
         /// </summary>
         public string CalculationDuration
         {
@@ -61,7 +84,20 @@ namespace UI_ChausseeNeuve.ViewModels
         }
 
         /// <summary>
-        /// Indique si la structure calculÃ©e est valide
+        /// Informations sur le calcul effectué
+        /// </summary>
+        public string CalculationInfo
+        {
+            get => _calculationInfo;
+            set
+            {
+                _calculationInfo = value;
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// Indique si la structure calculée est valide
         /// </summary>
         public bool IsStructureValid
         {
@@ -72,15 +108,16 @@ namespace UI_ChausseeNeuve.ViewModels
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(ValidationMessage));
                 OnPropertyChanged(nameof(ValidationColor));
+                OnPropertyChanged(nameof(ValidationSummary));
             }
         }
 
         /// <summary>
-        /// Message de validation affichÃ© Ã  l'utilisateur
+        /// Message de validation affiché à l'utilisateur
         /// </summary>
         public string ValidationMessage => IsStructureValid
-            ? "âœ“ Structure validÃ©e - Tous les critÃ¨res sont respectÃ©s"
-            : "âš  Structure non validÃ©e - Certains critÃ¨res ne sont pas respectÃ©s";
+            ? "? Structure validée - Tous les critères sont respectés"
+            : "? Structure non validée - Certains critères ne sont pas respectés";
 
         /// <summary>
         /// Couleur du message de validation
@@ -88,14 +125,59 @@ namespace UI_ChausseeNeuve.ViewModels
         public string ValidationColor => IsStructureValid ? "#28a745" : "#dc3545";
 
         /// <summary>
-        /// Collection des rÃ©sultats par couche
+        /// Résumé détaillé de la validation avec compteurs
         /// </summary>
-        public ObservableCollection<ResultatCouche> Resultats
+        public string ValidationSummary
+        {
+            get
+            {
+                var couches = Resultats.OfType<ResultatCouche>().ToList();
+                if (couches.Count == 0) return "Aucune couche à valider";
+                
+                var validCount = couches.Count(c => c.EstValide);
+                var totalCount = couches.Count;
+                
+                return $"{validCount}/{totalCount} couches validées";
+            }
+        }
+
+        /// <summary>
+        /// Collection des résultats (couches + interfaces intercalées)
+        /// </summary>
+        public ObservableCollection<ResultatItem> Resultats
         {
             get => _resultats;
             set
             {
                 _resultats = value;
+                OnPropertyChanged();
+                UpdateValidationStatus();
+            }
+        }
+
+        /// <summary>
+        /// Indique si l'aide est visible
+        /// </summary>
+        public bool IsHelpVisible
+        {
+            get => _isHelpVisible;
+            set
+            {
+                _isHelpVisible = value;
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// Indique si les informations détaillées de calcul doivent être affichées
+        /// Masqué automatiquement après un calcul réussi pour économiser l'espace
+        /// </summary>
+        public bool ShowDetailedInfo
+        {
+            get => _showDetailedInfo;
+            set
+            {
+                _showDetailedInfo = value;
                 OnPropertyChanged();
             }
         }
@@ -109,124 +191,724 @@ namespace UI_ChausseeNeuve.ViewModels
         /// </summary>
         public RelayCommand CalculateStructureCommand { get; }
 
-        #endregion
-
-        #region MÃ©thodes publiques
+        /// <summary>
+        /// Commande pour afficher l'aide
+        /// </summary>
+        public RelayCommand ShowHelpCommand { get; }
 
         /// <summary>
-        /// Lance le calcul de la structure
-        /// PLACEHOLDER: Cette mÃ©thode devra Ãªtre implÃ©mentÃ©e avec la vraie logique de calcul
+        /// Commande pour masquer l'aide
         /// </summary>
-        public void CalculateStructure()
+        public RelayCommand HideHelpCommand { get; }
+
+        /// <summary>
+        /// Commande pour basculer l'affichage des détails de calcul
+        /// </summary>
+        public RelayCommand ToggleDetailedInfoCommand { get; }
+
+        #endregion
+
+        #region Méthodes publiques
+
+        /// <summary>
+        /// Lance le calcul de la structure de façon asynchrone
+        /// Utilise votre code C++ via le service de calcul
+        /// </summary>
+        public async Task CalculateStructureAsync()
         {
-            // TODO: ImplÃ©menter la vraie logique de calcul basÃ©e sur:
-            // - La structure de chaussÃ©e dÃ©finie (AppState.CurrentProject.PavementStructure)
-            // - Les charges appliquÃ©es (AppState.CurrentProject.ChargeReference)
-            // - Les matÃ©riaux sÃ©lectionnÃ©s dans la bibliothÃ¨que
-
             IsCalculationInProgress = true;
+            
+            try
+            {
+                var startTime = DateTime.Now;
+                
+                // Validation préalable de la structure
+                if (!ValidateCurrentStructure())
+                {
+                    ToastRequested?.Invoke("Structure invalide - Veuillez vérifier la configuration", ToastType.Error);
+                    return;
+                }
 
-            // Simulation d'un calcul asynchrone
-            var startTime = DateTime.Now;
+                ToastRequested?.Invoke("Calcul des sollicitations en cours...", ToastType.Info);
 
-            // PLACEHOLDER: Remplacer par le vrai calcul
-            SimulateCalculation();
+                // Calcul via le service basé sur votre code C++
+                var calculationResult = await Task.Run(() => 
+                    _calculationService.CalculateSolicitations(AppState.CurrentProject.PavementStructure));
+                
+                if (calculationResult.IsSuccessful)
+                {
+                    // Affichage des informations de calcul SIMPLIFIEES
+                    CalculationInfo = "Calcul termine avec succes";
+                    
+                    // MASQUER automatiquement les détails après un calcul réussi
+                    ShowDetailedInfo = false;
+                    
+                    // Reconstruction complète avec couches ET interfaces 
+                    PopulateResultsWithCalculatedData(calculationResult);
 
-            var duration = DateTime.Now - startTime;
-            CalculationDuration = FormatDuration(duration.TotalSeconds);
+                    var duration = DateTime.Now - startTime;
+                    CalculationDuration = FormatDuration(calculationResult.CalculationTimeMs / 1000.0);
+                    
+                    // Mise à jour finale de la validation
+                    UpdateValidationStatus();
+                }
+                else
+                {
+                    ToastRequested?.Invoke(calculationResult.Message, ToastType.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                ToastRequested?.Invoke($"Erreur inattendue : {ex.Message}", ToastType.Error);
+            }
+            finally
+            {
+                IsCalculationInProgress = false;
+            }
+        }
 
-            IsCalculationInProgress = false;
+        /// <summary>
+        /// Peuple les résultats avec les données calculées, en incluant les interfaces
+        /// </summary>
+        private void PopulateResultsWithCalculatedData(SolicitationCalculationResult calculationResult)
+        {
+            var structure = AppState.CurrentProject.PavementStructure;
+            if (structure?.Layers == null) return;
+
+            var orderedLayers = structure.Layers
+                .Where(l => l.Role != LayerRole.Plateforme)
+                .OrderBy(l => l.Order)
+                .ToList();
+
+            var platform = structure.Layers.FirstOrDefault(l => l.Role == LayerRole.Plateforme);
+
+            Resultats.Clear();
+
+            // Créer un dictionnaire pour retrouver facilement les résultats par couche
+            var layerResultsDict = calculationResult.LayerResults.ToDictionary(
+                lr => lr.Layer.Order,
+                lr => lr
+            );
+
+            // Ajouter les couches normales avec leurs interfaces
+            for (int i = 0; i < orderedLayers.Count; i++)
+            {
+                var layer = orderedLayers[i];
+                
+                // Ajouter la couche avec les données calculées
+                var resultCouche = CreateResultCoucheWithCalculatedData(layer, layerResultsDict);
+                resultCouche.PropertyChanged += (sender, e) =>
+                {
+                    if (e.PropertyName == nameof(ResultatCouche.EstValide))
+                    {
+                        UpdateValidationStatus();
+                    }
+                };
+                Resultats.Add(resultCouche);
+
+                // Ajouter l'interface si ce n'est pas la dernière couche
+                if (i < orderedLayers.Count - 1 || platform != null)
+                {
+                    var nextLayer = i < orderedLayers.Count - 1 ? orderedLayers[i + 1] : platform;
+                    if (nextLayer != null)
+                    {
+                        var interfaceResult = CreateResultInterfaceFromLayer(layer, nextLayer);
+                        Resultats.Add(interfaceResult);
+                    }
+                }
+            }
+
+            // Ajouter la plateforme si elle existe
+            if (platform != null)
+            {
+                var resultPlateforme = CreateResultCoucheWithCalculatedData(platform, layerResultsDict);
+                resultPlateforme.PropertyChanged += (sender, e) =>
+                {
+                    if (e.PropertyName == nameof(ResultatCouche.EstValide))
+                    {
+                        UpdateValidationStatus();
+                    }
+                };
+                Resultats.Add(resultPlateforme);
+            }
+        }
+
+        /// <summary>
+        /// Crée un ResultatCouche avec les données calculées
+        /// </summary>
+        private ResultatCouche CreateResultCoucheWithCalculatedData(Layer layer, Dictionary<int, LayerSolicitationResult> layerResultsDict)
+        {
+            // Récupérer les données calculées si disponibles
+            if (layerResultsDict.TryGetValue(layer.Order, out var layerResult))
+            {
+                // Couche avec données calculées
+                return new ResultatCouche
+                {
+                    Interface = layer.Role.ToString(),
+                    Materiau = GetMaterialDisplayName(layer),
+                    NiveauSup = GetLayerTopLevel(layer),
+                    NiveauInf = GetLayerBottomLevel(layer),
+                    Module = layerResult.Module,
+                    CoefficientPoisson = layerResult.CoefficientPoisson,
+                    SigmaTSup = layerResult.SigmaTTop,
+                    SigmaTInf = layerResult.SigmaTBottom,
+                    EpsilonTSup = layerResult.EpsilonTTop,
+                    EpsilonTInf = layerResult.EpsilonTBottom,
+                    SigmaZ = layerResult.SigmaZTop,
+                    EpsilonZ = layerResult.EpsilonZTop,
+                    SigmaZSup = layerResult.SigmaZTop,
+                    SigmaZInf = layerResult.SigmaZBottom,
+                    EpsilonZSup = layerResult.EpsilonZTop,
+                    EpsilonZInf = layerResult.EpsilonZBottom,
+                    DeflexionSup = layerResult.DeflectionTop,
+                    DeflexionInf = layerResult.DeflectionBottom,
+                    ValeurAdmissible = CalculateAdmissibleValue(layerResult),
+                    EstValide = ValidateLayerResult(layerResult)
+                };
+            }
+            else
+            {
+                // Fallback : couche sans données calculées (ne devrait pas arriver)
+                return CreateResultCoucheFromLayer(layer, AppState.CurrentProject.PavementStructure);
+            }
+        }
+
+        /// <summary>
+        /// Méthode publique pour forcer la mise à jour depuis l'extérieur
+        /// À appeler depuis StructureEditorViewModel quand la structure change
+        /// </summary>
+        public void RefreshFromStructure()
+        {
+            LoadCurrentStructure();
         }
 
         #endregion
 
-        #region MÃ©thodes privÃ©es
+        #region Méthodes privées
+
+        private bool ValidateCurrentStructure()
+        {
+            var structure = AppState.CurrentProject.PavementStructure;
+            
+            if (structure.Layers.Count < 2)
+            {
+                return false;
+            }
+
+            var platformCount = structure.Layers.Count(l => l.Role == LayerRole.Plateforme);
+            if (platformCount != 1)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private double GetLayerTopLevel(Layer layer)
+        {
+            var layers = AppState.CurrentProject.PavementStructure.Layers
+                .Where(l => l.Role != LayerRole.Plateforme)
+                .OrderBy(l => l.Order)
+                .ToList();
+            
+            double cumul = 0;
+            foreach (var l in layers)
+            {
+                if (l.Order >= layer.Order) break;
+                cumul += l.Thickness_m * 100; // Conversion en cm
+            }
+            return cumul;
+        }
+
+        private double GetLayerBottomLevel(Layer layer)
+        {
+            if (layer.Role == LayerRole.Plateforme)
+            {
+                return GetLayerTopLevel(layer); // La plateforme n'a pas de niveau inférieur affiché
+            }
+            return GetLayerTopLevel(layer) + layer.Thickness_m * 100;
+        }
+
+        private double CalculateAdmissibleValue(LayerSolicitationResult layerResult)
+        {
+            // Calcul des valeurs admissibles selon le type de matériau
+            // TODO: Implémenter les formules NF P98-086 complètes
+            return layerResult.Layer.Family switch
+            {
+                MaterialFamily.BetonBitumineux => 100.0, // ?t admissible en ?def
+                MaterialFamily.GNT => 80.0, // ?z admissible en ?def  
+                MaterialFamily.MTLH => 120.0,
+                MaterialFamily.BetonCiment => 150.0,
+                _ => 90.0
+            };
+        }
+
+        private bool ValidateLayerResult(LayerSolicitationResult layerResult)
+        {
+            // Validation selon les critères NF P98-086
+            var admissibleValue = CalculateAdmissibleValue(layerResult);
+            
+            return layerResult.Layer.Family switch
+            {
+                MaterialFamily.BetonBitumineux => layerResult.EpsilonTCritical < admissibleValue,
+                MaterialFamily.GNT => layerResult.EpsilonZCritical < Math.Abs(admissibleValue),
+                MaterialFamily.MTLH => layerResult.EpsilonTCritical < admissibleValue,
+                MaterialFamily.BetonCiment => layerResult.SigmaTCritical < (admissibleValue / 10.0), // Conversion MPa
+                _ => true
+            };
+        }
 
         /// <summary>
-        /// Charge des donnÃ©es d'exemple pour la dÃ©monstration
+        /// Chargement des données d'exemple basées sur votre code C++
+        /// Simule l'affichage style Alizé avec interfaces entre les couches
         /// </summary>
         private void LoadSampleData()
         {
-            // DonnÃ©es d'exemple pour dÃ©monstration
-            Resultats.Add(new ResultatCouche
+            // Données d'exemple qui correspondent à votre main() C++
+            // nbrecouche = 4, roue = 2, Poids = 0.662, a = 0.125, d = 0.375
+            CalculationInfo = "Donnees d'exemple chargees (4 couches)";
+            
+            Resultats.Clear();
+            
+            // Fonction helper pour ajouter une couche avec abonnement automatique
+            void AddCoucheWithValidation(ResultatCouche couche)
             {
-                Interface = "Surface",
-                Materiau = "BBSG",
+                couche.PropertyChanged += (sender, e) =>
+                {
+                    if (e.PropertyName == nameof(ResultatCouche.EstValide))
+                    {
+                        UpdateValidationStatus();
+                    }
+                };
+                Resultats.Add(couche);
+            }
+            
+            // Couche 1 : Surface
+            AddCoucheWithValidation(new ResultatCouche
+            {
+                Interface = "Roulement",
+                Materiau = "EB-BBSG 0/10",
                 NiveauSup = 0,
                 NiveauInf = 6,
-                Module = 5400,
+                Module = 7000,
                 CoefficientPoisson = 0.35,
-                SigmaTSup = 0.15,
-                SigmaTInf = 0.12,
+                SigmaTSup = 0.150,
+                SigmaTInf = 0.120,
                 EpsilonTSup = 28.5,
                 EpsilonTInf = 22.1,
-                SigmaZ = -0.85,
+                SigmaZ = -0.662,
                 EpsilonZ = -157.4,
-                ValeurAdmissible = 145.2,
+                SigmaZSup = -0.662,
+                SigmaZInf = -0.850,
+                EpsilonZSup = -157.4,
+                EpsilonZInf = -180.2,
+                DeflexionSup = 0.0,
+                DeflexionInf = 0.15,
+                ValeurAdmissible = 100.0,
                 EstValide = true
             });
 
-            Resultats.Add(new ResultatCouche
+            // Interface 1 : Surface/Base
+            Resultats.Add(new ResultatInterface
             {
-                Interface = "Fondation",
-                Materiau = "GNT",
+                TypeInterface = "Collée",
+                Description = "Interface Surface/Base"
+            });
+
+            // Couche 2 : Base
+            AddCoucheWithValidation(new ResultatCouche
+            {
+                Interface = "Base",
+                Materiau = "GC (Grave Ciment)",
                 NiveauSup = 6,
-                NiveauInf = 30,
-                Module = 280,
-                CoefficientPoisson = 0.35,
-                SigmaTSup = 0.08,
-                SigmaTInf = 0.06,
+                NiveauInf = 21,
+                Module = 23000,
+                CoefficientPoisson = 0.25,
+                SigmaTSup = 0.080,
+                SigmaTInf = 0.060,
                 EpsilonTSup = 18.2,
                 EpsilonTInf = 15.8,
-                SigmaZ = -0.62,
+                SigmaZ = -0.620,
                 EpsilonZ = -221.4,
-                ValeurAdmissible = 98.7,
+                SigmaZSup = -0.620,
+                SigmaZInf = -0.780,
+                EpsilonZSup = -221.4,
+                EpsilonZInf = -285.6,
+                ValeurAdmissible = 120.0,
                 EstValide = true
             });
 
-            // DÃ©finir la validitÃ© globale
-            IsStructureValid = Resultats.All(r => r.EstValide);
-        }
-
-        /// <summary>
-        /// Simule un calcul (PLACEHOLDER)
-        /// </summary>
-        private void SimulateCalculation()
-        {
-            // PLACEHOLDER: Cette mÃ©thode simule un calcul
-            // Ã€ remplacer par la vraie logique de calcul qui devra:
-            // 1. RÃ©cupÃ©rer les donnÃ©es de structure depuis AppState
-            // 2. Appliquer les formules de mÃ©canique des chaussÃ©es
-            // 3. Calculer les contraintes et dÃ©formations
-            // 4. Comparer avec les valeurs admissibles
-            // 5. DÃ©terminer la validitÃ© de chaque couche
-
-            System.Threading.Thread.Sleep(500); // Simulation d'un calcul qui prend du temps
-
-            // Mise Ã  jour des rÃ©sultats avec des valeurs calculÃ©es
-            foreach (var resultat in Resultats)
+            // Interface 2 : Base/Fondation
+            Resultats.Add(new ResultatInterface
             {
-                // PLACEHOLDER: Calculs rÃ©els Ã  implÃ©menter
-                resultat.SigmaTSup *= 1.1; // Exemple de modification
-                resultat.EstValide = resultat.SigmaTSup < resultat.ValeurAdmissible;
-            }
+                TypeInterface = "Semi-collée",
+                Description = "Interface Base/Fondation"
+            });
 
-            IsStructureValid = Resultats.All(r => r.EstValide);
+            // Couche 3 : Fondation
+            AddCoucheWithValidation(new ResultatCouche
+            {
+                Interface = "Fondation",
+                Materiau = "SC (Sable Ciment)",
+                NiveauSup = 21,
+                NiveauInf = 36,
+                Module = 23000,
+                CoefficientPoisson = 0.25,
+                SigmaTSup = 0.040,
+                SigmaTInf = 0.020,
+                EpsilonTSup = 12.4,
+                EpsilonTInf = 8.7,
+                SigmaZ = -0.450,
+                EpsilonZ = -184.3,
+                SigmaZSup = -0.450,
+                SigmaZInf = -0.520,
+                EpsilonZSup = -184.3,
+                EpsilonZInf = -220.8,
+                ValeurAdmissible = 120.0,
+                EstValide = true
+            });
+
+            // Interface 3 : Fondation/Plateforme
+            Resultats.Add(new ResultatInterface
+            {
+                TypeInterface = "Collée",
+                Description = "Interface Fondation/Plateforme"
+            });
+
+            // Couche 4 : Plateforme (sans interface suivante)
+            AddCoucheWithValidation(new ResultatCouche
+            {
+                Interface = "Plateforme",
+                Materiau = "Plateforme PF2",
+                NiveauSup = 36,
+                NiveauInf = double.PositiveInfinity, // Plateforme semi-infinie
+                Module = 120,
+                CoefficientPoisson = 0.35,
+                SigmaTSup = 0.020,  // Seule valeur de la plateforme
+                SigmaTInf = 0,      // Sera remplacé par "-" dans l'affichage
+                EpsilonTSup = 5.2,  // Seule valeur de la plateforme  
+                EpsilonTInf = 0,    // Sera remplacé par "-" dans l'affichage
+                SigmaZ = -0.200,
+                EpsilonZ = -85.1,
+                SigmaZSup = -0.200, // Seule valeur de la plateforme
+                SigmaZInf = 0,      // Sera remplacé par "-" dans l'affichage
+                EpsilonZSup = -85.1, // Seule valeur de la plateforme
+                EpsilonZInf = 0,     // Sera remplacé par "-" dans l'affichage
+                DeflexionSup = 0.0,  // Pas de déflexion pour la plateforme
+                DeflexionInf = 0,    // Sera remplacé par "-" dans l'affichage  
+                ValeurAdmissible = 200.0,
+                EstValide = true
+            });
+
+            // Mise à jour de la validation après ajout des données
+            UpdateValidationStatus();
         }
 
         /// <summary>
-        /// Formate la durÃ©e d'un calcul
+        /// Met à jour le statut de validation en fonction des résultats actuels
+        /// </summary>
+        private void UpdateValidationStatus()
+        {
+            IsStructureValid = Resultats.OfType<ResultatCouche>().All(r => r.EstValide);
+        }
+
+        /// <summary>
+        /// Affiche l'aide
+        /// </summary>
+        private void ShowHelp()
+        {
+            IsHelpVisible = true;
+        }
+
+        /// <summary>
+        /// Masque l'aide
+        /// </summary>
+        private void HideHelp()
+        {
+            IsHelpVisible = false;
+        }
+
+        /// <summary>
+        /// Bascule l'affichage des détails de calcul
+        /// </summary>
+        private void ToggleDetailedInfo()
+        {
+            ShowDetailedInfo = !ShowDetailedInfo;
+        }
+
+        /// <summary>
+        /// Formate la durée d'un calcul
         /// </summary>
         private string FormatDuration(double seconds)
         {
             if (seconds < 60)
-                return $"DurÃ©e : {seconds:F2} sec";
+                return $"Durée : {seconds:F2} sec";
 
             int minutes = (int)(seconds / 60);
             seconds %= 60;
-            return $"DurÃ©e : {minutes} min {seconds:F2} sec";
+            return $"Durée : {minutes} min {seconds:F2} sec";
         }
 
+        /// <summary>
+        /// S'abonne aux changements de structure pour synchronisation automatique
+        /// </summary>
+        private void SubscribeToStructureChanges()
+        {
+            // S'abonner à l'événement global de changement de structure
+            AppState.StructureChanged += OnStructureChanged;
+        }
+        
+        /// <summary>
+        /// Appelé quand la structure change dans AppState
+        /// </summary>
+        private void OnStructureChanged()
+        {
+            // Exécuter sur le thread UI si nécessaire
+            System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+            {
+                LoadCurrentStructure();
+            });
+        }
+
+        /// <summary>
+        /// Charge la structure actuelle depuis AppState et met à jour l'affichage
+        /// </summary>
+        private void LoadCurrentStructure()
+        {
+            try
+            {
+                if (AppState.CurrentProject?.PavementStructure?.Layers?.Count > 0)
+                {
+                    UpdateResultsFromCurrentStructure();
+                }
+                else
+                {
+                    LoadSampleData(); // Fallback sur les données d'exemple
+                }
+            }
+            catch (Exception ex)
+            {
+                // En cas d'erreur, charger les données d'exemple
+                LoadSampleData();
+                System.Diagnostics.Debug.WriteLine($"Erreur lors du chargement de la structure: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Met à jour les résultats depuis la structure actuelle (sans calcul de sollicitations)
+        /// Affiche les propriétés de base : matériaux, niveaux, modules, etc.
+        /// </summary>
+        private void UpdateResultsFromCurrentStructure()
+        {
+            var structure = AppState.CurrentProject.PavementStructure;
+            if (structure?.Layers == null) return;
+
+            var orderedLayers = structure.Layers
+                .Where(l => l.Role != LayerRole.Plateforme)
+                .OrderBy(l => l.Order)
+                .ToList();
+
+            var platform = structure.Layers.FirstOrDefault(l => l.Role == LayerRole.Plateforme);
+
+            Resultats.Clear();
+            CalculationInfo = $"Structure synchronisee : {orderedLayers.Count + (platform != null ? 1 : 0)} couches - Calcul requis";
+
+            // Ajouter les couches normales avec interfaces
+            for (int i = 0; i < orderedLayers.Count; i++)
+            {
+                var layer = orderedLayers[i];
+                
+                // Ajouter la couche
+                var resultCouche = CreateResultCoucheFromLayer(layer, structure);
+                resultCouche.PropertyChanged += (sender, e) =>
+                {
+                    if (e.PropertyName == nameof(ResultatCouche.EstValide))
+                    {
+                        UpdateValidationStatus();
+                    }
+                };
+                Resultats.Add(resultCouche);
+
+                // Ajouter l'interface si ce n'est pas la dernière couche
+                if (i < orderedLayers.Count - 1 || platform != null)
+                {
+                    var nextLayer = i < orderedLayers.Count - 1 ? orderedLayers[i + 1] : platform;
+                    if (nextLayer != null)
+                    {
+                        var interfaceResult = CreateResultInterfaceFromLayer(layer, nextLayer);
+                        Resultats.Add(interfaceResult);
+                    }
+                }
+            }
+
+            // Ajouter la plateforme si elle existe
+            if (platform != null)
+            {
+                var resultPlateforme = CreateResultCoucheFromLayer(platform, structure);
+                resultPlateforme.PropertyChanged += (sender, e) =>
+                {
+                    if (e.PropertyName == nameof(ResultatCouche.EstValide))
+                    {
+                        UpdateValidationStatus();
+                    }
+                };
+                Resultats.Add(resultPlateforme);
+            }
+
+            UpdateValidationStatus();
+        }
+
+        /// <summary>
+        /// Crée un ResultatCouche depuis une Layer (sans sollicitations calculées)
+        /// </summary>
+        private ResultatCouche CreateResultCoucheFromLayer(Layer layer, PavementStructure structure)
+        {
+            return new ResultatCouche
+            {
+                Interface = layer.Role.ToString(),
+                Materiau = GetMaterialDisplayName(layer),
+                NiveauSup = GetLayerTopLevel(layer),
+                NiveauInf = GetLayerBottomLevel(layer),
+                Module = layer.Modulus_MPa,
+                CoefficientPoisson = layer.Poisson,
+                
+                // Sollicitations initialisées à zéro (à calculer)
+                SigmaTSup = 0,
+                SigmaTInf = 0,
+                EpsilonTSup = 0,
+                EpsilonTInf = 0,
+                SigmaZ = 0,
+                EpsilonZ = 0,
+                SigmaZSup = 0,
+                SigmaZInf = 0,
+                EpsilonZSup = 0,
+                EpsilonZInf = 0,
+                DeflexionSup = 0,
+                DeflexionInf = 0,
+                
+                ValeurAdmissible = GetDefaultAdmissibleValue(layer.Family),
+                EstValide = true // Par défaut, sera mis à jour après calcul
+            };
+        }
+
+        /// <summary>
+        /// Obtient le nom d'affichage du matériau pour synchronisation parfaite avec la structure
+        /// </summary>
+        private string GetMaterialDisplayName(Layer layer)
+        {
+            // Si MaterialName contient un nom réel (pas le nom générique), l'utiliser
+            if (!string.IsNullOrEmpty(layer.MaterialName) && 
+                !IsGenericMaterialName(layer.MaterialName))
+            {
+                return layer.MaterialName;
+            }
+
+            // Sinon, générer un nom basé sur la famille et le rôle
+            return GenerateDisplayNameFromFamily(layer.Family, layer.Role);
+        }
+
+        /// <summary>
+        /// Vérifie si le nom de matériau est générique (généré automatiquement)
+        /// </summary>
+        private bool IsGenericMaterialName(string materialName)
+        {
+            string[] genericNames = { 
+                "MTLH Base", "MTLH Fondation", "GNT (suppl.)", "Plateforme",
+                "BetonBitumineux", "BetonCiment", "GNT & Sol", "MTLH"
+            };
+            
+            return genericNames.Contains(materialName);
+        }
+
+        /// <summary>
+        /// Génère un nom d'affichage basé sur la famille de matériau et le rôle
+        /// </summary>
+        private string GenerateDisplayNameFromFamily(MaterialFamily family, LayerRole role)
+        {
+            return family switch
+            {
+                MaterialFamily.BetonBitumineux => role switch
+                {
+                    LayerRole.Roulement => "EB-BBSG 0/10",
+                    LayerRole.Base => "EB-GB",
+                    _ => "Enrobé Bitumineux"
+                },
+                MaterialFamily.BetonCiment => role switch
+                {
+                    LayerRole.Roulement => "BC-DAC",
+                    LayerRole.Base => "BC",
+                    _ => "Béton de Ciment"
+                },
+                MaterialFamily.MTLH => role switch
+                {
+                    LayerRole.Base => "GC (Grave Ciment)",
+                    LayerRole.Fondation => "SC (Sable Ciment)", 
+                    _ => "MTLH"
+                },
+                MaterialFamily.GNT => role switch
+                {
+                    LayerRole.Plateforme => "Plateforme PF2",
+                    LayerRole.Base => "GNT 0/31.5",
+                    LayerRole.Fondation => "GNT 0/20",
+                    _ => "GNT"
+                },
+                MaterialFamily.Bibliotheque => "Matériau Bibliothèque",
+                _ => "Matériau"
+            };
+        }
+
+        /// <summary>
+        /// Crée un ResultatInterface depuis deux layers
+        /// </summary>
+        private ResultatInterface CreateResultInterfaceFromLayer(Layer upperLayer, Layer lowerLayer)
+        {
+            var interfaceType = GetInterfaceTypeDescription(upperLayer.InterfaceWithBelow);
+            return new ResultatInterface
+            {
+                TypeInterface = interfaceType,
+                Description = $"Interface {upperLayer.Role}/{lowerLayer.Role}"
+            };
+        }
+
+        /// <summary>
+        /// Obtient une valeur admissible par défaut selon la famille de matériau
+        /// </summary>
+        private double GetDefaultAdmissibleValue(MaterialFamily family)
+        {
+            return family switch
+            {
+                MaterialFamily.BetonBitumineux => 100.0,
+                MaterialFamily.GNT => 80.0,
+                MaterialFamily.MTLH => 120.0,
+                MaterialFamily.BetonCiment => 150.0,
+                _ => 90.0
+            };
+        }
+
+        /// <summary>
+        /// Convertit le type d'interface en description
+        /// </summary>
+        private string GetInterfaceTypeDescription(InterfaceType? interfaceType)
+        {
+            return interfaceType switch
+            {
+                InterfaceType.Collee => "Collée",
+                InterfaceType.SemiCollee => "Semi-collée",
+                InterfaceType.Decollee => "Décollée",
+                _ => "Collée"
+            };
+        }
+
+        #endregion
+
+        #region IDisposable
+        
+        public void Dispose()
+        {
+            // Se désabonner de l'événement pour éviter les fuites mémoire
+            AppState.StructureChanged -= OnStructureChanged;
+        }
+        
         #endregion
 
         #region INotifyPropertyChanged
@@ -240,9 +922,21 @@ namespace UI_ChausseeNeuve.ViewModels
     }
 
     /// <summary>
-    /// ModÃ¨le de donnÃ©es pour un rÃ©sultat de calcul par couche
+    /// Classe de base pour les éléments de résultat (couches ou interfaces)
     /// </summary>
-    public class ResultatCouche : INotifyPropertyChanged
+    public abstract class ResultatItem : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+
+    /// <summary>
+    /// Résultat pour une couche de chaussée
+    /// </summary>
+    public class ResultatCouche : ResultatItem
     {
         private string _interface = "";
         private string _materiau = "";
@@ -256,6 +950,12 @@ namespace UI_ChausseeNeuve.ViewModels
         private double _epsilonTInf;
         private double _sigmaZ;
         private double _epsilonZ;
+        private double _sigmaZSup;
+        private double _sigmaZInf;
+        private double _epsilonZSup;
+        private double _epsilonZInf;
+        private double _deflexionSup;
+        private double _deflexionInf;
         private double _valeurAdmissible;
         private bool _estValide;
 
@@ -266,28 +966,28 @@ namespace UI_ChausseeNeuve.ViewModels
             set { _interface = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Type de matÃ©riau (BBSG, GNT, etc.)</summary>
+        /// <summary>Type de matériau (BBSG, GNT, etc.)</summary>
         public string Materiau
         {
             get => _materiau;
             set { _materiau = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Niveau supÃ©rieur en cm</summary>
+        /// <summary>Niveau supérieur en cm</summary>
         public double NiveauSup
         {
             get => _niveauSup;
             set { _niveauSup = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Niveau infÃ©rieur en cm</summary>
+        /// <summary>Niveau inférieur en cm</summary>
         public double NiveauInf
         {
             get => _niveauInf;
             set { _niveauInf = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Module d'Ã©lasticitÃ© en MPa</summary>
+        /// <summary>Module d'élasticité en MPa</summary>
         public double Module
         {
             get => _module;
@@ -301,28 +1001,28 @@ namespace UI_ChausseeNeuve.ViewModels
             set { _coefficientPoisson = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Contrainte horizontale supÃ©rieure en MPa</summary>
+        /// <summary>Contrainte horizontale supérieure en MPa</summary>
         public double SigmaTSup
         {
             get => _sigmaTSup;
             set { _sigmaTSup = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Contrainte horizontale infÃ©rieure en MPa</summary>
+        /// <summary>Contrainte horizontale inférieure en MPa</summary>
         public double SigmaTInf
         {
             get => _sigmaTInf;
             set { _sigmaTInf = value; OnPropertyChanged(); }
         }
 
-        /// <summary>DÃ©formation horizontale supÃ©rieure en micro-dÃ©formation</summary>
+        /// <summary>Déformation horizontale supérieure en micro-déformation</summary>
         public double EpsilonTSup
         {
             get => _epsilonTSup;
             set { _epsilonTSup = value; OnPropertyChanged(); }
         }
 
-        /// <summary>DÃ©formation horizontale infÃ©rieure en micro-dÃ©formation</summary>
+        /// <summary>Déformation horizontale inférieure en micro-déformation</summary>
         public double EpsilonTInf
         {
             get => _epsilonTInf;
@@ -336,34 +1036,117 @@ namespace UI_ChausseeNeuve.ViewModels
             set { _sigmaZ = value; OnPropertyChanged(); }
         }
 
-        /// <summary>DÃ©formation verticale en micro-dÃ©formation</summary>
+        /// <summary>Déformation verticale en micro-déformation</summary>
         public double EpsilonZ
         {
             get => _epsilonZ;
             set { _epsilonZ = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Valeur admissible pour le critÃ¨re sÃ©lectionnÃ©</summary>
+        /// <summary>Contrainte verticale supérieure en MPa</summary>
+        public double SigmaZSup
+        {
+            get => _sigmaZSup;
+            set { _sigmaZSup = value; OnPropertyChanged(); }
+        }
+
+        /// <summary>Contrainte verticale inférieure en MPa</summary>
+        public double SigmaZInf
+        {
+            get => _sigmaZInf;
+            set { _sigmaZInf = value; OnPropertyChanged(); }
+        }
+
+        /// <summary>Déformation verticale supérieure en micro-déformation</summary>
+        public double EpsilonZSup
+        {
+            get => _epsilonZSup;
+            set { _epsilonZSup = value; OnPropertyChanged(); }
+        }
+
+        /// <summary>Déformation verticale inférieure en micro-déformation</summary>
+        public double EpsilonZInf
+        {
+            get => _epsilonZInf;
+            set { _epsilonZInf = value; OnPropertyChanged(); }
+        }
+
+        /// <summary>Déflexion supérieure en mm/100</summary>
+        public double DeflexionSup
+        {
+            get => _deflexionSup;
+            set { _deflexionSup = value; OnPropertyChanged(); }
+        }
+
+        /// <summary>Déflexion inférieure en mm/100</summary>
+        public double DeflexionInf
+        {
+            get => _deflexionInf;
+            set { _deflexionInf = value; OnPropertyChanged(); }
+        }
+
+        /// <summary>Valeur admissible pour le critère sélectionné</summary>
         public double ValeurAdmissible
         {
             get => _valeurAdmissible;
             set { _valeurAdmissible = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Indique si cette couche respecte les critÃ¨res</summary>
+        /// <summary>Indique si cette couche respecte les critères</summary>
         public bool EstValide
         {
             get => _estValide;
-            set { _estValide = value; OnPropertyChanged(); OnPropertyChanged(nameof(CouleurValidation)); }
+            set { _estValide = value; OnPropertyChanged(); OnPropertyChanged(nameof(CouleurValidation)); OnPropertyChanged(nameof(StatutValidation)); }
         }
 
-        /// <summary>Couleur Ã  utiliser pour afficher le statut de validation</summary>
+        /// <summary>Couleur à utiliser pour afficher le statut de validation</summary>
         public string CouleurValidation => EstValide ? "#d4edda" : "#f8d7da";
 
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        /// <summary>Symbole de statut de validation (alternative directe sans converter)</summary>
+        public string StatutValidation => EstValide ? "\u2713" : "\u2717"; // ? ou ?
+
+        /// <summary>Valeur critique utilisée pour la validation</summary>
+        public double ValeurCritique => Math.Max(Math.Abs(EpsilonTSup), Math.Abs(EpsilonTInf));
+
+        /// <summary>Taux d'utilisation en pourcentage</summary>
+        public double TauxUtilisation => ValeurAdmissible > 0 ? (ValeurCritique / ValeurAdmissible) * 100 : 0;
+
+        /// <summary>Indique si c'est la plateforme (niveau inférieur infini)</summary>
+        public bool EstPlateforme => Interface == "Plateforme" || double.IsPositiveInfinity(NiveauInf);
+
+        /// <summary>Niveau inférieur formaté pour l'affichage (avec tiret pour la plateforme)</summary>
+        public string NiveauInfDisplay => EstPlateforme ? "-" : NiveauInf.ToString("F0");
+    }
+
+    /// <summary>
+    /// Résultat pour une interface entre deux couches
+    /// </summary>
+    public class ResultatInterface : ResultatItem
+    {
+        private string _typeInterface = "";
+        private string _description = "";
+
+        /// <summary>Type d'interface (Collée, Semi-collée, Décollée)</summary>
+        public string TypeInterface
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            get => _typeInterface;
+            set { _typeInterface = value; OnPropertyChanged(); OnPropertyChanged(nameof(CouleurInterface)); }
         }
+
+        /// <summary>Description de l'interface (ex: "Interface Surface/Base")</summary>
+        public string Description
+        {
+            get => _description;
+            set { _description = value; OnPropertyChanged(); }
+        }
+
+        /// <summary>Couleur à utiliser pour afficher le type d'interface</summary>
+        public string CouleurInterface => TypeInterface switch
+        {
+            "Collée" => "#28a745",      // Vert pour interface collée
+            "Semi-collée" => "#ffc107", // Jaune pour interface semi-collée
+            "Décollée" => "#dc3545",    // Rouge pour interface décollée
+            _ => "#6c757d"              // Gris pour interface inconnue
+        };
     }
 }

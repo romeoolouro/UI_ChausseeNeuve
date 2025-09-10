@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using ChausseeNeuve.Domain.Models;
 using UI_ChausseeNeuve.Services;
 using System.Linq;
+using System;
 
 namespace UI_ChausseeNeuve.ViewModels
 {
@@ -52,20 +53,38 @@ namespace UI_ChausseeNeuve.ViewModels
         }
 
         // Ajout propriétés température/fréquence
-        private int _selectedTemperature = 15;
+        private int _selectedTemperature = 15; // Changed default from 10 to 15°C to match Alizé
         public int SelectedTemperature
         {
             get => _selectedTemperature;
-            set { _selectedTemperature = value; OnPropertyChanged(); }
+            set
+            {
+                if (_selectedTemperature != value)
+                {
+                    _selectedTemperature = value;
+                    OnPropertyChanged();
+                    RecomputeComputedModulusForAll();
+                }
+            }
         }
-        private int _selectedFrequence = 10;
+        private int _selectedFrequence = 10; // Keep 10Hz as default, matches Alizé
         public int SelectedFrequence
         {
             get => _selectedFrequence;
-            set { _selectedFrequence = value; OnPropertyChanged(); }
+            set
+            {
+                if (_selectedFrequence != value)
+                {
+                    _selectedFrequence = value;
+                    OnPropertyChanged();
+                    RecomputeComputedModulusForAll();
+                }
+            }
         }
-        public int[] TemperatureOptions { get; } = new int[] { -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40 };
-        public int[] FrequenceOptions { get; } = new int[] { 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+        // Temperature options now include every integer from -10 to 40
+        public int[] TemperatureOptions { get; } = Enumerable.Range(-10, 51).ToArray(); // -10 .. 40
+        // Frequency options 1..50 Hz
+        public int[] FrequenceOptions { get; } = Enumerable.Range(1, 50).ToArray();
 
         protected MaterialViewModelBase()
         {
@@ -80,6 +99,24 @@ namespace UI_ChausseeNeuve.ViewModels
         public void SetCategory(string category)
         {
             CurrentCategory = category;
+        }
+
+        protected void RecomputeComputedModulusForAll()
+        {
+            if (AvailableMaterials == null) return;
+            foreach (var m in AvailableMaterials)
+            {
+                try
+                {
+                    m.ComputedModulus = m.GetModulusAt(SelectedTemperature, SelectedFrequence);
+                    System.Diagnostics.Debug.WriteLine($"Material {m.Name}: T={SelectedTemperature}°C, F={SelectedFrequence}Hz => E={m.ComputedModulus:N0} MPa (calibrated with factor {m.CalibrationFactor:F3})");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Erreur compute modulus pour {m.Name}: {ex.Message}");
+                    m.ComputedModulus = m.Modulus_MPa;
+                }
+            }
         }
     }
 
@@ -106,6 +143,9 @@ namespace UI_ChausseeNeuve.ViewModels
                 {
                     AvailableMaterials = new ObservableCollection<MaterialItem>(allMaterials);
                 }
+
+                // compute initial computed modulus
+                RecomputeComputedModulusForAll();
             }
             catch (System.Exception ex)
             {
@@ -137,6 +177,8 @@ namespace UI_ChausseeNeuve.ViewModels
                 {
                     AvailableMaterials = new ObservableCollection<MaterialItem>(allMaterials);
                 }
+
+                RecomputeComputedModulusForAll();
             }
             catch (System.Exception ex)
             {
@@ -168,6 +210,8 @@ namespace UI_ChausseeNeuve.ViewModels
                 {
                     AvailableMaterials = new ObservableCollection<MaterialItem>(allMaterials);
                 }
+
+                RecomputeComputedModulusForAll();
             }
             catch (System.Exception ex)
             {
@@ -192,13 +236,22 @@ namespace UI_ChausseeNeuve.ViewModels
 
                 if (!string.IsNullOrEmpty(CurrentCategory))
                 {
-                    AvailableMaterials = new ObservableCollection<MaterialItem>(
-                        _dataService.FilterByCategory(allMaterials, CurrentCategory));
+                    var filteredMaterials = _dataService.FilterByCategory(allMaterials, CurrentCategory).ToList();
+                    // Calibrate materials at Alizé reference conditions T=15°C, F=10Hz
+                    _dataService.CalibrateMaterials(filteredMaterials, referenceTemperature: 15, referenceFrequency: 10);
+                    AvailableMaterials = new ObservableCollection<MaterialItem>(filteredMaterials);
                 }
                 else
                 {
+                    // Calibrate all materials at Alizé reference conditions T=15°C, F=10Hz
+                    _dataService.CalibrateMaterials(allMaterials, referenceTemperature: 15, referenceFrequency: 10);
                     AvailableMaterials = new ObservableCollection<MaterialItem>(allMaterials);
                 }
+
+                // Initialize with reference values and compute initial modulus
+                SelectedTemperature = 15;  // start at Alizé reference T
+                SelectedFrequence = 10;    // start at Alizé reference F
+                RecomputeComputedModulusForAll();
             }
             catch (System.Exception ex)
             {
@@ -230,6 +283,8 @@ namespace UI_ChausseeNeuve.ViewModels
                 {
                     AvailableMaterials = new ObservableCollection<MaterialItem>(allMaterials);
                 }
+
+                RecomputeComputedModulusForAll();
             }
             catch (System.Exception ex)
             {

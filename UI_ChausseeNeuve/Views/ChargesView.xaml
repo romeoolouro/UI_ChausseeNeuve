@@ -3,12 +3,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:UI_ChausseeNeuve.ViewModels"
              xmlns:m="clr-namespace:ChausseeNeuve.Domain.Models;assembly=ChausseeNeuve.Domain"
-             xmlns:c="clr-namespace:UI_ChausseeNeuve.Converters"
              xmlns:local="clr-namespace:UI_ChausseeNeuve.Views"
              MinWidth="800"
              MinHeight="600">
 
-    <!-- Resources are centralized in Resources/Theme.xaml -->
+    <!-- Converters locaux pour cette vue -->
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+    </UserControl.Resources>
 
     <!-- Conteneur principal avec StackPanel vertical -->
     <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -122,9 +124,9 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Type (lecture seule) -->
+                            <!-- Type (lecture seule) - FIXÉ : suppression du converter problématique -->
                             <TextBox Grid.Column="0"
-                                     Text="{Binding ChargeReference.Type, Converter={StaticResource EnumDesc}}"
+                                     Text="{Binding SelectedChargeType}"
                                      IsReadOnly="True"
                                      Style="{StaticResource ModernTextBoxStyle}"
                                      Height="28"/>
@@ -210,7 +212,7 @@
                     </Border>
 
                     <!-- Description technique -->
-                    <TextBlock Text="{Binding SchemaDescription}"
+                    <TextBlock Text="Paramètres de charge appliqués à la structure de chaussée."
                                Style="{StaticResource SectionTitleStyle}"
                                FontSize="12"
                                FontWeight="Normal"

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
@@ -9,5 +9,18 @@
   <ItemGroup>
     <Resource Include="Resources\**\*.*" />
     <ProjectReference Include="..\ChausseeNeuve.Domain\ChausseeNeuve.Domain.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Data\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Remove="Resources\Theme.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Update="Resources\Theme.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Resource>
   </ItemGroup>
 </Project>

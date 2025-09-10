@@ -77,7 +77,7 @@
                             <GridViewColumn Header="Nom" DisplayMemberBinding="{Binding Name}" Width="140"/>
                             <GridViewColumn Header="Famille" DisplayMemberBinding="{Binding MaterialFamily}" Width="100"/>
                             <GridViewColumn Header="Catégorie" DisplayMemberBinding="{Binding Category}" Width="80"/>
-                            <GridViewColumn Header="Module E (MPa)" DisplayMemberBinding="{Binding Modulus_MPa}" Width="90"/>
+                            <GridViewColumn Header="Module E (MPa)" DisplayMemberBinding="{Binding ComputedModulus, StringFormat=N0}" Width="90"/>
                             <GridViewColumn Header="ν" DisplayMemberBinding="{Binding PoissonRatio}" Width="50"/>
                             <GridViewColumn Header="Ép. min (m)" DisplayMemberBinding="{Binding MinThickness_m}" Width="70"/>
                             <GridViewColumn Header="Ép. max (m)" DisplayMemberBinding="{Binding MaxThickness_m}" Width="70"/>
@@ -134,7 +134,7 @@
                             </Button>
                             <Border Background="#181A1B" BorderBrush="#0078D7" BorderThickness="2" CornerRadius="6" Padding="12,2" Margin="0,0,4,0">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding SelectedTemperature}" FontSize="16" FontWeight="Bold" Foreground="#FFF" Margin="0,0,2,0"/>
+                                    <TextBlock Text="{Binding CurrentMaterialViewModel.SelectedTemperature}" FontSize="16" FontWeight="Bold" Foreground="#FFF" Margin="0,0,2,0"/>
                                     <TextBlock Text="°C" FontSize="16" Foreground="#0078D7" FontWeight="Bold"/>
                                 </StackPanel>
                             </Border>
@@ -150,7 +150,7 @@
                             </Button>
                             <Border Background="#181A1B" BorderBrush="#0078D7" BorderThickness="2" CornerRadius="6" Padding="12,2" Margin="0,0,4,0">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding SelectedFrequence}" FontSize="16" FontWeight="Bold" Foreground="#FFF" Margin="0,0,2,0"/>
+                                    <TextBlock Text="{Binding CurrentMaterialViewModel.SelectedFrequence}" FontSize="16" FontWeight="Bold" Foreground="#FFF" Margin="0,0,2,0"/>
                                     <TextBlock Text="Hz" FontSize="16" Foreground="#0078D7" FontWeight="Bold"/>
                                 </StackPanel>
                             </Border>
@@ -160,10 +160,13 @@
                         </StackPanel>
                     </StackPanel>
                 </Border>
+                <!-- Debug: show number of loaded materials -->
+                <TextBlock Margin="8,4,8,4" Foreground="LightGray" FontStyle="Italic" HorizontalAlignment="Left"
+                           Text="{Binding CurrentMaterialViewModel.AvailableMaterials.Count, StringFormat='Matériaux chargés: {0}'}"/>
                 <Border Style="{StaticResource SectionCardStyle}" Padding="0" Margin="0">
                     <ListView x:Name="BitumeListView"
-                              ItemsSource="{Binding AvailableMaterials}"
-                              SelectedItem="{Binding SelectedMaterial, Mode=TwoWay}"
+                              ItemsSource="{Binding CurrentMaterialViewModel.AvailableMaterials}"
+                              SelectedItem="{Binding CurrentMaterialViewModel.SelectedMaterial, Mode=TwoWay}"
                               SelectionChanged="MaterialSelectionChanged"
                               Margin="0"
                               MinWidth="1200"
@@ -197,7 +200,7 @@
                                         </DataTemplate>
                                     </GridViewColumn.HeaderTemplate>
                                 </GridViewColumn>
-                                <GridViewColumn Header="E (MPa)" DisplayMemberBinding="{Binding Modulus_MPa}" Width="100">
+                                <GridViewColumn Header="E (MPa)" DisplayMemberBinding="{Binding ComputedModulus, StringFormat=N0}" Width="100">
                                     <GridViewColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <Border Background="#FF1F1F1F" Padding="4,2" CornerRadius="2">
