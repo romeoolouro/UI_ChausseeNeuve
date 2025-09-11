@@ -1,32 +1,48 @@
 <UserControl x:Class="UI_ChausseeNeuve.Views.HoverNavBar"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:conv="clr-namespace:UI_ChausseeNeuve.Converters"
-    mc:Ignorable="d">
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:conv="clr-namespace:UI_ChausseeNeuve.Converters"
+             mc:Ignorable="d">
     <UserControl.Resources>
         <conv:WidthToVisibilityConverter x:Key="WidthToVisibilityConverter"/>
-        <Style x:Key="NavRadio" TargetType="RadioButton">
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-<Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="HorizontalAlignment" Value="Stretch"/>
-            <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="Cursor" Value="Hand"/>
+        <Style x:Key="NavRadio"
+                TargetType="RadioButton">
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Left"/>
+            <Setter Property="Background"
+                    Value="Transparent"/>
+            <Setter Property="Foreground"
+                    Value="White"/>
+            <Setter Property="BorderThickness"
+                    Value="0"/>
+            <Setter Property="HorizontalAlignment"
+                    Value="Stretch"/>
+            <Setter Property="Padding"
+                    Value="10,8"/>
+            <Setter Property="Cursor"
+                    Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="bd" Background="{TemplateBinding Background}">
-                            <ContentPresenter HorizontalAlignment="Center" />
+                        <Border x:Name="bd"
+                                Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Left"
+                                    Margin="8,0,0,0"/>
                         </Border>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#33222222"/>
+                            <Trigger Property="IsMouseOver"
+                                    Value="True">
+                                <Setter TargetName="bd"
+                                        Property="Background"
+                                        Value="#33222222"/>
                             </Trigger>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#FF7F7F7F"/>
+                            <Trigger Property="IsChecked"
+                                    Value="True">
+                                <Setter TargetName="bd"
+                                        Property="Background"
+                                        Value="#FF7F7F7F"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -35,19 +51,27 @@
         </Style>
     </UserControl.Resources>
 
-    <Grid x:Name="Root" Width="64" Background="#203342">
+    <Grid x:Name="Root"
+            Width="64"
+            Background="#203342">
         <Grid.Triggers>
             <EventTrigger RoutedEvent="MouseEnter">
                 <BeginStoryboard>
                     <Storyboard>
-                        <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="Width" To="220" Duration="0:0:0.15"/>
+                        <DoubleAnimation Storyboard.TargetName="Root"
+                                Storyboard.TargetProperty="Width"
+                                To="220"
+                                Duration="0:0:0.15"/>
                     </Storyboard>
                 </BeginStoryboard>
             </EventTrigger>
             <EventTrigger RoutedEvent="MouseLeave">
                 <BeginStoryboard>
                     <Storyboard>
-                        <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="Width" To="64" Duration="0:0:0.15"/>
+                        <DoubleAnimation Storyboard.TargetName="Root"
+                                Storyboard.TargetProperty="Width"
+                                To="64"
+                                Duration="0:0:0.15"/>
                     </Storyboard>
                 </BeginStoryboard>
             </EventTrigger>
@@ -64,66 +88,162 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <RadioButton Grid.Row="0" Style="{StaticResource NavRadio}" GroupName="Nav" Tag="fichier" Checked="OnChecked" Unchecked="OnUnchecked" PreviewMouseLeftButtonDown="OnToggleSelected">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" >
-                <Image Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/fichier.png" Width="32" Height="32"/>
-                <TextBlock FontSize="14" Text="Fichier" Margin="8,0,0,0" Foreground="White"
+        <RadioButton Grid.Row="0"
+                Style="{StaticResource NavRadio}"
+                GroupName="Nav"
+                Tag="fichier"
+                Checked="OnChecked"
+                Unchecked="OnUnchecked"
+                PreviewMouseLeftButtonDown="OnToggleSelected">
+            <StackPanel Orientation="Horizontal"
+                    VerticalAlignment="Center">
+                <Image Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/fichier.png"
+                        Width="32"
+                        Height="32"/>
+                <TextBlock FontSize="14"
+                        Text="Fichier"
+                        Margin="8,0,0,0"
+                        Foreground="White"
                            Visibility="{Binding ElementName=Root, Path=ActualWidth, Converter={StaticResource WidthToVisibilityConverter}}"/>
             </StackPanel>
         </RadioButton>
 
-        <RadioButton Grid.Row="1" Style="{StaticResource NavRadio}" GroupName="Nav" Tag="structure" Checked="OnChecked" Unchecked="OnUnchecked" PreviewMouseLeftButtonDown="OnToggleSelected">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" >
-                <Image Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/structure.ico" Width="32" Height="32"/>
-                <TextBlock FontSize="14" Text="Structure de chaussée" Margin="8,0,0,0" Foreground="White"
+        <RadioButton Grid.Row="1"
+                Style="{StaticResource NavRadio}"
+                GroupName="Nav"
+                Tag="structure"
+                Checked="OnChecked"
+                Unchecked="OnUnchecked"
+                PreviewMouseLeftButtonDown="OnToggleSelected">
+            <StackPanel Orientation="Horizontal"
+                    VerticalAlignment="Center">
+                <Image Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/structure.ico"
+                        Width="32"
+                        Height="32"/>
+                <TextBlock FontSize="14"
+                        Text="Structure de chaussée"
+                        Margin="8,0,0,0"
+                        Foreground="White"
                            Visibility="{Binding ElementName=Root, Path=ActualWidth, Converter={StaticResource WidthToVisibilityConverter}}"/>
             </StackPanel>
         </RadioButton>
 
-        <RadioButton Grid.Row="2" Style="{StaticResource NavRadio}" GroupName="Nav" Tag="charge" Checked="OnChecked" Unchecked="OnUnchecked" PreviewMouseLeftButtonDown="OnToggleSelected">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" >
-                <Image Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/charge.ico" Width="32" Height="32"/>
-                <TextBlock FontSize="14" Text="Charge" Margin="8,0,0,0" Foreground="White"
+        <RadioButton Grid.Row="2"
+                Style="{StaticResource NavRadio}"
+                GroupName="Nav"
+                Tag="charge"
+                Checked="OnChecked"
+                Unchecked="OnUnchecked"
+                PreviewMouseLeftButtonDown="OnToggleSelected">
+            <StackPanel Orientation="Horizontal"
+                    VerticalAlignment="Center">
+                <Image Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/charge.ico"
+                        Width="32"
+                        Height="32"/>
+                <TextBlock FontSize="14"
+                        Text="Charge"
+                        Margin="8,0,0,0"
+                        Foreground="White"
                            Visibility="{Binding ElementName=Root, Path=ActualWidth, Converter={StaticResource WidthToVisibilityConverter}}"/>
             </StackPanel>
         </RadioButton>
 
-        <RadioButton Grid.Row="3" Style="{StaticResource NavRadio}" GroupName="Nav" Tag="biblio" Checked="OnChecked" Unchecked="OnUnchecked" PreviewMouseLeftButtonDown="OnToggleSelected">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" >
-                <Image Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/bibliotheque.png" Width="32" Height="32"/>
-                <TextBlock FontSize="14" Text="Bibliothèque" Margin="8,0,0,0" Foreground="White"
+        <RadioButton Grid.Row="3"
+                Style="{StaticResource NavRadio}"
+                GroupName="Nav"
+                Tag="biblio"
+                Checked="OnChecked"
+                Unchecked="OnUnchecked"
+                PreviewMouseLeftButtonDown="OnToggleSelected">
+            <StackPanel Orientation="Horizontal"
+                    VerticalAlignment="Center">
+                <Image Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/bibliotheque.png"
+                        Width="32"
+                        Height="32"/>
+                <TextBlock FontSize="14"
+                        Text="Bibliothèque"
+                        Margin="8,0,0,0"
+                        Foreground="White"
                            Visibility="{Binding ElementName=Root, Path=ActualWidth, Converter={StaticResource WidthToVisibilityConverter}}"/>
             </StackPanel>
         </RadioButton>
 
-        <RadioButton Grid.Row="4" Style="{StaticResource NavRadio}" GroupName="Nav" Tag="valeurs" Checked="OnChecked" Unchecked="OnUnchecked" PreviewMouseLeftButtonDown="OnToggleSelected">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" >
-                <Image Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/valeurs.ico" Width="32" Height="32"/>
-                <TextBlock FontSize="14" Text="Valeurs admissibles" Margin="8,0,0,0" Foreground="White"
+        <RadioButton Grid.Row="4"
+                Style="{StaticResource NavRadio}"
+                GroupName="Nav"
+                Tag="valeurs"
+                Checked="OnChecked"
+                Unchecked="OnUnchecked"
+                PreviewMouseLeftButtonDown="OnToggleSelected">
+            <StackPanel Orientation="Horizontal"
+                    VerticalAlignment="Center">
+                <Image Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/valeurs.ico"
+                        Width="32"
+                        Height="32"/>
+                <TextBlock FontSize="14"
+                        Text="Valeurs admissibles"
+                        Margin="8,0,0,0"
+                        Foreground="White"
                            Visibility="{Binding ElementName=Root, Path=ActualWidth, Converter={StaticResource WidthToVisibilityConverter}}"/>
             </StackPanel>
         </RadioButton>
 
-        <RadioButton Grid.Row="5" Style="{StaticResource NavRadio}" GroupName="Nav" Tag="resultats" Checked="OnChecked" Unchecked="OnUnchecked" PreviewMouseLeftButtonDown="OnToggleSelected">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" >
-                <Image Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/resultats.ico" Width="32" Height="32"/>
-                <TextBlock FontSize="14" Text="Résultats" Margin="8,0,0,0" Foreground="White"
+        <RadioButton Grid.Row="5"
+                Style="{StaticResource NavRadio}"
+                GroupName="Nav"
+                Tag="resultats"
+                Checked="OnChecked"
+                Unchecked="OnUnchecked"
+                PreviewMouseLeftButtonDown="OnToggleSelected">
+            <StackPanel Orientation="Horizontal"
+                    VerticalAlignment="Center">
+                <Image Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/resultats.ico"
+                        Width="32"
+                        Height="32"/>
+                <TextBlock FontSize="14"
+                        Text="Résultats"
+                        Margin="8,0,0,0"
+                        Foreground="White"
                            Visibility="{Binding ElementName=Root, Path=ActualWidth, Converter={StaticResource WidthToVisibilityConverter}}"/>
             </StackPanel>
         </RadioButton>
 
-        <RadioButton Grid.Row="6" Style="{StaticResource NavRadio}" GroupName="Nav" Tag="note" Checked="OnChecked" Unchecked="OnUnchecked" PreviewMouseLeftButtonDown="OnToggleSelected">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" >
-                <Image Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/notedecalcul.png" Width="32" Height="32"/>
-                <TextBlock FontSize="14" Text="Note de calcul" Margin="8,0,0,0" Foreground="White"
+        <RadioButton Grid.Row="6"
+                Style="{StaticResource NavRadio}"
+                GroupName="Nav"
+                Tag="note"
+                Checked="OnChecked"
+                Unchecked="OnUnchecked"
+                PreviewMouseLeftButtonDown="OnToggleSelected">
+            <StackPanel Orientation="Horizontal"
+                    VerticalAlignment="Center">
+                <Image Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/notedecalcul.png"
+                        Width="32"
+                        Height="32"/>
+                <TextBlock FontSize="14"
+                        Text="Note de calcul"
+                        Margin="8,0,0,0"
+                        Foreground="White"
                            Visibility="{Binding ElementName=Root, Path=ActualWidth, Converter={StaticResource WidthToVisibilityConverter}}"/>
             </StackPanel>
         </RadioButton>
 
-        <RadioButton Grid.Row="7" Style="{StaticResource NavRadio}" GroupName="Nav" Tag="optim" Checked="OnChecked" Unchecked="OnUnchecked" PreviewMouseLeftButtonDown="OnToggleSelected">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" >
-                <Image Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/optimisation.png" Width="32" Height="32"/>
-                <TextBlock FontSize="14" Text="Optimisation de chaussée" Margin="8,0,0,0" Foreground="White"
+        <RadioButton Grid.Row="7"
+                Style="{StaticResource NavRadio}"
+                GroupName="Nav"
+                Tag="optim"
+                Checked="OnChecked"
+                Unchecked="OnUnchecked"
+                PreviewMouseLeftButtonDown="OnToggleSelected">
+            <StackPanel Orientation="Horizontal"
+                    VerticalAlignment="Center">
+                <Image Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/optimisation.png"
+                        Width="32"
+                        Height="32"/>
+                <TextBlock FontSize="14"
+                        Text="Optimisation de chaussée"
+                        Margin="8,0,0,0"
+                        Foreground="White"
                            Visibility="{Binding ElementName=Root, Path=ActualWidth, Converter={StaticResource WidthToVisibilityConverter}}"/>
             </StackPanel>
         </RadioButton>
