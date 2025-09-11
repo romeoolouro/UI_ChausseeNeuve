@@ -32,7 +32,11 @@
         <SolidColorBrush x:Key="PrimaryLightBrush"
                          Color="#FF3A5E7D"/>
         <SolidColorBrush x:Key="AccentBlue"
-                         Color="#FF0078D7"/>
+                         Color="#FF106EBE"/>
+        <SolidColorBrush x:Key="AccentBlueLight"
+                         Color="#FF1F8EFF"/>
+        <SolidColorBrush x:Key="AccentBlueDark"
+                         Color="#FF005A9E"/>
         <SolidColorBrush x:Key="AccentGreen"
                          Color="#FF28A745"/>
         <SolidColorBrush x:Key="AccentOrange"
@@ -118,15 +122,15 @@
                TargetType="Button"
                BasedOn="{StaticResource PrimaryButton}">
                 <Setter Property="FontSize"
-                                Value="16"/>
+                        Value="16"/>
                 <Setter Property="Padding"
-                                Value="16,8"/>
+                        Value="16,8"/>
                 <Setter Property="HorizontalContentAlignment"
-                                Value="Left"/>
+                        Value="Left"/>
                 <Setter Property="HorizontalAlignment"
-                                Value="Stretch"/>
+                        Value="Stretch"/>
                 <Setter Property="Margin"
-                                Value="0,6,0,0"/>
+                        Value="0,6,0,0"/>
         </Style>
 
         <Style x:Key="GhostButton"
@@ -673,8 +677,10 @@
                TargetType="Button">
                 <Setter Property="Background"
                         Value="#222"/>
+                <Setter Property="Foreground"
+                        Value="{StaticResource AccentBlue}"/>
                 <Setter Property="BorderBrush"
-                        Value="#0078D7"/>
+                        Value="{StaticResource AccentBlueDark}"/>
                 <Setter Property="BorderThickness"
                         Value="1.5"/>
                 <Setter Property="Width"
@@ -698,6 +704,44 @@
                                 </ControlTemplate>
                         </Setter.Value>
                 </Setter>
+        </Style>
+
+        <Style x:Key="ValueBoxBorderStyle"
+               TargetType="Border">
+                <Setter Property="Background"
+                        Value="#181A1B"/>
+                <Setter Property="BorderBrush"
+                        Value="{StaticResource AccentBlueDark}"/>
+                <Setter Property="BorderThickness"
+                        Value="2"/>
+                <Setter Property="CornerRadius"
+                        Value="6"/>
+                <Setter Property="Padding"
+                        Value="12,2"/>
+                <Setter Property="Margin"
+                        Value="0,0,4,0"/>
+        </Style>
+
+        <Style x:Key="ValueNumberTextStyle"
+               TargetType="TextBlock">
+                <Setter Property="FontSize"
+                        Value="16"/>
+                <Setter Property="FontWeight"
+                        Value="Bold"/>
+                <Setter Property="Foreground"
+                        Value="{StaticResource TextWhite}"/>
+                <Setter Property="Margin"
+                        Value="0,0,2,0"/>
+        </Style>
+
+        <Style x:Key="ValueUnitTextStyle"
+               TargetType="TextBlock">
+                <Setter Property="FontSize"
+                        Value="16"/>
+                <Setter Property="FontWeight"
+                        Value="Bold"/>
+                <Setter Property="Foreground"
+                        Value="{StaticResource AccentBlueLight}"/>
         </Style>
 
         <!-- ========= Action Buttons (used by DocumentationWindow) ========= -->
