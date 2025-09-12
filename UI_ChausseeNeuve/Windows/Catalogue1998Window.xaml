@@ -1,0 +1,250 @@
+<Window x:Class="UI_ChausseeNeuve.Windows.Catalogue1998Window"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:UI_ChausseeNeuve.ViewModels"
+        Title="Catalogue francais 1998"
+        Height="620" Width="900"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource PrimaryBg}">
+    <Window.DataContext>
+        <vm:Catalogue1998ViewModel/>
+    </Window.DataContext>
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="PanelBg" Color="#3C4047"/>
+        <SolidColorBrush x:Key="PanelCellBg" Color="#3F3F3F"/>
+        <SolidColorBrush x:Key="PanelCellBorder" Color="#2E3237"/>
+        
+        <Style x:Key="HeaderCellBox" TargetType="Border">
+            <Setter Property="BorderBrush" Value="{StaticResource PanelCellBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="{StaticResource PanelCellBg}"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        <Style x:Key="CellBox" TargetType="Border" BasedOn="{StaticResource HeaderCellBox}">
+            <Setter Property="Padding" Value="4,2"/>
+        </Style>
+    </Window.Resources>
+
+    <Border Style="{StaticResource SectionCardStyle}" Margin="15">
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                <Button Content="Fermer" Style="{StaticResource PrimaryActionButtonStyle}" Click="Close_Click" Width="100"/>
+            </StackPanel>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,16,0">
+                <StackPanel>
+                    <TextBlock Text="Classification du trafic (millions de PL)" Style="{StaticResource SectionTitleStyle}"/>
+
+                    <!-- Zone 1: Classification -->
+                    <Border Background="Black" CornerRadius="8" Padding="8" Margin="0,0,0,12" BorderBrush="Transparent" BorderThickness="0">
+                        <Grid HorizontalAlignment="Center">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="60"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="classes :" Style="{StaticResource LabelStyle}"/></Border>
+                            <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TC1" Style="{StaticResource TableHeaderStyle}"/></Border>
+                            <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TC2" Style="{StaticResource TableHeaderStyle}"/></Border>
+                            <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TC3" Style="{StaticResource TableHeaderStyle}"/></Border>
+                            <Border Grid.Row="0" Grid.Column="4" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TC4" Style="{StaticResource TableHeaderStyle}"/></Border>
+                            <Border Grid.Row="0" Grid.Column="5" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TC5" Style="{StaticResource TableHeaderStyle}"/></Border>
+                            <Border Grid.Row="0" Grid.Column="6" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TC6" Style="{StaticResource TableHeaderStyle}"/></Border>
+                            <Border Grid.Row="0" Grid.Column="7" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TC7" Style="{StaticResource TableHeaderStyle}"/></Border>
+                            <Border Grid.Row="0" Grid.Column="8" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TC8" Style="{StaticResource TableHeaderStyle}"/></Border>
+
+                            <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CellBox}"><TextBlock Text="VRS :" Style="{StaticResource LabelStyle}"/></Border>
+                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="0" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" Command="{Binding SelectTrafficClassCommand}" CommandParameter="VRS:TC1"/></Border>
+                            <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="0,5" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" Command="{Binding SelectTrafficClassCommand}" CommandParameter="VRS:TC2"/></Border>
+                            <Border Grid.Row="1" Grid.Column="3" Style="{StaticResource CellBox}"><Button Content="1" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" CommandParameter="VRS:TC3" Command="{Binding SelectTrafficClassCommand}"/></Border>
+                            <Border Grid.Row="1" Grid.Column="4" Style="{StaticResource CellBox}"><Button Content="3" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" CommandParameter="VRS:TC4" Command="{Binding SelectTrafficClassCommand}"/></Border>
+                            <Border Grid.Row="1" Grid.Column="5" Style="{StaticResource CellBox}"><Button Content="6" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" CommandParameter="VRS:TC5" Command="{Binding SelectTrafficClassCommand}"/></Border>
+                            <Border Grid.Row="1" Grid.Column="6" Style="{StaticResource CellBox}"><Button Content="14" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" CommandParameter="VRS:TC6" Command="{Binding SelectTrafficClassCommand}"/></Border>
+                            <Border Grid.Row="1" Grid.Column="7" Style="{StaticResource CellBox}"><Button Content="38" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" CommandParameter="VRS:TC7" Command="{Binding SelectTrafficClassCommand}"/></Border>
+                            <Border Grid.Row="1" Grid.Column="8" Style="{StaticResource CellBox}"><Button Content="94" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" CommandParameter="VRS:TC8" Command="{Binding SelectTrafficClassCommand}"/></Border>
+
+                            <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource CellBox}"><TextBlock Text="VRNS :" Style="{StaticResource LabelStyle}"/></Border>
+                            <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="0" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" CommandParameter="VRNS:TC1" Command="{Binding SelectTrafficClassCommand}"/></Border>
+                            <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="0,2" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" CommandParameter="VRNS:TC2" Command="{Binding SelectTrafficClassCommand}"/></Border>
+                            <Border Grid.Row="2" Grid.Column="3" Style="{StaticResource CellBox}"><Button Content="0,5" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" CommandParameter="VRNS:TC3" Command="{Binding SelectTrafficClassCommand}"/></Border>
+                            <Border Grid.Row="2" Grid.Column="4" Style="{StaticResource CellBox}"><Button Content="1,5" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" CommandParameter="VRNS:TC4" Command="{Binding SelectTrafficClassCommand}"/></Border>
+                            <Border Grid.Row="2" Grid.Column="5" Style="{StaticResource CellBox}"><Button Content="2,5" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" CommandParameter="VRNS:TC5" Command="{Binding SelectTrafficClassCommand}"/></Border>
+                            <Border Grid.Row="2" Grid.Column="6" Style="{StaticResource CellBox}"><Button Content="6,5" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" CommandParameter="VRNS:TC6" Command="{Binding SelectTrafficClassCommand}"/></Border>
+                            <Border Grid.Row="2" Grid.Column="7" Style="{StaticResource CellBox}"><Button Content="17,5" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" CommandParameter="VRNS:TC7" Command="{Binding SelectTrafficClassCommand}"/></Border>
+                            <Border Grid.Row="2" Grid.Column="8" Style="{StaticResource CellBox}"><Button Content="43,5" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" CommandParameter="VRNS:TC8" Command="{Binding SelectTrafficClassCommand}"/></Border>
+
+                            <Border Grid.Row="3" Grid.ColumnSpan="9" Background="#22FFFFFF" BorderBrush="#66FFFFFF" BorderThickness="1" CornerRadius="4" Padding="6" Margin="0,6,0,0">
+                                <TextBlock Text="Cliquer une valeur pour selectionner la classe (VRS/VRNS + TC)." Foreground="White"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <TextBlock Text="{Binding SelectedTrafficDisplay}" Style="{StaticResource InfoTextStyle}" Margin="0,0,0,8" HorizontalAlignment="Center"/>
+
+                    <!-- Bloc RISQUES Catalogue 1998 (TC2..TC8) -->
+                    <Border x:Name="RiskBlock" Background="Black" CornerRadius="8" Padding="8" Margin="0,0,0,12" BorderBrush="Transparent" BorderThickness="0">
+                        <Grid HorizontalAlignment="Center">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="200"/>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="70"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Risques"/></Border>
+                            <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TC2"/></Border>
+                            <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TC3"/></Border>
+                            <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TC4"/></Border>
+                            <Border Grid.Row="0" Grid.Column="4" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TC5"/></Border>
+                            <Border Grid.Row="0" Grid.Column="5" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TC6"/></Border>
+                            <Border Grid.Row="0" Grid.Column="6" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TC7"/></Border>
+                            <Border Grid.Row="0" Grid.Column="7" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TC8"/></Border>
+
+                            <!-- materiaux bitumineux -->
+                            <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CellBox}"><TextBlock Text="materiaux bitumineux"/></Border>
+                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="18%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="18|R Catalogue98 bitumineux TC2"/></Border>
+                            <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="10%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="10|R Catalogue98 bitumineux TC3"/></Border>
+                            <Border Grid.Row="1" Grid.Column="3" Style="{StaticResource CellBox}"><Button Content="5%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="5|R Catalogue98 bitumineux TC4"/></Border>
+                            <Border Grid.Row="1" Grid.Column="4" Style="{StaticResource CellBox}"><Button Content="2%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="2|R Catalogue98 bitumineux TC5"/></Border>
+                            <Border Grid.Row="1" Grid.Column="5" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="1|R Catalogue98 bitumineux TC6"/></Border>
+                            <Border Grid.Row="1" Grid.Column="6" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="1|R Catalogue98 bitumineux TC7"/></Border>
+                            <Border Grid.Row="1" Grid.Column="7" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="1|R Catalogue98 bitumineux TC8"/></Border>
+
+                            <!-- mtx hydrauliques et betons -->
+                            <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource CellBox}"><TextBlock Text="mtx hydrauliques et betons"/></Border>
+                            <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="10%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="10|R Catalogue98 MTLH TC2"/></Border>
+                            <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="7,5%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="7.5|R Catalogue98 MTLH TC3"/></Border>
+                            <Border Grid.Row="2" Grid.Column="3" Style="{StaticResource CellBox}"><Button Content="5%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="5|R Catalogue98 MTLH TC4"/></Border>
+                            <Border Grid.Row="2" Grid.Column="4" Style="{StaticResource CellBox}"><Button Content="2%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="2|R Catalogue98 MTLH TC5"/></Border>
+                            <Border Grid.Row="2" Grid.Column="5" Style="{StaticResource CellBox}"><Button Content="2,5%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="2.5|R Catalogue98 MTLH TC6"/></Border>
+                            <Border Grid.Row="2" Grid.Column="6" Style="{StaticResource CellBox}"><Button Content="2%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="2|R Catalogue98 MTLH TC7"/></Border>
+                            <Border Grid.Row="2" Grid.Column="7" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="1|R Catalogue98 MTLH TC8"/></Border>
+
+                            <!-- fondation structures mixtes -->
+                            <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource CellBox}"><TextBlock Text="fondation struc. mixtes"/></Border>
+                            <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="35%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="35|R Catalogue98 fondation TC2"/></Border>
+                            <Border Grid.Row="3" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="20%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="20|R Catalogue98 fondation TC3"/></Border>
+                            <Border Grid.Row="3" Grid.Column="3" Style="{StaticResource CellBox}"><Button Content="10%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="10|R Catalogue98 fondation TC4"/></Border>
+                            <Border Grid.Row="3" Grid.Column="4" Style="{StaticResource CellBox}"><Button Content="3%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="3|R Catalogue98 fondation TC5"/></Border>
+                            <Border Grid.Row="3" Grid.Column="5" Style="{StaticResource CellBox}"><Button Content="2%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="2|R Catalogue98 fondation TC6"/></Border>
+                            <Border Grid.Row="3" Grid.Column="6" Style="{StaticResource CellBox}"><Button Content="2%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="2|R Catalogue98 fondation TC7"/></Border>
+                            <Border Grid.Row="3" Grid.Column="7" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding SelectRiskCommand}" CommandParameter="1|R Catalogue98 fondation TC8"/></Border>
+                        </Grid>
+                     </Border>
+
+                    <TextBlock Text="{Binding SelectedTrafficDisplay}" Style="{StaticResource InfoTextStyle}" Margin="0,0,0,8" HorizontalAlignment="Center"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <!-- Zone 2: Structures -->
+                        <Border x:Name="CamStructuresBlock" Grid.Column="0" Background="Black" Padding="8" CornerRadius="8" BorderBrush="Transparent" BorderThickness="0" Margin="0,0,6,0">
+                            <StackPanel>
+                                <TextBlock Text="CAM du trafic - Structures" Style="{StaticResource SectionTitleStyle}" FontSize="14"/>
+                                <Grid Margin="0,6,0,0" HorizontalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="80"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Structures :" Style="{StaticResource LabelStyle}"/></Border>
+                                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource HeaderCellBox}"><TextBlock Text="VRS" Style="{StaticResource TableHeaderStyle}"/></Border>
+                                    <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource HeaderCellBox}"><TextBlock Text="VRNS" Style="{StaticResource TableHeaderStyle}"/></Border>
+
+                                    <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CellBox}"><TextBlock Text="- bitumineuses et inverses :" Style="{StaticResource InfoTextStyle}"/></Border>
+                                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="{Binding CamBitumineuxVrs, StringFormat='{}{0:F1}'}" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" Command="{Binding SelectCamCommand}" CommandParameter="bitu_vrs"/></Border>
+                                    <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="{Binding CamBitumineuxVrns, StringFormat='{}{0:F1}'}" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" Command="{Binding SelectCamCommand}" CommandParameter="bitu_vrns"/></Border>
+
+                                    <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource CellBox}"><TextBlock Text="- Gnt/Gnt :" Style="{StaticResource InfoTextStyle}"/></Border>
+                                    <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="{Binding CamGntVrs, StringFormat='{}{0:F1}'}" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" Command="{Binding SelectCamCommand}" CommandParameter="gnt_vrs"/></Border>
+                                    <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="{Binding CamGntVrns, StringFormat='{}{0:F1}'}" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" Command="{Binding SelectCamCommand}" CommandParameter="gnt_vrns"/></Border>
+
+                                    <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource CellBox}"><TextBlock Text="- mixtes :" Style="{StaticResource InfoTextStyle}"/></Border>
+                                    <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="{Binding CamMixteVrs, StringFormat='{}{0:F1}'}" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" Command="{Binding SelectCamCommand}" CommandParameter="mixte_vrs"/></Border>
+                                    <Border Grid.Row="3" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="{Binding CamMixteVrns, StringFormat='{}{0:F1}'}" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" Command="{Binding SelectCamCommand}" CommandParameter="mixte_vrns"/></Border>
+
+                                    <Border Grid.Row="4" Grid.Column="0" Style="{StaticResource CellBox}"><TextBlock Text="- semi-rigides et beton :" Style="{StaticResource InfoTextStyle}"/></Border>
+                                    <Border Grid.Row="4" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="{Binding CamSemiRigideBetonVrs, StringFormat='{}{0:F1}'}" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" Command="{Binding SelectCamCommand}" CommandParameter="srbeton_vrs"/></Border>
+                                    <Border Grid.Row="4" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="{Binding CamSemiRigideBetonVrns, StringFormat='{}{0:F1}'}" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" Command="{Binding SelectCamCommand}" CommandParameter="srbeton_vrns"/></Border>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Zone 3: Plateforme -->
+                        <Border x:Name="CamPlateformeBlock" Grid.Column="1" Background="Black" Padding="8" CornerRadius="8" BorderBrush="Transparent" BorderThickness="0" Margin="6,0,0,0">
+                            <StackPanel>
+                                <Grid HorizontalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="80"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <Border Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource HeaderCellBox}">
+                                        <TextBlock Text="Plateforme support" Style="{StaticResource SectionTitleStyle}" HorizontalAlignment="Center"/>
+                                    </Border>
+
+                                    <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TC2" Style="{StaticResource TableHeaderStyle}"/></Border>
+                                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TC3" Style="{StaticResource TableHeaderStyle}"/></Border>
+                                    <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource HeaderCellBox}"><TextBlock Text=">TC3" Style="{StaticResource TableHeaderStyle}"/></Border>
+
+                                    <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource CellBox}"><Button Content="{Binding CamPF_TC2, StringFormat='{}{0:F2}'}" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" Command="{Binding SelectCamCommand}" CommandParameter="pf_tc2"/></Border>
+                                    <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="{Binding CamPF_TC3, StringFormat='{}{0:F2}'}" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" Command="{Binding SelectCamCommand}" CommandParameter="pf_tc3"/></Border>
+                                    <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="{Binding CamPF_TCSup3, StringFormat='{}{0:F2}'}" Style="{StaticResource SecondaryActionButtonStyle}" BorderThickness="0" Command="{Binding SelectCamCommand}" CommandParameter="pf_tcsup3"/></Border>
+                                </Grid>
+
+                                <Border Background="#22FFFFFF" BorderBrush="#66FFFFFF" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,10,0,0">
+                                    <TextBlock Text="Cliquer sur une valeur CAM pour l'appliquer aux couches correspondantes dans le tableau des valeurs admissibles" 
+                                                FontSize="12" 
+                                                TextWrapping="Wrap" 
+                                                Foreground="White"/>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>
+        </DockPanel>
+    </Border>
+</Window>

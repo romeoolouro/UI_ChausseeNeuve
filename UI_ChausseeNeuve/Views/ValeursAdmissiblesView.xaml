@@ -135,23 +135,27 @@
                                           FontSize="11" 
                                           Padding="8,4" 
                                           Margin="0,0,5,0"
-                                          Click="LcpcSetraButton_Click"
-                                          IsEnabled="{Binding ElementName=CoefficientsCamRadio, Path=IsChecked}" />
+                                          Click="LcpcSetraButton_Click"/>
                                     
                                     <Button Content="Catalogue 1998" 
                                           Style="{StaticResource PrimaryButton}" 
                                           FontSize="11" 
                                           Padding="8,4" 
                                           Margin="0,0,5,0"
-                                          Click="Catalogue1998Button_Click"
-                                          IsEnabled="{Binding ElementName=CoefficientsCamRadio, Path=IsChecked}" />
+                                          Click="Catalogue1998Button_Click"/>
                                     
                                     <Button Content="Norme NF P98-086" 
                                           Style="{StaticResource PrimaryButton}" 
                                           FontSize="11" 
                                           Padding="8,4"
-                                          Click="NormeNFP98Button_Click"
-                                          IsEnabled="{Binding ElementName=CoefficientsCamRadio, Path=IsChecked}" />
+                                          Click="NormeNFP98Button_Click"/>
+                                    
+                                    <Button Content="Infos Kd / Sh (rigides)" 
+                                          Style="{StaticResource PrimaryButton}" 
+                                          FontSize="11" 
+                                          Padding="8,4"
+                                          Margin="8,0,0,0"
+                                          Click="RigidInfo_Click"/>
                                 </StackPanel>
                                 
                                 <!-- Information sur les CAM -->

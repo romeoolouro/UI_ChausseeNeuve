@@ -48,6 +48,7 @@ namespace UI_ChausseeNeuve.ViewModels
         #region Commandes
 
         public ICommand SelectCamCommand { get; }
+        public ICommand SelectRiskCommand { get; }
 
         #endregion
 
@@ -56,6 +57,7 @@ namespace UI_ChausseeNeuve.ViewModels
         public LcpcSetraViewModel()
         {
             SelectCamCommand = new RelayCommand<object>(SelectCamValue);
+            SelectRiskCommand = new RelayCommand<object>(SelectRiskValue);
         }
 
         #endregion
@@ -251,6 +253,23 @@ namespace UI_ChausseeNeuve.ViewModels
             };
         }
 
+        /// <summary>
+        /// Sélectionne une valeur de risque R pour application
+        /// </summary>
+        private void SelectRiskValue(object? parameter)
+        {
+            if (parameter is string payload)
+            {
+                // format "value|label" (value en pourcentage)
+                var parts = payload.Split('|');
+                if (parts.Length >= 1 && double.TryParse(parts[0].Replace('%', ' ').Replace(',', '.'), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var r))
+                {
+                    string label = parts.Length > 1 ? parts[1] : "Risque";
+                    OnRiskValueSelected?.Invoke(r, label);
+                }
+            }
+        }
+
         #endregion
 
         #region Événements
@@ -259,6 +278,11 @@ namespace UI_ChausseeNeuve.ViewModels
         /// Événement déclenché quand une valeur CAM est sélectionnée
         /// </summary>
         public event System.Action<double, string>? OnCamValueSelected;
+
+        /// <summary>
+        /// Événement déclenché quand une valeur de risque est sélectionnée
+        /// </summary>
+        public event System.Action<double, string>? OnRiskValueSelected;
 
         #endregion
 

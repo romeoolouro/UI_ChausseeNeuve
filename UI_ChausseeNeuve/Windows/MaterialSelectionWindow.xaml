@@ -10,14 +10,14 @@
     <Border Style="{StaticResource SectionCardStyle}" Margin="15">
         <StackPanel>
             
-            <TextBlock Text="Selection des materiaux pour application CAM" 
+            <TextBlock x:Name="HeaderTitleText" Text="Selection des materiaux" 
                        Style="{StaticResource SectionTitleStyle}" 
                        HorizontalAlignment="Center" 
                        Margin="0,0,0,15" />
 
             <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource AccentBlue}" BorderThickness="1" CornerRadius="6" Padding="15" Margin="0,0,0,15">
                 <StackPanel>
-                    <TextBlock Text="Valeur CAM selectionnee :" FontWeight="SemiBold" Style="{StaticResource LabelStyle}" Margin="0,0,0,5" />
+                    <TextBlock x:Name="SelectedKindLabel" Text="Valeur selectionnee :" FontWeight="SemiBold" Style="{StaticResource LabelStyle}" Margin="0,0,0,5" />
                     <StackPanel Orientation="Horizontal">
                         <TextBlock x:Name="CamValueText" FontSize="16" FontWeight="Bold" Foreground="{StaticResource AccentBlue}" Margin="0,0,10,0" />
                         <TextBlock x:Name="MaterialTypeText" Style="{StaticResource InfoTextStyle}" FontSize="12" VerticalAlignment="Center" />
@@ -25,7 +25,7 @@
                 </StackPanel>
             </Border>
 
-            <TextBlock Text="Cochez les materiaux auxquels vous souhaitez appliquer cette valeur CAM :" 
+            <TextBlock x:Name="InstructionText" Text="Cochez les materiaux auxquels vous souhaitez appliquer cette valeur :" 
                        Style="{StaticResource LabelStyle}" 
                        Margin="0,0,0,10" />
 
@@ -52,7 +52,7 @@
             <Border Background="#fff3cd" BorderBrush="#ffeaa7" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,0,0,10">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="?" FontSize="16" Margin="0,0,8,0" Foreground="#28a745" />
-                    <TextBlock Text="Selectionnez les materiaux, puis cliquez sur 'Valider et Appliquer' pour confirmer les modifications dans le tableau des valeurs admissibles." 
+                    <TextBlock x:Name="HelpText" Text="Selectionnez les materiaux, puis cliquez sur 'Valider et Appliquer' pour confirmer les modifications dans le tableau des valeurs admissibles." 
                                FontSize="11" 
                                TextWrapping="Wrap" 
                                Foreground="#856404" />

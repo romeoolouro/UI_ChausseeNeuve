@@ -9,6 +9,22 @@
         ResizeMode="CanResize"
         ShowInTaskbar="False">
 
+    <Window.Resources>
+        <!-- Styles locaux identiques a ceux utilises dans SETRA/CATALOGUE -->
+        <SolidColorBrush x:Key="PanelCellBg" Color="#3F444B"/>
+        <SolidColorBrush x:Key="PanelCellBorder" Color="#2E3237"/>
+        <Style x:Key="HeaderCellBox" TargetType="Border">
+            <Setter Property="BorderBrush" Value="{StaticResource PanelCellBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="{StaticResource PanelCellBg}"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        <Style x:Key="CellBox" TargetType="Border" BasedOn="{StaticResource HeaderCellBox}">
+            <Setter Property="Padding" Value="4,2"/>
+        </Style>
+    </Window.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -83,7 +99,7 @@
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
-                
+
                 <!-- Tab 2: Quick actions -->
                 <TabItem Header="Actions rapides">
                     <StackPanel Margin="20">
@@ -107,7 +123,7 @@
                     </StackPanel>
                 </TabItem>
                 
-                <!-- Tab 3: Formulas -->
+                <!-- Tab 3: Formules -->
                 <TabItem Header="Formules et calculs">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="20">
@@ -166,6 +182,217 @@
                                             <TextBlock Text="- ks : Effet de structure (1.0 a 1.5)" FontSize="11" Margin="0,2"/>
                                         </StackPanel>
                                     </Grid>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- Tab 4: NF P98-086 (format identique aux tableaux noirs) -->
+                <TabItem Header="NF P98-086">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="20">
+                            <!-- Classes de trafic -->
+                            <Border Background="Black" BorderBrush="White" BorderThickness="2" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+                                <StackPanel>
+                                    <TextBlock Text="Classes de trafic" FontWeight="SemiBold" FontSize="16" Foreground="White"/>
+                                    <Grid HorizontalAlignment="Center" Margin="0,8,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="100"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="60"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Classe :"/></Border>
+                                        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T5"/></Border>
+                                        <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T4"/></Border>
+                                        <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T3"/></Border>
+                                        <Border Grid.Row="0" Grid.Column="4" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T3+"/></Border>
+                                        <Border Grid.Row="0" Grid.Column="5" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T2"/></Border>
+                                        <Border Grid.Row="0" Grid.Column="6" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T1"/></Border>
+                                        <Border Grid.Row="0" Grid.Column="7" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T0"/></Border>
+                                        <Border Grid.Row="0" Grid.Column="8" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TEX"/></Border>
+
+                                        <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Mg"/></Border>
+                                        <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="5"/></Border>
+                                        <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="35"/></Border>
+                                        <Border Grid.Row="1" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="85"/></Border>
+                                        <Border Grid.Row="1" Grid.Column="4" Style="{StaticResource CellBox}"><TextBlock Text="200"/></Border>
+                                        <Border Grid.Row="1" Grid.Column="5" Style="{StaticResource CellBox}"><TextBlock Text="500"/></Border>
+                                        <Border Grid.Row="1" Grid.Column="6" Style="{StaticResource CellBox}"><TextBlock Text="1200"/></Border>
+                                        <Border Grid.Row="1" Grid.Column="7" Style="{StaticResource CellBox}"><TextBlock Text="3000"/></Border>
+                                        <Border Grid.Row="1" Grid.Column="8" Style="{StaticResource CellBox}"><TextBlock Text="9000"/></Border>
+
+                                        <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TMJA"/></Border>
+                                        <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="1"/></Border>
+                                        <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="25"/></Border>
+                                        <Border Grid.Row="2" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="50"/></Border>
+                                        <Border Grid.Row="2" Grid.Column="4" Style="{StaticResource CellBox}"><TextBlock Text="150"/></Border>
+                                        <Border Grid.Row="2" Grid.Column="5" Style="{StaticResource CellBox}"><TextBlock Text="300"/></Border>
+                                        <Border Grid.Row="2" Grid.Column="6" Style="{StaticResource CellBox}"><TextBlock Text="750"/></Border>
+                                        <Border Grid.Row="2" Grid.Column="7" Style="{StaticResource CellBox}"><TextBlock Text="2000"/></Border>
+                                        <Border Grid.Row="2" Grid.Column="8" Style="{StaticResource CellBox}"><TextBlock Text="5000"/></Border>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Peri-urbain / Rase campagne -->
+                            <Border Background="Black" BorderBrush="White" BorderThickness="2" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+                                <StackPanel>
+                                    <TextBlock Text="Chaussees en milieu peri-urbain et rase campagne" FontWeight="SemiBold" FontSize="16" Foreground="White"/>
+                                    <Grid Margin="0,8,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition/>
+                                            <ColumnDefinition/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Non autoroutier -->
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Chaussees a caractere non autoroutier" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                            <Grid HorizontalAlignment="Center">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="220"/>
+                                                    <ColumnDefinition Width="60"/>
+                                                    <ColumnDefinition Width="60"/>
+                                                    <ColumnDefinition Width="60"/>
+                                                    <ColumnDefinition Width="60"/>
+                                                    <ColumnDefinition Width="60"/>
+                                                    <ColumnDefinition Width="60"/>
+                                                    <ColumnDefinition Width="60"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+
+                                                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Materiaux bitumineux"/></Border>
+                                                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T5"/></Border>
+                                                <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T4"/></Border>
+                                                <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T3"/></Border>
+                                                <Border Grid.Row="0" Grid.Column="4" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T3+"/></Border>
+                                                <Border Grid.Row="0" Grid.Column="5" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T2"/></Border>
+                                                <Border Grid.Row="0" Grid.Column="6" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T1"/></Border>
+                                                <Border Grid.Row="0" Grid.Column="7" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T0"/></Border>
+
+                                                <!-- Valeurs illustratives (format uniquement) -->
+                                                <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Materiaux traites hydrau. et betons"/></Border>
+                                                <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="GNT et sol"/></Border>
+
+                                                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="0,3"/></Border>
+                                                <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="0,3"/></Border>
+                                                <Border Grid.Row="1" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="0,4"/></Border>
+                                                <Border Grid.Row="1" Grid.Column="4" Style="{StaticResource CellBox}"><TextBlock Text="0,5"/></Border>
+                                                <Border Grid.Row="1" Grid.Column="5" Style="{StaticResource CellBox}"><TextBlock Text="0,6"/></Border>
+                                                <Border Grid.Row="1" Grid.Column="6" Style="{StaticResource CellBox}"><TextBlock Text="0,8"/></Border>
+                                                <Border Grid.Row="1" Grid.Column="7" Style="{StaticResource CellBox}"><TextBlock Text="0,9"/></Border>
+
+                                                <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="0,4"/></Border>
+                                                <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="0,5"/></Border>
+                                                <Border Grid.Row="2" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="0,6"/></Border>
+                                                <Border Grid.Row="2" Grid.Column="4" Style="{StaticResource CellBox}"><TextBlock Text="0,75"/></Border>
+                                                <Border Grid.Row="2" Grid.Column="5" Style="{StaticResource CellBox}"><TextBlock Text="1,0"/></Border>
+                                                <Border Grid.Row="2" Grid.Column="6" Style="{StaticResource CellBox}"><TextBlock Text="1,2"/></Border>
+                                                <Border Grid.Row="2" Grid.Column="7" Style="{StaticResource CellBox}"><TextBlock Text="1,5"/></Border>
+                                            </Grid>
+                                        </StackPanel>
+
+                                        <!-- Autoroutier -->
+                                        <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                            <TextBlock Text="Chaussees a caractere autoroutier" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                            <Grid HorizontalAlignment="Center">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="220"/>
+                                                    <ColumnDefinition Width="60"/>
+                                                    <ColumnDefinition Width="60"/>
+                                                    <ColumnDefinition Width="60"/>
+                                                    <ColumnDefinition Width="60"/>
+                                                    <ColumnDefinition Width="60"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+
+                                                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Materiaux bitumineux"/></Border>
+                                                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T2"/></Border>
+                                                <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T1"/></Border>
+                                                <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T0"/></Border>
+                                                <Border Grid.Row="0" Grid.Column="4" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T5"/></Border>
+                                                <Border Grid.Row="0" Grid.Column="5" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TEX"/></Border>
+
+                                                <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Materiaux traites hydrau. et betons"/></Border>
+                                                <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="GNT et sol"/></Border>
+
+                                                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="0,5"/></Border>
+                                                <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="0,6"/></Border>
+                                                <Border Grid.Row="1" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="0,8"/></Border>
+                                                <Border Grid.Row="1" Grid.Column="4" Style="{StaticResource CellBox}"><TextBlock Text="1,0"/></Border>
+                                                <Border Grid.Row="1" Grid.Column="5" Style="{StaticResource CellBox}"><TextBlock Text="1,3"/></Border>
+
+                                                <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="0,6"/></Border>
+                                                <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="0,7"/></Border>
+                                                <Border Grid.Row="2" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="1,0"/></Border>
+                                                <Border Grid.Row="2" Grid.Column="4" Style="{StaticResource CellBox}"><TextBlock Text="-"/></Border>
+                                                <Border Grid.Row="2" Grid.Column="5" Style="{StaticResource CellBox}"><TextBlock Text="1,0"/></Border>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Milieu urbain -->
+                            <Border Background="Black" BorderBrush="White" BorderThickness="2" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+                                <StackPanel>
+                                    <TextBlock Text="Chaussees en milieu urbain" FontWeight="SemiBold" FontSize="16" Foreground="White"/>
+                                    <Grid HorizontalAlignment="Center" Margin="0,8,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="220"/>
+                                            <ColumnDefinition Width="120"/>
+                                            <ColumnDefinition Width="160"/>
+                                            <ColumnDefinition Width="220"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text=""/></Border>
+                                        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Voie de desserte"/></Border>
+                                        <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Voie de distribution"/></Border>
+                                        <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Voie principale a trafic lourd"/></Border>
+
+                                        <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Materiaux bitumineux"/></Border>
+                                        <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Mat. traites liants hydrau. et betons"/></Border>
+                                        
+                                        <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="0,1"/></Border>
+                                        <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="0,2"/></Border>
+                                        <Border Grid.Row="1" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="0,4"/></Border>
+
+                                        <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="0,1"/></Border>
+                                        <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="0,2"/></Border>
+                                        <Border Grid.Row="2" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="0,4"/></Border>
+                                    </Grid>
+
+                                    <Border Background="#22FFFFFF" BorderBrush="#66FFFFFF" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,10,0,0">
+                                        <TextBlock Text="Cliquer le cas adequat pour l'appliquer aux couches correspondantes dans la feuille de calcul des valeurs admissibles" 
+                                                   FontSize="12" 
+                                                   TextWrapping="Wrap" 
+                                                   Foreground="White"/>
+                                    </Border>
                                 </StackPanel>
                             </Border>
                         </StackPanel>

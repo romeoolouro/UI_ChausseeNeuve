@@ -5,7 +5,7 @@ namespace ChausseeNeuve.Domain.Models;
 public enum DimensionnementMode { Expert, Automatique }
 public enum StructureType { Souple, BitumineuseEpaisse, SemiRigide, Mixte, Inverse, Rigide }
 
-// Enums pour le systÃ¨me de structure NF P98-086
+// Enums pour le système de structure NF P98-086
 public enum LayerRole { Roulement = 1, Base = 2, Fondation = 3, Plateforme = 4 }
 
 public enum MaterialFamily
@@ -20,15 +20,15 @@ public enum MaterialFamily
 
 public enum InterfaceType { Collee, SemiCollee, Decollee }
 
-// Enums pour les charges de rÃ©fÃ©rence
+// Enums pour les charges de référence
 public enum ChargeType
 {
-    [Description("Jumelage franÃ§ais")]
+    [Description("Jumelage français")]
     JumelageFrancais,
 
     [Description("Autre jumelage")]
     AutreJumelage,
 
-    [Description("Roue isolÃ©e")]
+    [Description("Roue isolée")]
     RoueIsolee
 }

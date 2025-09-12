@@ -1,0 +1,452 @@
+<Window x:Class="UI_ChausseeNeuve.Windows.NFP98086Window"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Norme NF P98-086"
+        Height="700" Width="1050"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource PrimaryBg}">
+
+    <Window.Resources>
+        <!-- Styles identiques aux autres fenetres (cellules gris fourni) -->
+        <SolidColorBrush x:Key="PanelCellBg" Color="#3F3F3F"/>
+        <SolidColorBrush x:Key="PanelCellBorder" Color="#2E3237"/>
+        <Style x:Key="HeaderCellBox" TargetType="Border">
+            <Setter Property="BorderBrush" Value="{StaticResource PanelCellBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="{StaticResource PanelCellBg}"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        <Style x:Key="CellBox" TargetType="Border" BasedOn="{StaticResource HeaderCellBox}">
+            <Setter Property="Padding" Value="4,2"/>
+        </Style>
+    </Window.Resources>
+
+    <Border Style="{StaticResource SectionCardStyle}" Margin="15">
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                <Button Content="Fermer" Style="{StaticResource PrimaryActionButtonStyle}" Click="Close_Click" Width="100"/>
+            </StackPanel>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,16,0">
+                <StackPanel>
+                    <TextBlock Text="Norme NF P98-086 (annexe C informative)" Style="{StaticResource SectionTitleStyle}"/>
+
+                    <!-- Zone 1: Classes de trafic -->
+                    <Border Background="Black" BorderBrush="Transparent" BorderThickness="0" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="Classes de trafic" FontWeight="SemiBold" FontSize="16" Foreground="White"/>
+                            <Grid HorizontalAlignment="Center" Margin="0,8,0,0" TextElement.Foreground="White">
+                                <Grid.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="TextAlignment" Value="Center"/>
+                                    </Style>
+                                </Grid.Resources>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="140"/>
+                                    <ColumnDefinition Width="60"/>
+                                    <ColumnDefinition Width="60"/>
+                                    <ColumnDefinition Width="60"/>
+                                    <ColumnDefinition Width="60"/>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition Width="70"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Entetes -->
+                                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Classe"/></Border>
+                                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T5"/></Border>
+                                <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T4"/></Border>
+                                <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T3-"/></Border>
+                                <Border Grid.Row="0" Grid.Column="4" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T3+"/></Border>
+                                <Border Grid.Row="0" Grid.Column="5" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T2-"/></Border>
+                                <Border Grid.Row="0" Grid.Column="6" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T2+"/></Border>
+                                <Border Grid.Row="0" Grid.Column="7" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T1-"/></Border>
+                                <Border Grid.Row="0" Grid.Column="8" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T1+"/></Border>
+                                <Border Grid.Row="0" Grid.Column="9" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T0-"/></Border>
+                                <Border Grid.Row="0" Grid.Column="10" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T0+"/></Border>
+                                <Border Grid.Row="0" Grid.Column="11" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TS-"/></Border>
+                                <Border Grid.Row="0" Grid.Column="12" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TS+"/></Border>
+                                <Border Grid.Row="0" Grid.Column="13" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TEX"/></Border>
+
+                                <!-- TMJA dimensionnant (intervalles) -->
+                                <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TMJA dimensionnant"/></Border>
+                                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="1 - 25"/></Border>
+                                <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="25 - 50"/></Border>
+                                <Border Grid.Row="1" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="50 - 85"/></Border>
+                                <Border Grid.Row="1" Grid.Column="4" Style="{StaticResource CellBox}"><TextBlock Text="85 - 150"/></Border>
+                                <Border Grid.Row="1" Grid.Column="5" Style="{StaticResource CellBox}"><TextBlock Text="150 - 200"/></Border>
+                                <Border Grid.Row="1" Grid.Column="6" Style="{StaticResource CellBox}"><TextBlock Text="200 - 300"/></Border>
+                                <Border Grid.Row="1" Grid.Column="7" Style="{StaticResource CellBox}"><TextBlock Text="300 - 500"/></Border>
+                                <Border Grid.Row="1" Grid.Column="8" Style="{StaticResource CellBox}"><TextBlock Text="500 - 750"/></Border>
+                                <Border Grid.Row="1" Grid.Column="9" Style="{StaticResource CellBox}"><TextBlock Text="750 - 1200"/></Border>
+                                <Border Grid.Row="1" Grid.Column="10" Style="{StaticResource CellBox}"><TextBlock Text="1200 - 2000"/></Border>
+                                <Border Grid.Row="1" Grid.Column="11" Style="{StaticResource CellBox}"><TextBlock Text="2000 - 3000"/></Border>
+                                <Border Grid.Row="1" Grid.Column="12" Style="{StaticResource CellBox}"><TextBlock Text="3000 - 5000"/></Border>
+                                <Border Grid.Row="1" Grid.Column="13" Style="{StaticResource CellBox}"><TextBlock Text="> 5000"/></Border>
+
+                                <!-- Moyenne geometrique -->
+                                <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Moyenne geometrique"/></Border>
+                                <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="5"/></Border>
+                                <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="35"/></Border>
+                                <Border Grid.Row="2" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="65"/></Border>
+                                <Border Grid.Row="2" Grid.Column="4" Style="{StaticResource CellBox}"><TextBlock Text="115"/></Border>
+                                <Border Grid.Row="2" Grid.Column="5" Style="{StaticResource CellBox}"><TextBlock Text="175"/></Border>
+                                <Border Grid.Row="2" Grid.Column="6" Style="{StaticResource CellBox}"><TextBlock Text="245"/></Border>
+                                <Border Grid.Row="2" Grid.Column="7" Style="{StaticResource CellBox}"><TextBlock Text="390"/></Border>
+                                <Border Grid.Row="2" Grid.Column="8" Style="{StaticResource CellBox}"><TextBlock Text="615"/></Border>
+                                <Border Grid.Row="2" Grid.Column="9" Style="{StaticResource CellBox}"><TextBlock Text="950"/></Border>
+                                <Border Grid.Row="2" Grid.Column="10" Style="{StaticResource CellBox}"><TextBlock Text="1550"/></Border>
+                                <Border Grid.Row="2" Grid.Column="11" Style="{StaticResource CellBox}"><TextBlock Text="2450"/></Border>
+                                <Border Grid.Row="2" Grid.Column="12" Style="{StaticResource CellBox}"><TextBlock Text="3875"/></Border>
+                                <Border Grid.Row="2" Grid.Column="13" Style="{StaticResource CellBox}"><TextBlock Text="5920"/></Border>
+                            </Grid>
+                            <TextBlock Margin="0,6,0,0" Foreground="White" FontSize="12" TextWrapping="Wrap"
+                                       Text="TMJA dimensionnant: intervalle de trafic journalier de poids lourds (veh/j). La moyenne geometrique correspond a la valeur representative utilisee dans les calculs."/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- BANDE 1: Peri-urbain / rase campagne (pleine largeur) -->
+                    <Border Background="Black" BorderBrush="Transparent" BorderThickness="0" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="Chaussees en milieu peri-urbain et rase campagne" FontWeight="SemiBold" FontSize="16" Foreground="White"/>
+                            <!-- Bloc RISQUES (haut) -->
+                            <Border x:Name="RiskPeriBlock" Background="#111111" CornerRadius="8" BorderBrush="Transparent" BorderThickness="0" Padding="8" Margin="0,8,0,8">
+                                <Grid HorizontalAlignment="Center" TextElement.Foreground="White">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="320"/>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="60"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Entetes T5..TEX -->
+                                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Risques"/></Border>
+                                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T5"/></Border>
+                                    <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T4"/></Border>
+                                    <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T3"/></Border>
+                                    <Border Grid.Row="0" Grid.Column="4" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T2"/></Border>
+                                    <Border Grid.Row="0" Grid.Column="5" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T1"/></Border>
+                                    <Border Grid.Row="0" Grid.Column="6" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T0"/></Border>
+                                    <Border Grid.Row="0" Grid.Column="7" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TS"/></Border>
+                                    <Border Grid.Row="0" Grid.Column="8" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TEX"/></Border>
+
+                                    <!-- Structures bitumineuses epaisses et semi-rigides -->
+                                    <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CellBox}"><TextBlock Text="Structures bitumineuses epaisses et semi-rigides - MB"/></Border>
+                                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="30%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="30|NFP MB T5"/></Border>
+                                    <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="30%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="30|NFP MB T4"/></Border>
+                                    <Border Grid.Row="1" Grid.Column="3" Style="{StaticResource CellBox}"><Button Content="25%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="25|NFP MB T3"/></Border>
+                                    <Border Grid.Row="1" Grid.Column="4" Style="{StaticResource CellBox}"><Button Content="12%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="12|NFP MB T2"/></Border>
+                                    <Border Grid.Row="1" Grid.Column="5" Style="{StaticResource CellBox}"><Button Content="5%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="5|NFP MB T1"/></Border>
+                                    <Border Grid.Row="1" Grid.Column="6" Style="{StaticResource CellBox}"><Button Content="2%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="2|NFP MB T0"/></Border>
+                                    <Border Grid.Row="1" Grid.Column="7" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="1|NFP MB TS"/></Border>
+                                    <Border Grid.Row="1" Grid.Column="8" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="1|NFP MB TEX"/></Border>
+
+                                    <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource CellBox}"><TextBlock Text="Structures bitumineuses epaisses et semi-rigides - MTLH"/></Border>
+                                    <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="25%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="25|NFP MTLH T5"/></Border>
+                                    <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="25%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="25|NFP MTLH T4"/></Border>
+                                    <Border Grid.Row="2" Grid.Column="3" Style="{StaticResource CellBox}"><Button Content="12%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="12|NFP MTLH T3"/></Border>
+                                    <Border Grid.Row="2" Grid.Column="4" Style="{StaticResource CellBox}"><Button Content="7,5%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="7.5|NFP MTLH T2"/></Border>
+                                    <Border Grid.Row="2" Grid.Column="5" Style="{StaticResource CellBox}"><Button Content="5%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="5|NFP MTLH T1"/></Border>
+                                    <Border Grid.Row="2" Grid.Column="6" Style="{StaticResource CellBox}"><Button Content="2,5%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="2.5|NFP MTLH T0"/></Border>
+                                    <Border Grid.Row="2" Grid.Column="7" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="1|NFP MTLH TS"/></Border>
+                                    <Border Grid.Row="2" Grid.Column="8" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="1|NFP MTLH TEX"/></Border>
+
+                                    <!-- Structures inverses -->
+                                    <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource CellBox}"><TextBlock Text="Structures inverses - MB"/></Border>
+                                    <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="30%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="30|NFP MB Inv T5"/></Border>
+                                    <Border Grid.Row="3" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="30%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="30|NFP MB Inv T4"/></Border>
+                                    <Border Grid.Row="3" Grid.Column="3" Style="{StaticResource CellBox}"><Button Content="25%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="25|NFP MB Inv T3"/></Border>
+                                    <Border Grid.Row="3" Grid.Column="4" Style="{StaticResource CellBox}"><Button Content="12%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="12|NFP MB Inv T2"/></Border>
+                                    <Border Grid.Row="3" Grid.Column="5" Style="{StaticResource CellBox}"><Button Content="5%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="5|NFP MB Inv T1"/></Border>
+                                    <Border Grid.Row="3" Grid.Column="6" Style="{StaticResource CellBox}"><Button Content="2%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="2|NFP MB Inv T0"/></Border>
+                                    <Border Grid.Row="3" Grid.Column="7" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="1|NFP MB Inv TS"/></Border>
+                                    <Border Grid.Row="3" Grid.Column="8" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="1|NFP MB Inv TEX"/></Border>
+
+                                    <Border Grid.Row="4" Grid.Column="0" Style="{StaticResource CellBox}"><TextBlock Text="Structures inverses - MTLH"/></Border>
+                                    <Border Grid.Row="4" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="25%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="25|NFP MTLH Inv T5"/></Border>
+                                    <Border Grid.Row="4" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="25%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="25|NFP MTLH Inv T4"/></Border>
+                                    <Border Grid.Row="4" Grid.Column="3" Style="{StaticResource CellBox}"><Button Content="24%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="24|NFP MTLH Inv T3"/></Border>
+                                    <Border Grid.Row="4" Grid.Column="4" Style="{StaticResource CellBox}"><Button Content="15%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="15|NFP MTLH Inv T2"/></Border>
+                                    <Border Grid.Row="4" Grid.Column="5" Style="{StaticResource CellBox}"><Button Content="5%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="5|NFP MTLH Inv T1"/></Border>
+                                    <Border Grid.Row="4" Grid.Column="6" Style="{StaticResource CellBox}"><Button Content="2%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="2|NFP MTLH Inv T0"/></Border>
+                                    <Border Grid.Row="4" Grid.Column="7" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="1|NFP MTLH Inv TS"/></Border>
+                                    <Border Grid.Row="4" Grid.Column="8" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="1|NFP MTLH Inv TEX"/></Border>
+
+                                    <!-- Structures mixtes -->
+                                    <Border Grid.Row="5" Grid.Column="0" Style="{StaticResource CellBox}"><TextBlock Text="Structures mixtes - MB"/></Border>
+                                    <Border Grid.Row="5" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="30%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="30|NFP MB Mix T5"/></Border>
+                                    <Border Grid.Row="5" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="30%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="30|NFP MB Mix T4"/></Border>
+                                    <Border Grid.Row="5" Grid.Column="3" Style="{StaticResource CellBox}"><Button Content="25%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="25|NFP MB Mix T3"/></Border>
+                                    <Border Grid.Row="5" Grid.Column="4" Style="{StaticResource CellBox}"><Button Content="12%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="12|NFP MB Mix T2"/></Border>
+                                    <Border Grid.Row="5" Grid.Column="5" Style="{StaticResource CellBox}"><Button Content="5%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="5|NFP MB Mix T1"/></Border>
+                                    <Border Grid.Row="5" Grid.Column="6" Style="{StaticResource CellBox}"><Button Content="2%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="2|NFP MB Mix T0"/></Border>
+                                    <Border Grid.Row="5" Grid.Column="7" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="1|NFP MB Mix TS"/></Border>
+                                    <Border Grid.Row="5" Grid.Column="8" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="1|NFP MB Mix TEX"/></Border>
+
+                                    <Border Grid.Row="6" Grid.Column="0" Style="{StaticResource CellBox}"><TextBlock Text="Structures mixtes - MTLH"/></Border>
+                                    <Border Grid.Row="6" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="50%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="50|NFP MTLH Mix T5"/></Border>
+                                    <Border Grid.Row="6" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="50%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="50|NFP MTLH Mix T4"/></Border>
+                                    <Border Grid.Row="6" Grid.Column="3" Style="{StaticResource CellBox}"><Button Content="35%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="35|NFP MTLH Mix T3"/></Border>
+                                    <Border Grid.Row="6" Grid.Column="4" Style="{StaticResource CellBox}"><Button Content="20%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="20|NFP MTLH Mix T2"/></Border>
+                                    <Border Grid.Row="6" Grid.Column="5" Style="{StaticResource CellBox}"><Button Content="10%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="10|NFP MTLH Mix T1"/></Border>
+                                    <Border Grid.Row="6" Grid.Column="6" Style="{StaticResource CellBox}"><Button Content="3%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="3|NFP MTLH Mix T0"/></Border>
+                                    <Border Grid.Row="6" Grid.Column="7" Style="{StaticResource CellBox}"><Button Content="2%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="2|NFP MTLH Mix TS"/></Border>
+                                    <Border Grid.Row="6" Grid.Column="8" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="1|NFP MTLH Mix TEX"/></Border>
+
+                                    <!-- Structures beton -->
+                                    <Border Grid.Row="7" Grid.Column="0" Style="{StaticResource CellBox}"><TextBlock Text="Structures beton - CdBase/Roulement"/></Border>
+                                    <Border Grid.Row="7" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="25%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="25|NFP Beton Base T5"/></Border>
+                                    <Border Grid.Row="7" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="25%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="25|NFP Beton Base T4"/></Border>
+                                    <Border Grid.Row="7" Grid.Column="3" Style="{StaticResource CellBox}"><Button Content="15%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="15|NFP Beton Base T3"/></Border>
+                                    <Border Grid.Row="7" Grid.Column="4" Style="{StaticResource CellBox}"><Button Content="7,5%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="7.5|NFP Beton Base T2"/></Border>
+                                    <Border Grid.Row="7" Grid.Column="5" Style="{StaticResource CellBox}"><Button Content="2,8%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="2.8|NFP Beton Base T1"/></Border>
+                                    <Border Grid.Row="7" Grid.Column="6" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="1|NFP Beton Base T0"/></Border>
+                                    <Border Grid.Row="7" Grid.Column="7" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="1|NFP Beton Base TS"/></Border>
+                                    <Border Grid.Row="7" Grid.Column="8" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="1|NFP Beton Base TEX"/></Border>
+
+                                    <Border Grid.Row="8" Grid.Column="0" Style="{StaticResource CellBox}"><TextBlock Text="Structures beton - CdFond sauf BAC et BCg"/></Border>
+                                    <Border Grid.Row="8" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="25%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="25|NFP Beton FondNoBAC T5"/></Border>
+                                    <Border Grid.Row="8" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="25%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="25|NFP Beton FondNoBAC T4"/></Border>
+                                    <Border Grid.Row="8" Grid.Column="3" Style="{StaticResource CellBox}"><Button Content="25%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="25|NFP Beton FondNoBAC T3"/></Border>
+                                    <Border Grid.Row="8" Grid.Column="4" Style="{StaticResource CellBox}"><Button Content="15%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="15|NFP Beton FondNoBAC T2"/></Border>
+                                    <Border Grid.Row="8" Grid.Column="5" Style="{StaticResource CellBox}"><Button Content="10%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="10|NFP Beton FondNoBAC T1"/></Border>
+                                    <Border Grid.Row="8" Grid.Column="6" Style="{StaticResource CellBox}"><Button Content="5,6%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="5.6|NFP Beton FondNoBAC T0"/></Border>
+                                    <Border Grid.Row="8" Grid.Column="7" Style="{StaticResource CellBox}"><Button Content="2%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="2|NFP Beton FondNoBAC TS"/></Border>
+                                    <Border Grid.Row="8" Grid.Column="8" Style="{StaticResource CellBox}"><Button Content="1%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="1|NFP Beton FondNoBAC TEX"/></Border>
+
+                                    <Border Grid.Row="9" Grid.Column="0" Style="{StaticResource CellBox}"><TextBlock Text="Structures beton - CdFond pour BAC et BCg"/></Border>
+                                    <Border Grid.Row="9" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="50%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="50|NFP Beton FondBAC T5"/></Border>
+                                    <Border Grid.Row="9" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="50%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="50|NFP Beton FondBAC T4"/></Border>
+                                    <Border Grid.Row="9" Grid.Column="3" Style="{StaticResource CellBox}"><Button Content="50%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="50|NFP Beton FondBAC T3"/></Border>
+                                    <Border Grid.Row="9" Grid.Column="4" Style="{StaticResource CellBox}"><Button Content="50%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="50|NFP Beton FondBAC T2"/></Border>
+                                    <Border Grid.Row="9" Grid.Column="5" Style="{StaticResource CellBox}"><Button Content="50%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="50|NFP Beton FondBAC T1"/></Border>
+                                    <Border Grid.Row="9" Grid.Column="6" Style="{StaticResource CellBox}"><Button Content="50%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="50|NFP Beton FondBAC T0"/></Border>
+                                    <Border Grid.Row="9" Grid.Column="7" Style="{StaticResource CellBox}"><Button Content="50%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="50|NFP Beton FondBAC TS"/></Border>
+                                    <Border Grid.Row="9" Grid.Column="8" Style="{StaticResource CellBox}"><Button Content="50%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="50|NFP Beton FondBAC TEX"/></Border>
+                                </Grid>
+                            </Border>
+
+                            <Grid Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Non autoroutier (gauche) -->
+                                <StackPanel x:Name="CamPeriLeft" Grid.Column="0">
+                                    <TextBlock Text="Chaussees a caractere non autoroutier" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                    <Grid x:Name="GridPeriNonAuto" HorizontalAlignment="Center" TextElement.Foreground="White">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="220"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="60"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Entetes T5 T4 T3- T3+ -->
+                                        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text=""/></Border>
+                                        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T5"/></Border>
+                                        <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T4"/>
+                                        </Border>
+                                        <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T3-"/></Border>
+                                        <Border Grid.Row="0" Grid.Column="4" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T3+"/></Border>
+
+                                        <!-- Lignes valeurs -->
+                                        <!-- MB -->
+                                        <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Materiaux bitumineux"/></Border>
+                                        <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="0,3"/></Border>
+                                        <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="0,3"/></Border>
+                                        <Border Grid.Row="1" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="0,4"/></Border>
+                                        <Border Grid.Row="1" Grid.Column="4" Style="{StaticResource CellBox}"><TextBlock Text="0,5"/></Border>
+
+                                        <!-- MTLH + betons -->
+                                        <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Mat. traites LH et betons"/></Border>
+                                        <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="0,4"/></Border>
+                                        <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="0,5"/></Border>
+                                        <Border Grid.Row="2" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="0,6"/></Border>
+                                        <Border Grid.Row="2" Grid.Column="4" Style="{StaticResource CellBox}"><TextBlock Text="0,8"/></Border>
+
+                                        <!-- GNT et sol -->
+                                        <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="GNT et sol"/></Border>
+                                        <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="0,4"/></Border>
+                                        <Border Grid.Row="3" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="0,5"/></Border>
+                                        <Border Grid.Row="3" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="0,6"/></Border>
+                                        <Border Grid.Row="3" Grid.Column="4" Style="{StaticResource CellBox}"><TextBlock Text="0,75"/></Border>
+                                    </Grid>
+                                </StackPanel>
+
+                                <!-- separateur visuel -->
+                                <Border Grid.Column="1" Background="#55FFFFFF" Width="2" Margin="6,0"/>
+
+                                <!-- Autoroutier (droite) -->
+                                <StackPanel x:Name="CamPeriRight" Grid.Column="2">
+                                    <TextBlock Text="Chaussees a caractere autoroutier" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                    <Grid x:Name="GridPeriAuto" HorizontalAlignment="Center" TextElement.Foreground="White">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="220"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="60"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Entetes T2 T1 T0 TS TEX -->
+                                        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text=""/></Border>
+                                        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T2"/></Border>
+                                        <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T1"/></Border>
+                                        <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T0"/></Border>
+                                        <Border Grid.Row="0" Grid.Column="4" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TS"/></Border>
+                                        <Border Grid.Row="0" Grid.Column="5" Style="{StaticResource HeaderCellBox}"><TextBlock Text="TEX"/></Border>
+
+                                        <!-- MB: valeur unique centree -->
+                                        <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Materiaux bitumineux"/></Border>
+                                        <Border Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="5" Style="{StaticResource CellBox}"><TextBlock Text="0,8"/></Border>
+
+                                        <!-- MTLH+betons: valeur unique centree -->
+                                        <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Mat. traites LH et betons"/></Border>
+                                        <Border Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="5" Style="{StaticResource CellBox}"><TextBlock Text="1,3"/></Border>
+
+                                        <!-- GNT et sol: valeur unique centree -->
+                                        <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="GNT et sol"/></Border>
+                                        <Border Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="5" Style="{StaticResource CellBox}"><TextBlock Text="1,0"/></Border>
+                                    </Grid>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- BANDE 2: Milieu urbain + colonne d'aide a droite -->
+                    <Border Background="Black" BorderBrush="Transparent" BorderThickness="0" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="300"/>
+                            </Grid.ColumnDefinitions>
+ 
+                             <!-- Tableau milieu urbain (gauche) -->
+                             <StackPanel x:Name="CamUrbain" Grid.Column="0">
+                                 <TextBlock Text="Chaussees en milieu urbain" FontWeight="SemiBold" FontSize="16" Foreground="White"/>
+                                 <Grid x:Name="GridUrbain" HorizontalAlignment="Center" Margin="0,8,0,0" TextElement.Foreground="White">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="220"/>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="160"/>
+                                        <ColumnDefinition Width="220"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text=""/></Border>
+                                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Voie de desserte"/></Border>
+                                    <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Voie de distribution"/></Border>
+                                    <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Voie principale a trafic lourd"/></Border>
+
+                                    <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Materiaux bitumineux"/></Border>
+                                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="0,1"/></Border>
+                                    <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="0,2"/></Border>
+                                    <Border Grid.Row="1" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="0,2"/></Border>
+
+                                    <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Mat. traites LH et betons"/></Border>
+                                    <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="0,1"/></Border>
+                                    <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="0,2"/></Border>
+                                    <Border Grid.Row="2" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="0,4"/></Border>
+
+                                    <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Giratoire"/></Border>
+                                    <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="0,2"/></Border>
+                                    <Border Grid.Row="3" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="0,5"/></Border>
+                                    <Border Grid.Row="3" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="1,0"/></Border>
+                                </Grid>
+                             </StackPanel>
+
+                             <!-- Bloc Risque milieu urbain -->
+                             <Border x:Name="RiskUrbainBlock" Grid.Column="0" Background="#111111" CornerRadius="8" BorderBrush="Transparent" BorderThickness="0" Padding="8" Margin="0,8,0,0">
+                                <Grid HorizontalAlignment="Center" TextElement.Foreground="White">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="220"/>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="160"/>
+                                        <ColumnDefinition Width="220"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Risques - Milieu urbain"/></Border>
+                                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Voie de desserte"/></Border>
+                                    <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Voie de distribution"/></Border>
+                                    <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Voie principale a trafic lourd"/></Border>
+
+                                    <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Materiaux bitumineux"/></Border>
+                                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CellBox}"><Button Content="25%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="25|NFP Urbain Desserte"/></Border>
+                                    <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource CellBox}"><Button Content="25%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="25|NFP Urbain Distribution"/></Border>
+                                    <Border Grid.Row="1" Grid.Column="3" Style="{StaticResource CellBox}"><Button Content="5%" Style="{StaticResource SecondaryActionButtonStyle}" Click="Risk_Click" Tag="5|NFP Urbain Principal"/></Border>
+                                </Grid>
+                            </Border>
+ 
+                             <!-- Colonne d'aide (droite) -->
+                             <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Stretch">
+                                 <TextBlock Text="Cliquer le cas echeant sur la valeur choisie, pour la transferer dans la feuille de calcul des Valeurs admissibles" TextWrapping="Wrap" Foreground="#FFEA4335" FontSize="13"/>
+                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                                     <Button Content="Annuler" Width="100" Margin="0,0,10,0" Click="Cancel_Click"/>
+                                     <Button Content="OK" Width="100" Click="Ok_Click"/>
+                                 </StackPanel>
+                             </StackPanel>
+                         </Grid>
+                     </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </DockPanel>
+    </Border>
+</Window>

@@ -8,7 +8,7 @@ namespace ChausseeNeuve.Domain.Models
         public double NE { get; set; } = 80_000;
         public string StructureType { get; set; } = "Souple";
 
-        // Charges de rÃ©fÃ©rence
+        // Charges de référence
         public ChargeReference ChargeReference { get; set; } = new ChargeReference();
     }
 }

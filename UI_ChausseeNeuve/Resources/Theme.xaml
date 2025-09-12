@@ -25,6 +25,8 @@
     <SolidColorBrush x:Key="TextSecondary" Color="#FF9E9E9E"/>
     <SolidColorBrush x:Key="BorderColor" Color="#FF404040"/>
     <SolidColorBrush x:Key="SecondaryBg" Color="#FF444444"/>
+    <!-- Arriere-plan des tableaux (gris fourni) -->
+    <SolidColorBrush x:Key="TablesBg" Color="#FF3F3F3F"/>
 
     <!-- ========= Converters (ONLY existing ones) ========= -->
     <c:InverseBooleanConverter x:Key="InverseBooleanConverter"/>

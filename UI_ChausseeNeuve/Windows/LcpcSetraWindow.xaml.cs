@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Linq;
@@ -22,14 +23,37 @@ namespace UI_ChausseeNeuve.Windows
         /// </summary>
         public LcpcSetraViewModel? ViewModel => DataContext as LcpcSetraViewModel;
 
-        public LcpcSetraWindow()
+        public string Mode { get; } = "CAM"; // CAM ou RISQUE
+
+        public LcpcSetraWindow() : this("CAM") { }
+
+        public LcpcSetraWindow(string mode)
         {
             InitializeComponent();
-            
+
+            Mode = string.IsNullOrWhiteSpace(mode) ? "CAM" : mode.ToUpperInvariant();
+
+            // Afficher uniquement la section en fonction du mode
+            if (Mode == "RISQUE")
+            {
+                if (CamBlockMoyensForts != null) CamBlockMoyensForts.Visibility = Visibility.Collapsed;
+                if (CamBlockFaibles != null) CamBlockFaibles.Visibility = Visibility.Collapsed;
+                if (RiskBlock != null) RiskBlock.Visibility = Visibility.Visible;
+                this.Title = "Beniroute - Risque R, Guide Lcpc-Setra 1994";
+            }
+            else
+            {
+                if (CamBlockMoyensForts != null) CamBlockMoyensForts.Visibility = Visibility.Visible;
+                if (CamBlockFaibles != null) CamBlockFaibles.Visibility = Visibility.Visible;
+                if (RiskBlock != null) RiskBlock.Visibility = Visibility.Collapsed;
+                this.Title = "Beniroute - CAM, valeurs du Guide Lcpc-Setra 1994";
+            }
+
             // S'abonner à l'événement de sélection de valeur CAM
             if (ViewModel != null)
             {
                 ViewModel.OnCamValueSelected += OnCamValueSelected;
+                ViewModel.OnRiskValueSelected += OnRiskValueSelected;
             }
         }
 
@@ -38,8 +62,8 @@ namespace UI_ChausseeNeuve.Windows
         /// </summary>
         private void OnCamValueSelected(double camValue, string materialType)
         {
-            // Ouvrir la fenêtre de sélection précise des matériaux
-            var materialSelectionWindow = new MaterialSelectionWindow(camValue, materialType);
+            // Ouvrir la fenêtre de sélection précise des matériaux en mode CAM
+            var materialSelectionWindow = new MaterialSelectionWindow(camValue, materialType, valueKind: "CAM");
             materialSelectionWindow.Owner = this;
             
             var result = materialSelectionWindow.ShowDialog();
@@ -48,6 +72,24 @@ namespace UI_ChausseeNeuve.Windows
                 // Les valeurs CAM ont déjà été appliquées dans MaterialSelectionWindow
                 // Plus besoin de les appliquer à nouveau ici
                 System.Diagnostics.Debug.WriteLine($"Selection CAM terminee: {materialSelectionWindow.SelectedMaterialIndices.Count} materiaux modifies");
+            }
+        }
+
+        /// <summary>
+        /// Gestionnaire pour la sélection d'une valeur de risque
+        /// </summary>
+        private void OnRiskValueSelected(double riskPercent, string label)
+        {
+            // Ouvrir la fenêtre de sélection précise des matériaux en mode RISQUE
+            var selectWin = new MaterialSelectionWindow(riskPercent, label, valueKind: "RISQUE");
+            selectWin.Owner = this;
+            
+            var result = selectWin.ShowDialog();
+            if (result == true && selectWin.SelectedMaterialIndices.Count > 0)
+            {
+                // Les valeurs de risque ont déjà été appliquées dans MaterialSelectionWindow
+                // Plus besoin de les appliquer à nouveau ici
+                System.Diagnostics.Debug.WriteLine($"Selection RISQUE terminee: {selectWin.SelectedMaterialIndices.Count} materiaux modifies");
             }
         }
 
@@ -136,6 +178,7 @@ namespace UI_ChausseeNeuve.Windows
             if (ViewModel != null)
             {
                 ViewModel.OnCamValueSelected -= OnCamValueSelected;
+                ViewModel.OnRiskValueSelected -= OnRiskValueSelected;
             }
             base.OnClosed(e);
         }

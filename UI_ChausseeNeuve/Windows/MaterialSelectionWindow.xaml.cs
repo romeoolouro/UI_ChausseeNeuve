@@ -8,69 +8,76 @@ using UI_ChausseeNeuve.ViewModels;
 namespace UI_ChausseeNeuve.Windows
 {
     /// <summary>
-    /// Fenêtre pour sélectionner précisément quels matériaux doivent recevoir une valeur CAM
+    /// Fenetre pour selectionner precisement quels materiaux doivent recevoir une valeur (CAM ou RISQUE)
     /// </summary>
     public partial class MaterialSelectionWindow : Window
     {
         /// <summary>
-        /// Liste des indices des matériaux sélectionnés
+        /// Liste des indices des materiaux selectionnes
         /// </summary>
         public List<int> SelectedMaterialIndices { get; private set; } = new List<int>();
 
         /// <summary>
-        /// Valeur CAM à appliquer
+        /// Valeur a appliquer (CAM ou RISQUE)
         /// </summary>
-        public double CamValue { get; }
+        public double SelectedValue { get; }
 
         /// <summary>
-        /// Type de matériau de la valeur CAM
+        /// Type/Contexte de selection (ex: "Bitumineux", "Risque usuelles")
         /// </summary>
         public string MaterialType { get; }
 
         /// <summary>
-        /// Liste des checkboxes pour chaque matériau
+        /// Type de valeur: "CAM" (defaut) ou "RISQUE"
+        /// </summary>
+        public string ValueKind { get; } = "CAM";
+
+        /// <summary>
+        /// Liste des checkboxes pour chaque materiau
         /// </summary>
         private List<CheckBox> MaterialCheckBoxes { get; set; } = new List<CheckBox>();
 
-        public MaterialSelectionWindow(double camValue, string materialType)
+        public MaterialSelectionWindow(double value, string materialType, string valueKind = "CAM")
         {
             InitializeComponent();
-            
-            CamValue = camValue;
+            SelectedValue = value;
             MaterialType = materialType;
-            
-            // Afficher les informations sur la valeur sélectionnée
-            CamValueText.Text = $"CAM = {camValue:F1}";
+            ValueKind = string.IsNullOrWhiteSpace(valueKind) ? "CAM" : valueKind.ToUpperInvariant();
+
+            // En-tetes dynamiques
+            HeaderTitleText.Text = ValueKind == "RISQUE" ? "Selection des materiaux (Risque)" : "Selection des materiaux (CAM)";
+            SelectedKindLabel.Text = ValueKind == "RISQUE" ? "Valeur de risque selectionnee :" : "Valeur selectionnee :";
+            CamValueText.Text = ValueKind == "RISQUE" ? $"RISQUE = {value:F1}%" : $"CAM = {value:F1}";
             MaterialTypeText.Text = $"Type : {materialType}";
-            
-            // Charger les matériaux disponibles
+            InstructionText.Text = ValueKind == "RISQUE"
+                ? "Cochez les materiaux auxquels vous souhaitez appliquer ce risque (%)."
+                : "Cochez les materiaux auxquels vous souhaitez appliquer cette valeur (CAM).";
+
+            // Charger les materiaux disponibles
             LoadAvailableMaterials();
         }
 
         /// <summary>
-        /// Charge les matériaux disponibles depuis le ViewModel des valeurs admissibles
+        /// Charge les materiaux disponibles depuis le ViewModel des valeurs admissibles
         /// </summary>
         private void LoadAvailableMaterials()
         {
             var valeursAdmissiblesViewModel = FindValeursAdmissiblesViewModel();
-            
             if (valeursAdmissiblesViewModel?.ValeursAdmissibles != null)
             {
                 MaterialsStackPanel.Children.Clear();
                 MaterialCheckBoxes.Clear();
-                
+
                 for (int i = 0; i < valeursAdmissiblesViewModel.ValeursAdmissibles.Count; i++)
                 {
                     var couche = valeursAdmissiblesViewModel.ValeursAdmissibles[i];
                     CreateMaterialCheckBox(i, couche);
                 }
-                
-                // Initialiser le compteur de sélection
+
                 UpdateSelectionCount(null, null);
             }
             else
             {
-                // Message si aucun matériau n'est disponible
                 var noDataText = new TextBlock
                 {
                     Text = "Aucun materiau disponible dans le tableau des valeurs admissibles",
@@ -83,7 +90,7 @@ namespace UI_ChausseeNeuve.Windows
         }
 
         /// <summary>
-        /// Crée une checkbox pour un matériau
+        /// Cree une checkbox pour un materiau
         /// </summary>
         private void CreateMaterialCheckBox(int index, ValeurAdmissibleCouche couche)
         {
@@ -98,27 +105,22 @@ namespace UI_ChausseeNeuve.Windows
             };
 
             var grid = new Grid();
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) }); // Checkbox
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) }); // Niveau
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); // Matériau
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(80) }); // CAM actuel
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(110) }); // valeur actuelle
 
-            // Checkbox
             var checkBox = new CheckBox
             {
                 Tag = index,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(0, 0, 5, 0)
             };
-            
-            // Événement pour mettre à jour le compteur de sélection
             checkBox.Checked += UpdateSelectionCount;
             checkBox.Unchecked += UpdateSelectionCount;
-            
             Grid.SetColumn(checkBox, 0);
             MaterialCheckBoxes.Add(checkBox);
 
-            // Niveau de la couche
             var niveauText = new TextBlock
             {
                 Text = couche.Niveau.ToString(),
@@ -129,7 +131,6 @@ namespace UI_ChausseeNeuve.Windows
             };
             Grid.SetColumn(niveauText, 1);
 
-            // Nom du matériau
             var materiauText = new TextBlock
             {
                 Text = couche.Materiau,
@@ -140,45 +141,38 @@ namespace UI_ChausseeNeuve.Windows
             };
             Grid.SetColumn(materiauText, 2);
 
-            // Valeur CAM actuelle
-            var camActuelText = new TextBlock
+            // Valeur actuelle (CAM ou Risque)
+            string valueLabel = ValueKind == "RISQUE" ? $"Risque: {couche.Risque:F1}%" : $"CAM: {couche.Cam:F1}";
+            var valueText = new TextBlock
             {
-                Text = $"CAM: {couche.Cam:F1}",
+                Text = valueLabel,
                 Style = (Style)FindResource("InfoTextStyle"),
                 FontSize = 11,
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center
             };
-            Grid.SetColumn(camActuelText, 3);
+            Grid.SetColumn(valueText, 3);
 
             grid.Children.Add(checkBox);
             grid.Children.Add(niveauText);
             grid.Children.Add(materiauText);
-            grid.Children.Add(camActuelText);
+            grid.Children.Add(valueText);
 
             border.Child = grid;
             MaterialsStackPanel.Children.Add(border);
         }
 
-        /// <summary>
-        /// Trouve le ViewModel des valeurs admissibles
-        /// </summary>
         private ValeursAdmissiblesViewModel? FindValeursAdmissiblesViewModel()
         {
             var mainWindow = Application.Current.MainWindow;
             if (mainWindow is UI_ChausseeNeuve.Windows.AccueilWindow accueilWindow)
             {
-                // Rechercher le contrôle ValeursAdmissiblesView dans l'arbre visuel
                 var valeursAdmissiblesView = FindVisualChild<UI_ChausseeNeuve.Views.ValeursAdmissiblesView>(accueilWindow);
                 return valeursAdmissiblesView?.ViewModel;
             }
-            
             return null;
         }
 
-        /// <summary>
-        /// Méthode helper pour trouver un contrôle enfant dans l'arbre visuel
-        /// </summary>
         private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
         {
             for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
@@ -186,7 +180,7 @@ namespace UI_ChausseeNeuve.Windows
                 var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
                 if (child is T result)
                     return result;
-                
+
                 var childOfChild = FindVisualChild<T>(child);
                 if (childOfChild != null)
                     return childOfChild;
@@ -194,135 +188,102 @@ namespace UI_ChausseeNeuve.Windows
             return null;
         }
 
-        /// <summary>
-        /// Gestionnaire pour cocher tous les matériaux
-        /// </summary>
         private void SelectAll_Click(object sender, RoutedEventArgs e)
         {
             foreach (var checkBox in MaterialCheckBoxes)
-            {
                 checkBox.IsChecked = true;
-            }
             UpdateSelectionCount(null, null);
         }
 
-        /// <summary>
-        /// Gestionnaire pour décocher tous les matériaux
-        /// </summary>
         private void DeselectAll_Click(object sender, RoutedEventArgs e)
         {
             foreach (var checkBox in MaterialCheckBoxes)
-            {
                 checkBox.IsChecked = false;
-            }
             UpdateSelectionCount(null, null);
         }
 
-        /// <summary>
-        /// Gestionnaire pour le bouton Valider et Appliquer
-        /// </summary>
         private void Validate_Click(object sender, RoutedEventArgs e)
         {
-            // Récupérer les indices des matériaux cochés
             SelectedMaterialIndices.Clear();
-            
             foreach (var checkBox in MaterialCheckBoxes)
             {
                 if (checkBox.IsChecked == true && checkBox.Tag is int index)
-                {
                     SelectedMaterialIndices.Add(index);
-                }
             }
 
             if (SelectedMaterialIndices.Count > 0)
             {
-                // Afficher une boîte de confirmation avant d'appliquer
                 var selectedMaterials = new List<string>();
-                var valeursAdmissiblesViewModel = FindValeursAdmissiblesViewModel();
-                
-                if (valeursAdmissiblesViewModel != null)
+                var vm = FindValeursAdmissiblesViewModel();
+                if (vm != null)
                 {
                     foreach (var index in SelectedMaterialIndices)
                     {
-                        if (index >= 0 && index < valeursAdmissiblesViewModel.ValeursAdmissibles.Count)
+                        if (index >= 0 && index < vm.ValeursAdmissibles.Count)
                         {
-                            var couche = valeursAdmissiblesViewModel.ValeursAdmissibles[index];
-                            selectedMaterials.Add($"• Couche {couche.Niveau}: {couche.Materiau} (CAM actuel: {couche.Cam:F1})");
+                            var couche = vm.ValeursAdmissibles[index];
+                            string current = ValueKind == "RISQUE" ? $"R actuel: {couche.Risque:F1}%" : $"CAM actuel: {couche.Cam:F1}";
+                            selectedMaterials.Add($"- Couche {couche.Niveau}: {couche.Materiau} ({current})");
                         }
                     }
                 }
 
                 var materialsText = string.Join("\n", selectedMaterials);
-                var confirmationMessage = $"Confirmer l'application de la valeur CAM {CamValue:F1} aux materiaux suivants ?\n\n{materialsText}\n\nType: {MaterialType}";
-                
-                var result = MessageBox.Show(
-                    confirmationMessage,
-                    "Confirmation de validation",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
+                string valueText = ValueKind == "RISQUE" ? $"{SelectedValue:F1}%" : $"{SelectedValue:F1}";
+                var confirmationMessage = $"Confirmer l'application de la valeur {ValueKind} {valueText} aux materiaux suivants ?\n\n{materialsText}\n\nType: {MaterialType}";
 
+                var result = MessageBox.Show(confirmationMessage, "Confirmation de validation", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (result == MessageBoxResult.Yes)
                 {
-                    // Appliquer immédiatement les valeurs CAM
-                    ApplyCamValues();
-                    
+                    ApplyValues();
                     DialogResult = true;
                     Close();
                 }
             }
             else
             {
-                MessageBox.Show(
-                    "Veuillez selectionner au moins un materiau dans la liste.",
-                    "Selection requise",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                MessageBox.Show("Veuillez selectionner au moins un materiau dans la liste.", "Selection requise", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
         /// <summary>
-        /// Applique les valeurs CAM aux matériaux sélectionnés
+        /// Applique la valeur selectionnee (CAM ou RISQUE) aux materiaux selectionnes
         /// </summary>
-        private void ApplyCamValues()
+        private void ApplyValues()
         {
-            var valeursAdmissiblesViewModel = FindValeursAdmissiblesViewModel();
-            
-            if (valeursAdmissiblesViewModel != null)
+            var vm = FindValeursAdmissiblesViewModel();
+            if (vm != null)
             {
                 var updatedMaterials = new List<string>();
-                
                 foreach (var index in SelectedMaterialIndices)
                 {
-                    if (index >= 0 && index < valeursAdmissiblesViewModel.ValeursAdmissibles.Count)
+                    if (index >= 0 && index < vm.ValeursAdmissibles.Count)
                     {
-                        var couche = valeursAdmissiblesViewModel.ValeursAdmissibles[index];
-                        
-                        // Debug : afficher la valeur avant modification
-                        System.Diagnostics.Debug.WriteLine($"AVANT: Couche {couche.Niveau} '{couche.Materiau}' CAM = {couche.Cam:F1}");
-                        
-                        // Appliquer la nouvelle valeur CAM
-                        couche.Cam = CamValue;
-                        
-                        // Debug : afficher la valeur après modification
-                        System.Diagnostics.Debug.WriteLine($"APRES: Couche {couche.Niveau} '{couche.Materiau}' CAM = {couche.Cam:F1}");
-                        
-                        updatedMaterials.Add($"• Couche {couche.Niveau}: {couche.Materiau} ? CAM = {CamValue:F1}");
+                        var couche = vm.ValeursAdmissibles[index];
+                        if (ValueKind == "RISQUE")
+                        {
+                            System.Diagnostics.Debug.WriteLine($"AVANT: Couche {couche.Niveau} '{couche.Materiau}' R = {couche.Risque:F1}%");
+                            couche.Risque = SelectedValue;
+                            System.Diagnostics.Debug.WriteLine($"APRES: Couche {couche.Niveau} '{couche.Materiau}' R = {couche.Risque:F1}%");
+                            updatedMaterials.Add($"- Couche {couche.Niveau}: {couche.Materiau} -> R = {SelectedValue:F1}%");
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"AVANT: Couche {couche.Niveau} '{couche.Materiau}' CAM = {couche.Cam:F1}");
+                            couche.Cam = SelectedValue;
+                            System.Diagnostics.Debug.WriteLine($"APRES: Couche {couche.Niveau} '{couche.Materiau}' CAM = {couche.Cam:F1}");
+                            updatedMaterials.Add($"- Couche {couche.Niveau}: {couche.Materiau} -> CAM = {SelectedValue:F1}");
+                        }
                     }
                 }
-                
-                // Message de confirmation final
+
                 var materialsText = string.Join("\n", updatedMaterials);
-                MessageBox.Show(
-                    $"Valeurs CAM appliquees avec succes :\n\n{materialsText}\n\n?? Note : Vous pouvez toujours modifier ces valeurs manuellement dans le tableau principal.",
-                    "Application reussie",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                string header = ValueKind == "RISQUE" ? "Valeurs de risque appliquees avec succes:" : "Valeurs CAM appliquees avec succes :";
+                MessageBox.Show($"{header}\n\n{materialsText}\n\nNote : Vous pouvez toujours modifier ces valeurs manuellement dans le tableau principal.",
+                                "Application reussie", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
-        /// <summary>
-        /// Gestionnaire pour le bouton Annuler
-        /// </summary>
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
             SelectedMaterialIndices.Clear();
@@ -330,22 +291,13 @@ namespace UI_ChausseeNeuve.Windows
             Close();
         }
 
-        /// <summary>
-        /// Met à jour le compteur de sélection
-        /// </summary>
         private void UpdateSelectionCount(object? sender, RoutedEventArgs? e)
         {
             var selectedCount = MaterialCheckBoxes.Count(cb => cb.IsChecked == true);
-            
             if (SelectionCountText != null)
-            {
                 SelectionCountText.Text = $"{selectedCount} materiau(x) selectionne(s)";
-            }
-            
             if (SelectionSummary != null)
-            {
                 SelectionSummary.Visibility = selectedCount > 0 ? Visibility.Visible : Visibility.Collapsed;
-            }
         }
     }
 }

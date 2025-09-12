@@ -8,7 +8,10 @@ namespace ChausseeNeuve.Domain.Models
 {
     public class Layer : INotifyPropertyChanged, INotifyDataErrorInfo
     {
-        // DÃ©lÃ©guÃ© pour notifications toast
+        // Constante pour l'épaisseur de la plateforme (représente l'infini dans les calculs)
+        private const double PLATFORM_INFINITE_THICKNESS = 10_000_000.0; // 10 millions de mètres
+
+        // Délégué pour notifications toast
         public static Action<string, ToastType>? NotifyToast { get; set; }
 
         private int _order;
@@ -22,7 +25,28 @@ namespace ChausseeNeuve.Domain.Models
         private readonly Dictionary<string, List<string>> _errors = new();
 
         public int Order { get => _order; set { _order = value; OnPropertyChanged(); } }
-        public LayerRole Role { get => _role; set { _role = value; OnPropertyChanged(); ValidateAll(); NotifyCoefficientsChanged(); } }
+        
+        public LayerRole Role 
+        { 
+            get => _role; 
+            set 
+            { 
+                _role = value; 
+                OnPropertyChanged(); 
+                ValidateAll(); 
+                NotifyCoefficientsChanged();
+                
+                // Fixer automatiquement l'épaisseur si c'est une plateforme
+                if (_role == LayerRole.Plateforme && Math.Abs(_t - PLATFORM_INFINITE_THICKNESS) > 0.001)
+                {
+                    _t = PLATFORM_INFINITE_THICKNESS;
+                    OnPropertyChanged(nameof(Thickness_m));
+                    OnPropertyChanged(nameof(ThicknessDisplay));
+                    NotifyToast?.Invoke($"Épaisseur plateforme fixée à {PLATFORM_INFINITE_THICKNESS:N0} m (infini)", ToastType.Info);
+                }
+            } 
+        }
+        
         public string MaterialName { get => _material; set { _material = value; OnPropertyChanged(); } }
         public MaterialFamily Family { get => _family; set { _family = value; OnPropertyChanged(); ValidateAll(); NotifyCoefficientsChanged(); } }
 
@@ -36,6 +60,7 @@ namespace ChausseeNeuve.Domain.Models
                 {
                     _t = validatedValue;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(ThicknessDisplay));
                     NotifyCoefficientsChanged();
                 }
             }
@@ -75,6 +100,10 @@ namespace ChausseeNeuve.Domain.Models
 
         public InterfaceType? InterfaceWithBelow { get => _iface; set { _iface = value; OnPropertyChanged(); } }
 
+        // Propriétés utilitaires pour l'interface utilisateur
+        public bool IsPlatform => Role == LayerRole.Plateforme;
+        public string ThicknessDisplay => Role == LayerRole.Plateforme ? "?" : $"{Thickness_m:F3} m";
+
         private double ValidateModulus(double value)
         {
             ClearErrors(nameof(Modulus_MPa));
@@ -82,14 +111,14 @@ namespace ChausseeNeuve.Domain.Models
             var (min, max) = GetModulusRange();
             if (value < min)
             {
-                AddError(nameof(Modulus_MPa), $"Module ajustÃ© Ã  {min} MPa (min. NF P98-086 pour {Family})");
-                NotifyToast?.Invoke($"Module E ajustÃ© Ã  {min} MPa pour {Family} ({Role})", ToastType.Warning);
+                AddError(nameof(Modulus_MPa), $"Module ajusté à {min} MPa (min. NF P98-086 pour {Family})");
+                NotifyToast?.Invoke($"Module E ajusté à {min} MPa pour {Family} ({Role})", ToastType.Warning);
                 return min;
             }
             if (value > max)
             {
-                AddError(nameof(Modulus_MPa), $"Module ajustÃ© Ã  {max} MPa (max. NF P98-086 pour {Family})");
-                NotifyToast?.Invoke($"Module E ajustÃ© Ã  {max} MPa pour {Family} ({Role})", ToastType.Warning);
+                AddError(nameof(Modulus_MPa), $"Module ajusté à {max} MPa (max. NF P98-086 pour {Family})");
+                NotifyToast?.Invoke($"Module E ajusté à {max} MPa pour {Family} ({Role})", ToastType.Warning);
                 return max;
             }
             return value;
@@ -102,8 +131,8 @@ namespace ChausseeNeuve.Domain.Models
             var expectedPoisson = GetExpectedPoisson();
             if (Math.Abs(value - expectedPoisson) > 0.001)
             {
-                AddError(nameof(Poisson), $"Coefficient de Poisson fixÃ© Ã  {expectedPoisson} (NF P98-086 pour {Family})");
-                NotifyToast?.Invoke($"Coefficient Î½ ajustÃ© Ã  {expectedPoisson} pour {Family}", ToastType.Info);
+                AddError(nameof(Poisson), $"Coefficient de Poisson fixé à {expectedPoisson} (NF P98-086 pour {Family})");
+                NotifyToast?.Invoke($"Coefficient ? ajusté à {expectedPoisson} pour {Family}", ToastType.Info);
                 return expectedPoisson;
             }
             return value;
@@ -113,17 +142,25 @@ namespace ChausseeNeuve.Domain.Models
         {
             ClearErrors(nameof(Thickness_m));
 
-            if (Role == LayerRole.Plateforme) return value; // Pas de limite pour plate-forme
+            // Gestion spéciale pour la plateforme : toujours fixer à la valeur "infinie"
+            if (Role == LayerRole.Plateforme)
+            {
+                if (Math.Abs(value - PLATFORM_INFINITE_THICKNESS) > 0.001)
+                {
+                    NotifyToast?.Invoke($"Épaisseur plateforme fixée à {PLATFORM_INFINITE_THICKNESS:N0} m (infini)", ToastType.Info);
+                }
+                return PLATFORM_INFINITE_THICKNESS;
+            }
 
             var (min, max) = GetThicknessRange();
             if (value < min)
             {
-                AddError(nameof(Thickness_m), $"Ã‰paisseur ajustÃ©e Ã  {min:F3} m (min. NF P98-086 pour {Family})");
+                AddError(nameof(Thickness_m), $"Épaisseur ajustée à {min:F3} m (min. NF P98-086 pour {Family})");
                 return min;
             }
             if (value > max)
             {
-                AddError(nameof(Thickness_m), $"Ã‰paisseur ajustÃ©e Ã  {max:F3} m (max. NF P98-086 pour {Family})");
+                AddError(nameof(Thickness_m), $"Épaisseur ajustée à {max:F3} m (max. NF P98-086 pour {Family})");
                 return max;
             }
             return value;
@@ -145,7 +182,7 @@ namespace ChausseeNeuve.Domain.Models
                 MaterialFamily.MTLH => (3000, 32000),
                 MaterialFamily.BetonBitumineux => (3000, 18000),
                 MaterialFamily.BetonCiment => (18000, 40000),
-                MaterialFamily.Bibliotheque => (1, 100000), // Pas de limite pour bibliothÃ¨que
+                MaterialFamily.Bibliotheque => (1, 100000), // Pas de limite pour bibliothèque
                 _ => (1, 100000)
             };
         }
@@ -158,7 +195,7 @@ namespace ChausseeNeuve.Domain.Models
                 MaterialFamily.BetonBitumineux => 0.35,
                 MaterialFamily.MTLH => 0.25,
                 MaterialFamily.BetonCiment => 0.25,
-                MaterialFamily.Bibliotheque => _nu, // Pas de contrainte pour bibliothÃ¨que
+                MaterialFamily.Bibliotheque => _nu, // Pas de contrainte pour bibliothèque
                 _ => _nu
             };
         }
@@ -171,7 +208,7 @@ namespace ChausseeNeuve.Domain.Models
                 MaterialFamily.MTLH => (0.15, 0.32),
                 MaterialFamily.BetonBitumineux => (0.05, 0.16),
                 MaterialFamily.BetonCiment => (0.12, 0.45),
-                MaterialFamily.Bibliotheque => (0.01, 2.0), // Plage large pour bibliothÃ¨que
+                MaterialFamily.Bibliotheque => (0.01, 2.0), // Plage large pour bibliothèque
                 _ => (0.01, 2.0)
             };
         }
@@ -262,7 +299,7 @@ namespace ChausseeNeuve.Domain.Models
 
         private double CalculateKd()
         {
-            // Coefficient de dÃ©formation kd selon Section 6.2.3 NF P98-086
+            // Coefficient de déformation kd selon Section 6.2.3 NF P98-086
             var baseKd = Family switch
             {
                 MaterialFamily.GNT => 2.0,
@@ -273,7 +310,13 @@ namespace ChausseeNeuve.Domain.Models
                 _ => 2.0
             };
 
-            // Ajustement selon l'Ã©paisseur (Section 6.2.3.2)
+            // Ajustement selon l'épaisseur (Section 6.2.3.2)
+            // Pour la plateforme, pas d'ajustement d'épaisseur car elle est "infinie"
+            if (Role == LayerRole.Plateforme)
+            {
+                return Math.Round(baseKd, 2);
+            }
+
             var thicknessMultiplier = Thickness_m switch
             {
                 < 0.10 => 1.2,

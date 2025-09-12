@@ -9,6 +9,6 @@ public class Project
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     public DimensionnementMode Mode { get; set; } = DimensionnementMode.Expert;
 
-    // Structure de chaussÃ©e NF P98-086
+    // Structure de chaussée NF P98-086
     public PavementStructure PavementStructure { get; set; } = new PavementStructure();
 }
