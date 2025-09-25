@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
@@ -96,5 +97,30 @@ namespace UI_ChausseeNeuve.Converters
             }
             return false;
         }
+    }
+
+    public class EpsiZTooltipConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is string critere && critere.Equals("EpsiZ", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Pour EpsiZ, entrez la valeur directe de la pente b (entre -1 et 0, initialisée à -0.222).";
+            }
+            return null;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public class EpsiZBgConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            // Ne change plus le fond, laisse le style par défaut (gris)
+            return DependencyProperty.UnsetValue;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
     }
 }

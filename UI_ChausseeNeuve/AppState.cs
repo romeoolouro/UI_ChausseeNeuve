@@ -32,5 +32,12 @@ namespace UI_ChausseeNeuve
         {
             StructureChanged?.Invoke();
         }
+        /// <summary>
+        /// Méthode pour déclencher manuellement la notification de changement de structure
+        /// </summary>
+        public static void OnStructureChanged()
+        {
+            StructureChanged?.Invoke();
+        }
     } 
 }

@@ -132,6 +132,7 @@
                 
                 <Grid>
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/> <!-- Numero -->
                         <ColumnDefinition Width="85"/>
                         <ColumnDefinition Width="100"/>
                         <ColumnDefinition Width="140"/>
@@ -147,19 +148,21 @@
                         <ColumnDefinition Width="60"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0"/>
-                    <TextBlock Grid.Column="1" Text="{Binding Interface}" Style="{StaticResource CellStyle}" FontWeight="Medium"/>
-                    <TextBlock Grid.Column="2" Text="{Binding Materiau}" Style="{StaticResource CellStyle}"/>
+                    <TextBlock Grid.Column="0" Text="{Binding NiveauDisplay}" Style="{StaticResource CellStyle}"/>
+                    <!-- Afficher le nom de l'interface uniquement si different de la nature -->
+                    <TextBlock Grid.Column="1" Text="{Binding InterfaceAffichee}" FontWeight="Medium" Style="{StaticResource CellStyle}"/>
+                    <TextBlock Grid.Column="2" Text="{Binding Nature}" Style="{StaticResource CellStyle}"/>
+                    <TextBlock Grid.Column="3" Text="{Binding Materiau}" Style="{StaticResource CellStyle}"/>
                     
-                    <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="0">
+                    <StackPanel Grid.Column="4" VerticalAlignment="Center" Margin="0">
                         <TextBlock Text="{Binding NiveauSup, StringFormat='{}{0:F0}'}" Style="{StaticResource CompactCellStyle}" Margin="0,-1,0,-1"/>
                         <TextBlock Text="{Binding NiveauInfDisplay}" Style="{StaticResource CompactCellStyle}" Margin="0,-1,0,-1"/>
                     </StackPanel>
 
-                    <TextBlock Grid.Column="4" Text="{Binding Module, StringFormat='{}{0:F0}'}" Style="{StaticResource CellStyle}"/>
-                    <TextBlock Grid.Column="5" Text="{Binding CoefficientPoisson, StringFormat='{}{0:F2}'}" Style="{StaticResource CellStyle}"/>
+                    <TextBlock Grid.Column="5" Text="{Binding Module, StringFormat='{}{0:F0}'}" Style="{StaticResource CellStyle}"/>
+                    <TextBlock Grid.Column="6" Text="{Binding CoefficientPoisson, StringFormat='{}{0:F2}'}" Style="{StaticResource CellStyle}"/>
                     
-                    <StackPanel Grid.Column="6" VerticalAlignment="Center" Margin="0">
+                    <StackPanel Grid.Column="7" VerticalAlignment="Center" Margin="0">
                         <TextBlock Text="{Binding SigmaTSup, StringFormat='{}{0:F3}'}" Style="{StaticResource NumericCellStyle}" Margin="0,-1,0,-1"/>
                         <TextBlock Margin="0,-1,0,-1">
                             <TextBlock.Style>
@@ -175,7 +178,7 @@
                         </TextBlock>
                     </StackPanel>
                     
-                    <StackPanel Grid.Column="7" VerticalAlignment="Center" Margin="0">
+                    <StackPanel Grid.Column="8" VerticalAlignment="Center" Margin="0">
                         <TextBlock Text="{Binding EpsilonTSup, StringFormat='{}{0:F1}'}" Style="{StaticResource NumericCellStyle}" Margin="0,-1,0,-1"/>
                         <TextBlock Margin="0,-1,0,-1">
                             <TextBlock.Style>
@@ -191,7 +194,7 @@
                         </TextBlock>
                     </StackPanel>
                     
-                    <StackPanel Grid.Column="8" VerticalAlignment="Center" Margin="0">
+                    <StackPanel Grid.Column="9" VerticalAlignment="Center" Margin="0">
                         <TextBlock Text="{Binding SigmaZSup, StringFormat='{}{0:F3}'}" Style="{StaticResource NumericCellStyle}" Foreground="Red" Margin="0,-1,0,-1"/>
                         <TextBlock Margin="0,-1,0,-1">
                             <TextBlock.Style>
@@ -208,7 +211,7 @@
                         </TextBlock>
                     </StackPanel>
                     
-                    <StackPanel Grid.Column="9" VerticalAlignment="Center" Margin="0">
+                    <StackPanel Grid.Column="10" VerticalAlignment="Center" Margin="0">
                         <TextBlock Text="{Binding EpsilonZSup, StringFormat='{}{0:F1}'}" Style="{StaticResource NumericCellStyle}" Margin="0,-1,0,-1"/>
                         <TextBlock Margin="0,-1,0,-1">
                             <TextBlock.Style>
@@ -224,7 +227,7 @@
                         </TextBlock>
                     </StackPanel>
                     
-                    <StackPanel Grid.Column="10" VerticalAlignment="Center" Margin="0">
+                    <StackPanel Grid.Column="11" VerticalAlignment="Center" Margin="0">
                         <TextBlock Text="{Binding DeflexionSup, StringFormat='{}{0:F2}'}" Style="{StaticResource NumericCellStyle}" Margin="0,-1,0,-1"/>
                         <TextBlock Margin="0,-1,0,-1">
                             <TextBlock.Style>
@@ -240,9 +243,9 @@
                         </TextBlock>
                     </StackPanel>
                     
-                    <TextBlock Grid.Column="11" Text="{Binding ValeurAdmissible, StringFormat='{}{0:F1}'}" Style="{StaticResource NumericCellStyle}" Foreground="Blue" FontWeight="Bold"/>
+                    <TextBlock Grid.Column="12" Text="{Binding ValeurAdmissible, StringFormat='{}{0:F1}'}" Style="{StaticResource NumericCellStyle}" Foreground="Blue" FontWeight="Bold"/>
                     
-                    <TextBlock Grid.Column="12" Text="{Binding StatutValidation}" Style="{StaticResource CellStyle}" FontWeight="Bold" FontSize="16">
+                    <TextBlock Grid.Column="13" Text="{Binding StatutValidation}" Style="{StaticResource CellStyle}" FontWeight="Bold" FontSize="16">
                         <TextBlock.Foreground>
                             <Binding Path="EstValide">
                                 <Binding.Converter>
@@ -259,6 +262,7 @@
         <DataTemplate x:Key="InterfaceTemplate">
             <Grid Height="25">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="50"/> <!-- Numero -->
                     <ColumnDefinition Width="85"/>
                     <ColumnDefinition Width="100"/>
                     <ColumnDefinition Width="140"/>
@@ -273,8 +277,8 @@
                     <ColumnDefinition Width="80"/>
                     <ColumnDefinition Width="60"/>
                 </Grid.ColumnDefinitions>
-
-                <Border Grid.Column="0" CornerRadius="3" Padding="3,1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <!-- Afficher le type d'interface dans la colonne Interface uniquement -->
+                <Border Grid.Column="1" CornerRadius="3" Padding="3,1" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <Border.Background>
                         <SolidColorBrush Color="{Binding CouleurInterface}"/>
                     </Border.Background>
@@ -352,6 +356,7 @@
                         <Border Background="#E9ECEF" CornerRadius="6,6,0,0" Padding="5" Margin="0,10,0,0">
                             <Grid>
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="50"/> <!-- Numero -->
                                     <ColumnDefinition Width="85"/>
                                     <ColumnDefinition Width="100"/>
                                     <ColumnDefinition Width="140"/>
@@ -367,19 +372,20 @@
                                     <ColumnDefinition Width="60"/>
                                 </Grid.ColumnDefinitions>
 
-                                <TextBlock Grid.Column="0" Text="Interface" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="1" Text="Nature" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="2" Text="Materiau" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="3" Text="Niveau (cm)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="4" Text="Module (MPa)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="5" Text="nu" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="6" Text="sigT (MPa)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="7" Text="epsT (udef)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="8" Text="sigZ (MPa)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="9" Text="epsZ (udef)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="10" Text="w (mm/100)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="11" Text="Val. Adm." Style="{StaticResource CellStyle}" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="12" Text="OK" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="0" Text="N" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="1" Text="Interface" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="2" Text="Nature" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="3" Text="Materiau" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="4" Text="Niveau (cm)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="5" Text="Module (MPa)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="6" Text="nu" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="7" Text="sigT (MPa)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="8" Text="epsT (udef)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="9" Text="sigZ (MPa)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="10" Text="epsZ (udef)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="11" Text="w (mm/100)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="12" Text="Val. Adm." Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="13" Text="OK" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
                             </Grid>
                         </Border>
 

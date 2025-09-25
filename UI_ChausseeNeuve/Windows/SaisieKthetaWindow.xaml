@@ -1,0 +1,48 @@
+<Window x:Class="UI_ChausseeNeuve.Windows.SaisieKthetaWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Saisie k?" Height="280" Width="370" WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="#2D2D30" Foreground="#FFEAEAEA">
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock Text="Choisissez le mode de saisie pour k? :" FontWeight="Bold" FontSize="15" Margin="0,0,0,12"/>
+        <StackPanel Grid.Row="1" Margin="0,0,0,10">
+            <RadioButton x:Name="RadioManuel" Content="Saisie manuelle" IsChecked="True" Margin="0,0,0,8" Checked="Radio_Checked" Foreground="#FFEAEAEA"/>
+            <StackPanel x:Name="PanelManuel" Orientation="Horizontal" Margin="18,0,0,8">
+                <TextBlock Text="k? : " FontStyle="Italic" VerticalAlignment="Center"/>
+                <TextBox x:Name="KthetaManuelBox" Width="80" Margin="6,0,0,0" Background="#1E1E1E" Foreground="#FFEAEAEA"/>
+            </StackPanel>
+            <RadioButton x:Name="RadioAuto" Content="Calcul automatique" Margin="0,0,0,8" Checked="Radio_Checked" Foreground="#FFEAEAEA"/>
+            <StackPanel x:Name="PanelAuto" Orientation="Vertical" Margin="18,0,0,0">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                    <TextBlock>
+                        <Run Text="E(" FontStyle="Italic"/>
+                        <Run Text="10" FontStyle="Italic"/><Run Text="&#176;"/>
+                        <Run Text="C, 10Hz ou 0,02s" FontStyle="Italic"/>
+                        <Run Text=") : " FontStyle="Italic"/>
+                    </TextBlock>
+                    <TextBox x:Name="E10Box" Width="80" Margin="6,0,0,0" TextChanged="E10Box_TextChanged" Background="#1E1E1E" Foreground="#FFEAEAEA"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock>
+                        <Run Text="E(" FontStyle="Italic"/>
+                        <Run Text="?" FontStyle="Italic"/>
+                        <Run Text="eq" FontStyle="Italic" FontSize="10" BaselineAlignment="Subscript"/>
+                        <Run Text=", 10Hz ou 0,02s" FontStyle="Italic"/>
+                        <Run Text=") : " FontStyle="Italic"/>
+                    </TextBlock>
+                    <TextBox x:Name="EteqBox" Width="80" Margin="6,0,0,0" TextChanged="EteqBox_TextChanged" Background="#1E1E1E" Foreground="#FFEAEAEA"/>
+                </StackPanel>
+                <TextBlock x:Name="KthetaAutoResult" Margin="0,6,0,0" FontWeight="SemiBold"/>
+            </StackPanel>
+        </StackPanel>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="OK" Width="70" Margin="0,0,8,0" Click="Ok_Click" Background="#106EBE" Foreground="White"/>
+            <Button Content="Annuler" Width="70" Click="Cancel_Click" Background="#444" Foreground="#FFEAEAEA"/>
+        </StackPanel>
+    </Grid>
+</Window>

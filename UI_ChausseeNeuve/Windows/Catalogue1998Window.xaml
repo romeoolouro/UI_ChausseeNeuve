@@ -38,7 +38,7 @@
                     <TextBlock Text="Classification du trafic (millions de PL)" Style="{StaticResource SectionTitleStyle}"/>
 
                     <!-- Zone 1: Classification -->
-                    <Border Background="Black" CornerRadius="8" Padding="8" Margin="0,0,0,12" BorderBrush="Transparent" BorderThickness="0">
+                    <Border Background="{StaticResource NormTablesBg}" CornerRadius="8" Padding="8" Margin="0,0,0,12" BorderBrush="Transparent" BorderThickness="0">
                         <Grid HorizontalAlignment="Center">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -97,7 +97,7 @@
                     <TextBlock Text="{Binding SelectedTrafficDisplay}" Style="{StaticResource InfoTextStyle}" Margin="0,0,0,8" HorizontalAlignment="Center"/>
 
                     <!-- Bloc RISQUES Catalogue 1998 (TC2..TC8) -->
-                    <Border x:Name="RiskBlock" Background="Black" CornerRadius="8" Padding="8" Margin="0,0,0,12" BorderBrush="Transparent" BorderThickness="0">
+                    <Border x:Name="RiskBlock" Background="{StaticResource NormTablesBg}" CornerRadius="8" Padding="8" Margin="0,0,0,12" BorderBrush="Transparent" BorderThickness="0">
                         <Grid HorizontalAlignment="Center">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="200"/>
@@ -166,7 +166,7 @@
                             <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
                         <!-- Zone 2: Structures -->
-                        <Border x:Name="CamStructuresBlock" Grid.Column="0" Background="Black" Padding="8" CornerRadius="8" BorderBrush="Transparent" BorderThickness="0" Margin="0,0,6,0">
+                        <Border x:Name="CamStructuresBlock" Grid.Column="0" Background="{StaticResource NormTablesBg}" Padding="8" CornerRadius="8" BorderBrush="Transparent" BorderThickness="0" Margin="0,0,6,0">
                             <StackPanel>
                                 <TextBlock Text="CAM du trafic - Structures" Style="{StaticResource SectionTitleStyle}" FontSize="14"/>
                                 <Grid Margin="0,6,0,0" HorizontalAlignment="Center">
@@ -207,7 +207,7 @@
                         </Border>
 
                         <!-- Zone 3: Plateforme -->
-                        <Border x:Name="CamPlateformeBlock" Grid.Column="1" Background="Black" Padding="8" CornerRadius="8" BorderBrush="Transparent" BorderThickness="0" Margin="6,0,0,0">
+                        <Border x:Name="CamPlateformeBlock" Grid.Column="1" Background="{StaticResource NormTablesBg}" Padding="8" CornerRadius="8" BorderBrush="Transparent" BorderThickness="0" Margin="6,0,0,0">
                             <StackPanel>
                                 <Grid HorizontalAlignment="Center">
                                     <Grid.ColumnDefinitions>

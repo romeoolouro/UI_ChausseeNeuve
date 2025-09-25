@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using ChausseeNeuve.Domain.Models;
 using UI_ChausseeNeuve.Services;
+using System.Windows; // Pour ShowDialog Owner
 
 namespace UI_ChausseeNeuve.ViewModels
 {
@@ -62,6 +63,13 @@ namespace UI_ChausseeNeuve.ViewModels
         // Événement pour les notifications toast
         public event Action<string, ToastType>? ToastRequested;
 
+        // Garde pour éviter une réouverture récursive de la Bibliothèque
+        private bool _isOpeningLibrary;
+        private bool _pendingOpen;
+
+        // Mémoire: dernier état NON-Bibliothèque par couche (pour restaurer si annulation)
+        private readonly Dictionary<Layer, LayerState> _lastNonLibraryState = new();
+
         private double _ne = 80_000;
         public double NE { get => _ne; set { _ne = value; OnPropertyChanged(); Recompute(); } }
 
@@ -91,6 +99,8 @@ namespace UI_ChausseeNeuve.ViewModels
         public RelayCommand RemoveTopLayerCommand { get; }
         public RelayCommand<Layer> DeleteLayerCommand { get; }
         public RelayCommand ValidateStructureCommand { get; }
+        public RelayCommand<Layer> MoveLayerUpCommand { get; }
+        public RelayCommand<Layer> MoveLayerDownCommand { get; }
 
         public ObservableCollection<RowVM> Rows
         {
@@ -119,6 +129,8 @@ namespace UI_ChausseeNeuve.ViewModels
             RemoveTopLayerCommand = new RelayCommand(RemoveTopLayer, () => Layers.Count > 3);
             DeleteLayerCommand = new RelayCommand<Layer>(DeleteLayer, l => l is not null && l.Role != LayerRole.Plateforme);
             ValidateStructureCommand = new RelayCommand(ValidateNow);
+            MoveLayerUpCommand = new RelayCommand<Layer>(MoveLayerUp, CanMoveUp);
+            MoveLayerDownCommand = new RelayCommand<Layer>(MoveLayerDown, CanMoveDown);
 
             Layers.CollectionChanged += (s, e) =>
             {
@@ -128,6 +140,10 @@ namespace UI_ChausseeNeuve.ViewModels
                 Recompute();
                 TryAutoScale();
                 UpdateAppState();
+                // Mettre à jour l'état des commandes
+                RemoveTopLayerCommand?.RaiseCanExecuteChanged();
+                MoveLayerUpCommand?.RaiseCanExecuteChanged();
+                MoveLayerDownCommand?.RaiseCanExecuteChanged();
             };
             foreach (var L in Layers) L.PropertyChanged += LayerChanged;
         }
@@ -198,14 +214,92 @@ namespace UI_ChausseeNeuve.ViewModels
 
         private void LayerChanged(object? sender, PropertyChangedEventArgs e)
         {
+            if (sender is Layer changed && e.PropertyName == nameof(Layer.Family))
+            {
+                if (changed.Family != MaterialFamily.Bibliotheque)
+                {
+                    // Mémoriser l’état courant comme dernier état non-bibliothèque
+                    _lastNonLibraryState[changed] = new LayerState(changed);
+                }
+            }
+
+            if (_isOpeningLibrary) return;
             if (sender is Layer L && e.PropertyName == nameof(L.Family) && L.Family == MaterialFamily.Bibliotheque)
             {
-                System.Windows.MessageBox.Show("Ouverture de la Bibliothèque (à implémenter)", "Bibliothèque");
+                // Déclencher l'ouverture de la bibliothèque après la fin du cycle d'UI
+                if (_pendingOpen) return;
+                _pendingOpen = true;
+                Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    try
+                    {
+                        OpenLibraryAndApply(L);
+                    }
+                    finally
+                    {
+                        _pendingOpen = false;
+                    }
+                }));
             }
             OnPropertyChanged(nameof(Rows));
             Recompute();
             TryAutoScale();
             UpdateAppState();
+        }
+
+        private void OpenLibraryAndApply(Layer targetLayer)
+        {
+            try
+            {
+                _isOpeningLibrary = true;
+                var win = new UI_ChausseeNeuve.Windows.BibliothequeWindow();
+                if (Application.Current?.MainWindow != null)
+                    win.Owner = Application.Current.MainWindow;
+
+                var result = win.ShowDialog();
+                var selected = win.ViewModel?.SelectedMaterial;
+                if (result == true && selected != null)
+                {
+                    ApplyMaterialToLayer(targetLayer, selected);
+                    ToastRequested?.Invoke($"Matériau '{targetLayer.MaterialName}' appliqué à la couche {targetLayer.Role}", ToastType.Success);
+                }
+                else
+                {
+                    // Annulé: restaurer l’état précédent s’il existe (pas de repli arbitraire)
+                    if (_lastNonLibraryState.TryGetValue(targetLayer, out var prev))
+                    {
+                        prev.RestoreTo(targetLayer);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur ouverture Bibliothèque: {ex.Message}");
+            }
+            finally
+            {
+                _isOpeningLibrary = false;
+            }
+        }
+
+        private void ApplyMaterialToLayer(Layer layer, MaterialItem mat)
+        {
+            if (mat == null) return;
+
+            // Important: conserver la famille Bibliotheque pour ne pas forcer de contraintes
+            layer.Family = MaterialFamily.Bibliotheque;
+            // Nom affiché
+            layer.MaterialName = mat.Name ?? layer.MaterialName;
+            // Module: utiliser la valeur choisie/calculée
+            double modulus = mat.ComputedModulus > 0 ? mat.ComputedModulus : (mat.Modulus_MPa > 0 ? mat.Modulus_MPa : layer.Modulus_MPa);
+            layer.Modulus_MPa = modulus;
+            // Coefficient de Poisson (utiliser tel quel si fourni)
+            if (mat.PoissonRatio > 0) layer.Poisson = mat.PoissonRatio;
+            // Épaisseur: respecter min/max si la fiche l’impose (facultatif)
+            if (mat.MinThickness_m.HasValue && layer.Thickness_m < mat.MinThickness_m.Value)
+                layer.Thickness_m = mat.MinThickness_m.Value;
+            if (mat.MaxThickness_m.HasValue && layer.Thickness_m > mat.MaxThickness_m.Value)
+                layer.Thickness_m = mat.MaxThickness_m.Value;
         }
 
         // + / - juste au-dessus de la Plateforme
@@ -249,10 +343,45 @@ namespace UI_ChausseeNeuve.ViewModels
             Renumber();
         }
 
+        private bool CanMoveUp(Layer? l)
+        {
+            if (l is null || l.Role == LayerRole.Plateforme) return false;
+            var idx = Layers.IndexOf(l);
+            return idx > 0;
+        }
+
+        private bool CanMoveDown(Layer? l)
+        {
+            if (l is null || l.Role == LayerRole.Plateforme) return false;
+            var idx = Layers.IndexOf(l);
+            if (idx < 0) return false;
+            var platIdx = Layers.ToList().FindIndex(x => x.Role == LayerRole.Plateforme);
+            int lastMovable = platIdx >= 0 ? platIdx - 1 : Layers.Count - 1;
+            return idx < lastMovable;
+        }
+
+        private void MoveLayerUp(Layer? l)
+        {
+            if (!CanMoveUp(l)) return;
+            var idx = Layers.IndexOf(l!);
+            Layers.Move(idx, idx - 1);
+            Renumber();
+        }
+
+        private void MoveLayerDown(Layer? l)
+        {
+            if (!CanMoveDown(l)) return;
+            var idx = Layers.IndexOf(l!);
+            Layers.Move(idx, idx + 1);
+            Renumber();
+        }
+
         private void Renumber()
         {
             for (int i = 0; i < Layers.Count; i++) Layers[i].Order = i + 1;
             OnPropertyChanged(nameof(Rows));
+            MoveLayerUpCommand?.RaiseCanExecuteChanged();
+            MoveLayerDownCommand?.RaiseCanExecuteChanged();
         }
 
         private void ValidateNow()
@@ -500,5 +629,33 @@ namespace UI_ChausseeNeuve.ViewModels
 
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
+
+    // Snapshot simple de l’état d’une couche
+    internal sealed class LayerState
+    {
+        public MaterialFamily Family { get; }
+        public string Name { get; }
+        public double Thickness { get; }
+        public double Modulus { get; }
+        public double Poisson { get; }
+
+        public LayerState(Layer layer)
+        {
+            Family = layer.Family;
+            Name = layer.MaterialName;
+            Thickness = layer.Thickness_m;
+            Modulus = layer.Modulus_MPa;
+            Poisson = layer.Poisson;
+        }
+
+        public void RestoreTo(Layer layer)
+        {
+            layer.Family = Family;
+            layer.MaterialName = Name;
+            layer.Thickness_m = Thickness;
+            layer.Modulus_MPa = Modulus;
+            layer.Poisson = Poisson;
+        }
     }
 }

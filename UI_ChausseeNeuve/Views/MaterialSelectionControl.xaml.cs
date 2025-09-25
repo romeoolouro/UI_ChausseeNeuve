@@ -1,6 +1,9 @@
 using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using UI_ChausseeNeuve.ViewModels;
 
@@ -104,6 +107,47 @@ namespace UI_ChausseeNeuve.Views
             if (vm.SelectedFrequence < max)
             {
                 vm.SelectedFrequence += 1;
+            }
+        }
+
+        /// <summary>
+        /// Gestionnaire pour le double-clic sur les cellules Sh
+        /// Ouvre la fenêtre d'explication de la dispersion d'épaisseur comme Alizé
+        /// </summary>
+        private void OnShCellDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ClickCount == 2 && sender is FrameworkElement element && element.DataContext is MaterialItem material)
+            {
+                if (material.ShStatus == "standard")
+                {
+                    // Ouvrir la fenêtre d'explication comme dans Alizé
+                    var mainWindow = Window.GetWindow(this);
+                    bool applied = Windows.ShDispersionExplanationWindow.ShowExplanation(material, mainWindow);
+                    
+                    if (applied)
+                    {
+                        // Optionnel : notification toast de succès
+                        Services.ToastService.ShowToast(
+                            $"Valeur Sh appliquée pour {material.Name}: {material.Sh:F3}m",
+                            ChausseeNeuve.Domain.Models.ToastType.Success);
+                    }
+                }
+                else
+                {
+                    // Si déjà rempli, proposer de réinitialiser ou de modifier
+                    var result = MessageBox.Show(
+                        $"La valeur Sh pour {material.Name} est déjà définie ({material.Sh:F3}m).\n\n" +
+                        "Voulez-vous ouvrir à nouveau l'explication de la dispersion d'épaisseur ?",
+                        "Valeur Sh déjà définie",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question);
+                    
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        var mainWindow = Window.GetWindow(this);
+                        Windows.ShDispersionExplanationWindow.ShowExplanation(material, mainWindow);
+                    }
+                }
             }
         }
     }

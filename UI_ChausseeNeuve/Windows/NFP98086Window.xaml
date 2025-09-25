@@ -33,7 +33,7 @@
                     <TextBlock Text="Norme NF P98-086 (annexe C informative)" Style="{StaticResource SectionTitleStyle}"/>
 
                     <!-- Zone 1: Classes de trafic -->
-                    <Border Background="Black" BorderBrush="Transparent" BorderThickness="0" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+                    <Border Background="{StaticResource NormTablesBg}" BorderBrush="Transparent" BorderThickness="0" CornerRadius="8" Padding="12" Margin="0,0,0,12">
                         <StackPanel>
                             <TextBlock Text="Classes de trafic" FontWeight="SemiBold" FontSize="16" Foreground="White"/>
                             <Grid HorizontalAlignment="Center" Margin="0,8,0,0" TextElement.Foreground="White">
@@ -120,11 +120,11 @@
                     </Border>
 
                     <!-- BANDE 1: Peri-urbain / rase campagne (pleine largeur) -->
-                    <Border Background="Black" BorderBrush="Transparent" BorderThickness="0" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+                    <Border Background="{StaticResource NormTablesBg}" BorderBrush="Transparent" BorderThickness="0" CornerRadius="8" Padding="12" Margin="0,0,0,12">
                         <StackPanel>
                             <TextBlock Text="Chaussees en milieu peri-urbain et rase campagne" FontWeight="SemiBold" FontSize="16" Foreground="White"/>
                             <!-- Bloc RISQUES (haut) -->
-                            <Border x:Name="RiskPeriBlock" Background="#111111" CornerRadius="8" BorderBrush="Transparent" BorderThickness="0" Padding="8" Margin="0,8,0,8">
+                            <Border x:Name="RiskPeriBlock" Background="{StaticResource NormTablesBg}" CornerRadius="8" BorderBrush="Transparent" BorderThickness="0" Padding="8" Margin="0,8,0,8">
                                 <Grid HorizontalAlignment="Center" TextElement.Foreground="White">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="320"/>
@@ -363,7 +363,7 @@
                     </Border>
 
                     <!-- BANDE 2: Milieu urbain + colonne d'aide a droite -->
-                    <Border Background="Black" BorderBrush="Transparent" BorderThickness="0" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+                    <Border Background="{StaticResource NormTablesBg}" BorderBrush="Transparent" BorderThickness="0" CornerRadius="8" Padding="12" Margin="0,0,0,12">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition/>
@@ -410,7 +410,7 @@
                              </StackPanel>
 
                              <!-- Bloc Risque milieu urbain -->
-                             <Border x:Name="RiskUrbainBlock" Grid.Column="0" Background="#111111" CornerRadius="8" BorderBrush="Transparent" BorderThickness="0" Padding="8" Margin="0,8,0,0">
+                             <Border x:Name="RiskUrbainBlock" Grid.Column="0" Background="{StaticResource NormTablesBg}" CornerRadius="8" BorderBrush="Transparent" BorderThickness="0" Padding="8" Margin="0,8,0,0">
                                 <Grid HorizontalAlignment="Center" TextElement.Foreground="White">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="220"/>

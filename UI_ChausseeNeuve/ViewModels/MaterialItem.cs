@@ -26,7 +26,34 @@ namespace UI_ChausseeNeuve.ViewModels
         public double? Sigma6 { get; set; } // Sigma6 (MPa)
         public double? InverseB { get; set; } // -1/b
         public double? Sl { get; set; } // Sl
-        public double? Sh { get; set; } // Sh (m)
+        private double? _sh; // Sh (m)
+        public double? Sh
+        {
+            get => _sh;
+            set
+            {
+                if (_sh != value)
+                {
+                    _sh = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(ShDisplay));
+                }
+            }
+        }
+        private string? _shStatus; // "standard" ou "filled"
+        public string? ShStatus
+        {
+            get => _shStatus;
+            set
+            {
+                if (_shStatus != value)
+                {
+                    _shStatus = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(ShDisplay));
+                }
+            }
+        }
         public double? Kc { get; set; } // Kc
         public double? Kd { get; set; } // Kd
 
@@ -78,6 +105,31 @@ namespace UI_ChausseeNeuve.ViewModels
 
         // Propriétés additionnelles génériques
         public Dictionary<string, object>? AdditionalProperties { get; set; }
+
+        /// <summary>
+        /// Propriété calculée pour l'affichage de Sh dans l'interface selon le statut
+        /// </summary>
+        public string ShDisplay => (ShStatus == "standard" || !Sh.HasValue) ? (ShStatus == "standard" ? "standard" : "/") : Sh.Value.ToString("0.###");
+
+        /// <summary>
+        /// Méthode pour remplir automatiquement la valeur Sh selon les règles d'Alizé
+        /// </summary>
+        public void FillShFromStandard()
+        {
+            if (ShStatus != "standard" || Category != "MB") return;
+
+            var lname = (Name ?? string.Empty).ToLowerInvariant();
+            
+            if (lname.Contains("eb-gb"))
+                Sh = 0.030; // Graves bitumes (m)
+            else if (lname.Contains("eme"))
+                Sh = 0.025; // EME (m)
+            else
+                Sh = 0.025; // BBSG, BBME, autres (m)
+
+            ShStatus = "filled";
+            NotifyPropertyChanged(nameof(ShDisplay));
+        }
 
         /// <summary>
         /// Crée un objet Layer à partir de ce MaterialItem
@@ -210,6 +262,14 @@ namespace UI_ChausseeNeuve.ViewModels
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        /// <summary>
+        /// Méthode publique pour déclencher OnPropertyChanged depuis l'extérieur
+        /// </summary>
+        public void NotifyPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

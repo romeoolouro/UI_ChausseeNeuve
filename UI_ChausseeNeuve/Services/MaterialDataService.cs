@@ -161,153 +161,266 @@ namespace UI_ChausseeNeuve.Services
             // Matériaux bitumineux NF P98-086 (valeurs exactes Alizé à T=15°C)
             return new List<MaterialItem>
             {
+                // ===== MB =====
                 // eb-bbsg1
                 new() { Statut = "system", Name = "eb-bbsg1", 
-                       Modulus_MPa = 5633, // Valeur exacte Alizé à 15°C
-                       PoissonRatio = 0.35, 
-                       Epsi0_10C = 100, InverseB = 5, SN = 5, 
-                       Sh = 0.25, Kc = 1.1, 
-                       EvsTemperature = new Dictionary<int, double>{
-                           {-10,14800}, {0,12000}, {10,7315}, {20,3685}, {30,1300}, {40,1000}
-                       }, 
-                       Category = "MB" },
+                       Modulus_MPa = 5500,
+                        PoissonRatio = 0.35, 
+                        Epsi0_10C = 100, InverseB = 5, SN = 0.25, 
+                        Sh = null, ShStatus = "standard", Kc = 1.1, 
+                        EvsTemperature = new Dictionary<int, double>{
+                            {-10,14800}, {0,12000}, {10,7315}, {20,3685}, {30,1300}, {40,1000}
+                        }, 
+                        Category = "MB" },
 
                 // eb-bbsg2
                 new() { Statut = "system", Name = "eb-bbsg2",
-                       Modulus_MPa = 7169, // Valeur exacte Alizé à 15°C
-                       PoissonRatio = 0.35,
-                       Epsi0_10C = 100, InverseB = 5, SN = 5,
-                       Sh = 0.25, Kc = 1.1,
-                       EvsTemperature = new Dictionary<int, double>{
-                           {-10,16000}, {0,13500}, {10,9310}, {20,4690}, {30,1800}, {40,1000}
-                       },
-                       Category = "MB" },
+                       Modulus_MPa = 7000,
+                        PoissonRatio = 0.35,
+                        Epsi0_10C = 100, InverseB = 5, SN = 0.25,
+                        Sh = null, ShStatus = "standard", Kc = 1.1,
+                        EvsTemperature = new Dictionary<int, double>{
+                            {-10,16000}, {0,13500}, {10,9310}, {20,4690}, {30,1800}, {40,1000}
+                        },
+                        Category = "MB" },
 
                 // eb-bbsg3
                 new() { Statut = "system", Name = "eb-bbsg3",
-                       Modulus_MPa = 7169, // Valeur exacte Alizé à 15°C
-                       PoissonRatio = 0.35,
-                       Epsi0_10C = 100, InverseB = 5, SN = 5,
-                       Sh = 0.25, Kc = 1.1,
-                       EvsTemperature = new Dictionary<int, double>{
-                           {-10,16000}, {0,13500}, {10,9310}, {20,4690}, {30,1800}, {40,1000}
-                       },
-                       Category = "MB" },
+                       Modulus_MPa = 7000,
+                        PoissonRatio = 0.35,
+                        Epsi0_10C = 100, InverseB = 5, SN = 0.25,
+                        Sh = null, ShStatus = "standard", Kc = 1.1,
+                        EvsTemperature = new Dictionary<int, double>{
+                            {-10,16000}, {0,13500}, {10,9310}, {20,4690}, {30,1800}, {40,1000}
+                        },
+                        Category = "MB" },
 
                 // eb-bbme1
-                new() { Statut = "system", Name = "eb-bbme1",
-                       Modulus_MPa = 8705, // Valeur exacte Alizé à 15°C
-                       PoissonRatio = 0.35,
-                       Epsi0_10C = 100, InverseB = 5, SN = 5,
-                       Sh = 0.25, Kc = 1.1,
-                       EvsTemperature = new Dictionary<int, double>{
-                           {-10,17300}, {0,15400}, {10,10970}, {20,6030}, {30,3000}, {40,1900}
-                       },
-                       Category = "MB" },
+                 new() { Statut = "system", Name = "eb-bbme1",
+                       Modulus_MPa = 9000,
+                        PoissonRatio = 0.35,
+                        Epsi0_10C = 100, InverseB = 5, SN = 0.25,
+                        Sh = null, ShStatus = "standard", Kc = 1.1,
+                        EvsTemperature = new Dictionary<int, double>{
+                           {-10,17300}, {0,15400}, {10,11970}, {20,6030}, {30,3000}, {40,1900}
+                        },
+                        Category = "MB" },
 
                 // eb-bbme2
-                new() { Statut = "system", Name = "eb-bbme2",
-                       Modulus_MPa = 11265, // Valeur exacte Alizé à 15°C
-                       PoissonRatio = 0.35,
-                       Epsi0_10C = 100, InverseB = 5, SN = 5,
-                       Sh = 0.25, Kc = 1.1,
-                       EvsTemperature = new Dictionary<int, double>{
-                           {-10,19500}, {0,18200}, {10,14630}, {20,7370}, {30,3800}, {40,2300}
-                       },
-                       Category = "MB" },
+                 new() { Statut = "system", Name = "eb-bbme2",
+                       Modulus_MPa = 11000,
+                        PoissonRatio = 0.35,
+                        Epsi0_10C = 100, InverseB = 5, SN = 0.25,
+                        Sh = null, ShStatus = "standard", Kc = 1.1,
+                        EvsTemperature = new Dictionary<int, double>{
+                            {-10,19500}, {0,18200}, {10,14630}, {20,7370}, {30,3800}, {40,2300}
+                        },
+                        Category = "MB" },
 
                 // eb-bbme3
-                new() { Statut = "system", Name = "eb-bbme3",
-                       Modulus_MPa = 11265, // Valeur exacte Alizé à 15°C
-                       PoissonRatio = 0.35,
-                       Epsi0_10C = 100, InverseB = 5, SN = 5,
-                       Sh = 0.25, Kc = 1.1,
-                       EvsTemperature = new Dictionary<int, double>{
-                           {-10,19500}, {0,18200}, {10,14630}, {20,7370}, {30,3800}, {40,2300}
-                       },
-                       Category = "MB" },
+                 new() { Statut = "system", Name = "eb-bbme3",
+                       Modulus_MPa = 11000,
+                        PoissonRatio = 0.35,
+                        Epsi0_10C = 100, InverseB = 5, SN = 0.25,
+                        Sh = null, ShStatus = "standard", Kc = 1.1,
+                        EvsTemperature = new Dictionary<int, double>{
+                            {-10,19500}, {0,18200}, {10,14630}, {20,7370}, {30,3800}, {40,2300}
+                        },
+                        Category = "MB" },
 
-                // bbtm
-                new() { Statut = "system", Name = "bbtm",
-                       Modulus_MPa = 5633, // Valeur exacte Alizé à 15°C
-                       PoissonRatio = 0.35,
-                       EvsTemperature = new Dictionary<int, double>{
+                // bbm
+                new() { Statut = "system", Name = "bbm",
+                       Modulus_MPa = 5500, PoissonRatio = 0.35,
+                       SN = 0.25, Sh = null, ShStatus = "standard", Kc = 1.1,
+                       EvsTemperature = new Dictionary<int, double>
+                       {
                            {-10,14800}, {0,12000}, {10,7315}, {20,3685}, {30,1300}, {40,1000}
                        },
                        Category = "MB" },
-
-                // bbdr
-                new() { Statut = "system", Name = "bbdr",
-                       Modulus_MPa = 3072, // Valeur exacte Alizé à 15°C
-                       PoissonRatio = 0.35,
-                       EvsTemperature = new Dictionary<int, double>{
+                // bbtm
+                new() { Statut = "system", Name = "bbtm",
+                       Modulus_MPa = 3000, PoissonRatio = 0.35,
+                       SN = 0.25, Sh = null, ShStatus = "standard", Kc = 1.1,
+                       EvsTemperature = new Dictionary<int, double>
+                       {
                            {-10,8500}, {0,7000}, {10,4200}, {20,1800}, {30,1000}, {40,800}
                        },
                        Category = "MB" },
 
-                // acr
+                 // bbdr
+                new() { Statut = "system", Name = "bbdr",
+                       Modulus_MPa = 3000,
+                        PoissonRatio = 0.35,
+                        SN = 0.25, Sh = null, ShStatus = "standard", Kc = 1.1,
+                        EvsTemperature = new Dictionary<int, double>
+                        {
+                            {-10,8500}, {0,7000}, {10,4200}, {20,1800}, {30,1000}, {40,800}
+                        },
+                       Category = "MB" },
+
+                 // acr
                 new() { Statut = "system", Name = "acr",
-                       Modulus_MPa = 5633, // Valeur exacte Alizé à 15°C
-                       PoissonRatio = 0.35,
-                       EvsTemperature = new Dictionary<int, double>{
-                           {-10,14800}, {0,12000}, {10,7315}, {20,3685}, {30,1300}, {40,1000}
-                       },
+                       Modulus_MPa = 5500,
+                        PoissonRatio = 0.35,
+                        SN = 0.25, Sh = null, ShStatus = "standard", Kc = 1.1,
+                        EvsTemperature = new Dictionary<int, double>
+                        {
+                            {-10,14800}, {0,12000}, {10,7315}, {20,3685}, {30,1300}, {40,1000}
+                        },
                        Category = "MB" },
 
-                // eb-gb2
+                 // eb-gb2
                 new() { Statut = "system", Name = "eb-gb2",
-                       Modulus_MPa = 9217, // Valeur exacte Alizé à 15°C
-                       PoissonRatio = 0.35,
-                       Epsi0_10C = 80, InverseB = 5, SN = 5,
-                       Sh = 0.3, Kc = 1.3,
-                       EvsTemperature = new Dictionary<int, double>{
-                           {-10,22800}, {0,18300}, {10,11880}, {20,6120}, {30,2700}, {40,1000}
-                       },
-                       Category = "MB" },
+                       Modulus_MPa = 9000,
+                        PoissonRatio = 0.35,
+                        Epsi0_10C = 80, InverseB = 5, SN = 0.3,
+                        Sh = null, ShStatus = "standard", Kc = 1.3,
+                        EvsTemperature = new Dictionary<int, double>
+                        {
+                            {-10,22800}, {0,18300}, {10,11880}, {20,6120}, {30,2700}, {40,1000}
+                        },
+                        Category = "MB" },
 
-                // eb-gb3
+                 // eb-gb3
                 new() { Statut = "system", Name = "eb-gb3",
-                       Modulus_MPa = 9217, // Valeur exacte Alizé à 15°C
-                       PoissonRatio = 0.35,
-                       Epsi0_10C = 90, InverseB = 5, SN = 5,
-                       Sh = 0.3, Kc = 1.3,
-                       EvsTemperature = new Dictionary<int, double>{
-                           {-10,22800}, {0,18300}, {10,11880}, {20,6120}, {30,2700}, {40,1000}
-                       },
-                       Category = "MB" },
+                       Modulus_MPa = 9000,
+                        PoissonRatio = 0.35,
+                        Epsi0_10C = 90, InverseB = 5, SN = 0.3,
+                        Sh = null, ShStatus = "standard", Kc = 1.3,
+                        EvsTemperature = new Dictionary<int, double>
+                        {
+                           {-10,22800}, {0,18300}, {10,13800}, {20,6120}, {30,2700}, {40,1000}
+                        },
+                        Category = "MB" },
 
-                // eb-gb4
+                 // eb-gb4
                 new() { Statut = "system", Name = "eb-gb4",
-                       Modulus_MPa = 11265, // Valeur exacte Alizé à 15°C
-                       PoissonRatio = 0.35,
-                       Epsi0_10C = 100, InverseB = 5, SN = 5,
-                       Sh = 0.3, Kc = 1.3,
-                       EvsTemperature = new Dictionary<int, double>{
-                           {-10,25000}, {0,20000}, {10,14300}, {20,7700}, {30,3500}, {40,1200}
-                       },
-                       Category = "MB" },
+                       Modulus_MPa = 11000,
+                        PoissonRatio = 0.35,
+                        Epsi0_10C = 100, InverseB = 5, SN = 0.3,
+                        Sh = null, ShStatus = "standard", Kc = 1.3,
+                        EvsTemperature = new Dictionary<int, double>
+                        {
+                           {-10,25300}, {0,20000}, {10,14300}, {20,7700}, {30,3500}, {40,1200}
+                        },
+                        Category = "MB" },
 
-                // eb-eme1
+                 // eb-eme1
                 new() { Statut = "system", Name = "eb-eme1",
-                       Modulus_MPa = 14338, // Valeur exacte Alizé à 15°C
-                       PoissonRatio = 0.35,
-                       Epsi0_10C = 100, InverseB = 5, SN = 5,
-                       Sh = 0.25, Kc = 1.0,
-                       EvsTemperature = new Dictionary<int, double>{
-                           {-10,30000}, {0,24000}, {10,16940}, {20,11060}, {30,6000}, {40,3000}
-                       },
-                       Category = "MB" },
+                       Modulus_MPa = 14000,
+                        PoissonRatio = 0.35,
+                        Epsi0_10C = 100, InverseB = 5, SN = 0.25,
+                        Sh = null, ShStatus = "standard", Kc = 1.0,
+                        EvsTemperature = new Dictionary<int, double>
+                        {
+                            {-10,30000}, {0,24000}, {10,16940}, {20,11060}, {30,6000}, {40,3000}
+                        },
+                        Category = "MB" },
 
-                // eb-eme2
+                 // eb-eme2
                 new() { Statut = "system", Name = "eb-eme2",
-                       Modulus_MPa = 14338, // Valeur exacte Alizé à 15°C
-                       PoissonRatio = 0.35,
-                       Epsi0_10C = 130, InverseB = 5, SN = 5,
-                       Sh = 0.25, Kc = 1.0,
-                       EvsTemperature = new Dictionary<int, double>{
-                           {-10,30000}, {0,24000}, {10,16940}, {20,11060}, {30,6000}, {40,3000}
-                       },
-                       Category = "MB" }
+                       Modulus_MPa = 14000,
+                        PoissonRatio = 0.35,
+                        Epsi0_10C = 130, InverseB = 5, SN = 0.25,
+                        Sh = null, ShStatus = "standard", Kc = 1.0,
+                        EvsTemperature = new Dictionary<int, double>
+                        {
+                            {-10,30000}, {0,24000}, {10,16940}, {20,11060}, {30,6000}, {40,3000}
+                        },
+                        Category = "MB" },
+
+                // ===== MTLH (exemples par défaut) =====
+                new() { Statut = "system", Name = "gc-t3", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                       Modulus_MPa = 23000, PoissonRatio = 0.25, Sigma6 = 0.75, InverseB = 15, SN = 1, Sh = 0.03, Kc = 1.4, Kd = 1 },
+                new() { Statut = "system", Name = "gc-t4", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                       Modulus_MPa = 25000, PoissonRatio = 0.25, Sigma6 = 1.2, InverseB = 15, SN = 1, Sh = 0.03, Kc = 1.4, Kd = 0.8 },
+                new() { Statut = "system", Name = "glhr-t3", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                       Modulus_MPa = 23000, PoissonRatio = 0.25, Sigma6 = 0.75, InverseB = 15, SN = 1, Sh = 0.03, Kc = 1.4, Kd = 1 },
+                new() { Statut = "system", Name = "gch-t3", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                       Modulus_MPa = 23000, PoissonRatio = 0.25, Sigma6 = 0.75, InverseB = 15, SN = 1, Sh = 0.03, Kc = 1.5, Kd = 1 },
+                new() { Statut = "system", Name = "glg-t2", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                       Modulus_MPa = 15000, PoissonRatio = 0.25, Sigma6 = 0.5, InverseB = 12.5, SN = 1, Sh = 0.03, Kc = 1.5, Kd = 1 },
+                new() { Statut = "system", Name = "glp-t2", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                       Modulus_MPa = 15000, PoissonRatio = 0.25, Sigma6 = 0.5, InverseB = 12.5, SN = 1, Sh = 0.03, Kc = 1.5, Kd = 1 },
+                new() { Statut = "system", Name = "glp-t3", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                       Modulus_MPa = 20000, PoissonRatio = 0.25, Sigma6 = 0.7, InverseB = 13.7, SN = 1, Sh = 0.03, Kc = 1.5, Kd = 1 },
+                new() { Statut = "system", Name = "gcv-t3", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                       Modulus_MPa = 20000, PoissonRatio = 0.25, Sigma6 = 1.4, InverseB = 16, SN = 1, Sh = 0.03, Kc = 1.3, Kd = 1 },
+                new() { Statut = "system", Name = "bcr-t5", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                       Modulus_MPa = 28000, PoissonRatio = 0.25, Sigma6 = 1.85, InverseB = 15, SN = 1, Sh = 0.03, Kc = 1.5, Kd = 0.8 },
+                // sables/sols traités et pouzzolanes
+                new() { Statut = "system", Name = "sl-t1", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                       Modulus_MPa = 3700, PoissonRatio = 0.25, Sigma6 = 0.175, InverseB = 10, SN = 0.8, Sh = 0.025, Kc = 1.5, Kd = 1 },
+                new() { Statut = "system", Name = "sl-t2", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                       Modulus_MPa = 8500, PoissonRatio = 0.25, Sigma6 = 0.40, InverseB = 12, SN = 0.8, Sh = 0.025, Kc = 1.5, Kd = 1 },
+                new() { Statut = "system", Name = "sl-t3", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                       Modulus_MPa = 12500, PoissonRatio = 0.25, Sigma6 = 0.63, InverseB = 12, SN = 0.8, Sh = 0.025, Kc = 1.5, Kd = 1 },
+                new() { Statut = "system", Name = "spch-t1", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                       Modulus_MPa = 3700, PoissonRatio = 0.25, Sigma6 = 0.175, InverseB = 10, SN = 0.8, Sh = 0.025, Kc = 1.5, Kd = 1 },
+                new() { Statut = "system", Name = "spch-t2", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                       Modulus_MPa = 8500, PoissonRatio = 0.25, Sigma6 = 0.40, InverseB = 12, SN = 0.8, Sh = 0.025, Kc = 1.5, Kd = 1 },
+                new() { Statut = "system", Name = "spch-t3", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                       Modulus_MPa = 12500, PoissonRatio = 0.25, Sigma6 = 0.63, InverseB = 12, SN = 0.8, Sh = 0.025, Kc = 1.5, Kd = 1 },
+                new() { Statut = "system", Name = "sc-t1", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                       Modulus_MPa = 5000, PoissonRatio = 0.25, Sigma6 = 0.21, InverseB = 12, SN = 0.8, Sh = 0.025, Kc = 1.5, Kd = 1 },
+                new() { Statut = "system", Name = "sc-t2", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                       Modulus_MPa = 12000, PoissonRatio = 0.25, Sigma6 = 0.50, InverseB = 12, SN = 0.8, Sh = 0.025, Kc = 1.5, Kd = 1 },
+                new() { Statut = "system", Name = "sc-t3", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                       Modulus_MPa = 17200, PoissonRatio = 0.25, Sigma6 = 0.75, InverseB = 12, SN = 0.8, Sh = 0.025, Kc = 1.5, Kd = 1 },
+                new() { Statut = "system", Name = "scv-t1", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                       Modulus_MPa = 5000, PoissonRatio = 0.25, Sigma6 = 0.21, InverseB = 12, SN = 0.8, Sh = 0.025, Kc = 1.5, Kd = 1 },
+                 new() { Statut = "system", Name = "slhr-t1", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                        Modulus_MPa = 5000, PoissonRatio = 0.25, Sigma6 = 0.21, InverseB = 12, SN = 0.8, Sh = 0.025, Kc = 1.5, Kd = 1 },
+                 new() { Statut = "system", Name = "slhr-t2", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                        Modulus_MPa = 12000, PoissonRatio = 0.25, Sigma6 = 0.50, InverseB = 12, SN = 0.8, Sh = 0.025, Kc = 1.5, Kd = 1 },
+                 new() { Statut = "system", Name = "slhr-t3", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                        Modulus_MPa = 17200, PoissonRatio = 0.25, Sigma6 = 0.75, InverseB = 12, SN = 0.8, Sh = 0.025, Kc = 1.5, Kd = 1 },
+                 new() { Statut = "system", Name = "scv-t2", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                        Modulus_MPa = 12000, PoissonRatio = 0.25, Sigma6 = 0.50, InverseB = 12, SN = 0.8, Sh = 0.025, Kc = 1.5, Kd = 1 },
+                 new() { Statut = "system", Name = "scv-t3", Category = "MTLH", MaterialFamily = MaterialFamily.MTLH,
+                        Modulus_MPa = 17200, PoissonRatio = 0.25, Sigma6 = 0.75, InverseB = 12, SN = 0.8, Sh = 0.025, Kc = 1.5, Kd = 1 },
+
+                // ===== BETON (par défaut) =====
+                new() { Statut = "system", Name = "bc5", Category = "Beton", MaterialFamily = MaterialFamily.BetonCiment,
+                       Modulus_MPa = 35000, PoissonRatio = 0.25, Sigma6 = 2.15, InverseB = 16, SN = 1, Kc = 1.5 },
+                new() { Statut = "system", Name = "bc4", Category = "Beton", MaterialFamily = MaterialFamily.BetonCiment,
+                       Modulus_MPa = 24000, PoissonRatio = 0.25, Sigma6 = 1.95, InverseB = 15, SN = 1, Kc = 1.5 },
+                new() { Statut = "system", Name = "bc3", Category = "Beton", MaterialFamily = MaterialFamily.BetonCiment,
+                       Modulus_MPa = 24000, PoissonRatio = 0.25, Sigma6 = 1.63, InverseB = 15, SN = 1, Kc = 1.5 },
+                new() { Statut = "system", Name = "bc2", Category = "Beton", MaterialFamily = MaterialFamily.BetonCiment,
+                       Modulus_MPa = 20000, PoissonRatio = 0.25, Sigma6 = 1.37, InverseB = 14, SN = 1, Kc = 1.5 },
+
+                // ===== SOL & GNT (par défaut) =====
+                new() { Statut = "system", Name = "gnt1", Category = "Sol_GNT", MaterialFamily = MaterialFamily.GNT,
+                       Modulus_MPa = 600, PoissonRatio = 0.35,
+                       AdditionalProperties = new Dictionary<string, object>{{"A_faible","non défini"},{"A_fort","non défini"},{"pente_b","non défini"}} },
+                new() { Statut = "system", Name = "gnt2", Category = "Sol_GNT", MaterialFamily = MaterialFamily.GNT,
+                       Modulus_MPa = 400, PoissonRatio = 0.35,
+                       AdditionalProperties = new Dictionary<string, object>{{"A_faible","non défini"},{"A_fort","non défini"},{"pente_b","non défini"}} },
+                new() { Statut = "system", Name = "gnt3", Category = "Sol_GNT", MaterialFamily = MaterialFamily.GNT,
+                       Modulus_MPa = 200, PoissonRatio = 0.35,
+                       AdditionalProperties = new Dictionary<string, object>{{"A_faible","non défini"},{"A_fort","non défini"},{"pente_b","non défini"}} },
+                new() { Statut = "system", Name = "gnt-be", Category = "Sol_GNT", MaterialFamily = MaterialFamily.GNT,
+                       Modulus_MPa = 360, PoissonRatio = 0.35,
+                       AdditionalProperties = new Dictionary<string, object>{{"A_faible","non défini"},{"A_fort",12000},{"pente_b",-0.222}} },
+                new() { Statut = "system", Name = "gnt-inv", Category = "Sol_GNT", MaterialFamily = MaterialFamily.GNT,
+                       Modulus_MPa = 480, PoissonRatio = 0.35,
+                       AdditionalProperties = new Dictionary<string, object>{{"A_faible","non défini"},{"A_fort",14400},{"pente_b",-0.222}} },
+                new() { Statut = "system", Name = "pf1", Category = "Sol_GNT", MaterialFamily = MaterialFamily.GNT,
+                       Modulus_MPa = 20, PoissonRatio = 0.35,
+                       AdditionalProperties = new Dictionary<string, object>{{"A_faible",16000},{"A_fort",12000},{"pente_b",-0.222}} },
+                new() { Statut = "system", Name = "pf2", Category = "Sol_GNT", MaterialFamily = MaterialFamily.GNT,
+                       Modulus_MPa = 50, PoissonRatio = 0.35,
+                       AdditionalProperties = new Dictionary<string, object>{{"A_faible",16000},{"A_fort",12000},{"pente_b",-0.222}} },
+                new() { Statut = "system", Name = "pf2qs", Category = "Sol_GNT", MaterialFamily = MaterialFamily.GNT,
+                       Modulus_MPa = 80, PoissonRatio = 0.35,
+                       AdditionalProperties = new Dictionary<string, object>{{"A_faible",16000},{"A_fort",12000},{"pente_b",-0.222}} },
+                new() { Statut = "system", Name = "pf3", Category = "Sol_GNT", MaterialFamily = MaterialFamily.GNT,
+                       Modulus_MPa = 120, PoissonRatio = 0.35,
+                       AdditionalProperties = new Dictionary<string, object>{{"A_faible",16000},{"A_fort",12000},{"pente_b",-0.222}} },
+                new() { Statut = "system", Name = "pf4", Category = "Sol_GNT", MaterialFamily = MaterialFamily.GNT,
+                       Modulus_MPa = 200, PoissonRatio = 0.35,
+                       AdditionalProperties = new Dictionary<string, object>{{"A_faible",16000},{"A_fort",12000},{"pente_b",-0.222}} },
             };
         }
 
@@ -463,6 +576,84 @@ namespace UI_ChausseeNeuve.Services
             }
 
             return m.Modulus_MPa; // Fallback
+        }
+
+        /// <summary>
+        /// Remplit automatiquement les valeurs Sh marquées comme "standard" selon les règles d'Alizé
+        /// </summary>
+        public void FillStandardShValues(IEnumerable<MaterialItem> materials)
+        {
+            foreach (var material in materials.Where(m => m.ShStatus == "standard" && m.Category == "MB"))
+            {
+                material.FillShFromStandard();
+            }
+        }
+
+        /// <summary>
+        /// Applique les corrections spécifiques pour la bibliothèque NFP98-086
+        /// Complète les valeurs manquantes selon les règles de la norme
+        /// </summary>
+        private void ApplyNFP98Corrections(List<MaterialItem> materials, string libraryName)
+        {
+            if (materials == null || materials.Count == 0) return;
+            if (!string.Equals(libraryName, "NFP98_086_2019", StringComparison.OrdinalIgnoreCase)) return;
+
+            foreach (var m in materials)
+            {
+                try
+                {
+                    if (!string.Equals(m.Category, "MB", StringComparison.OrdinalIgnoreCase)) continue;
+
+                    var lname = (m.Name ?? string.Empty).ToLowerInvariant();
+                    bool isBBMFamily = lname is "bbm" or "bbtm" or "bbdr" or "acr"; // valeurs non renseignées pour Epsi0/SN/-1b
+
+                    // SN et -1/b par défaut selon le tableau de référence
+                    if (!isBBMFamily)
+                    {
+                        // Pour les matériaux système eb-*, les valeurs sont déjà définies dans GetNFP98Defaults()
+                        // Ne pas les écraser ici
+                        if (m.SN == null)
+                        {
+                            if (lname.Contains("eb-gb"))
+                                m.SN = 0.3; // Graves bitumes
+                            else
+                                m.SN = 0.25; // BBSG, BBME, EME
+                        }
+                        
+                        if (m.InverseB == null)
+                            m.InverseB = 5; // Valeur standard pour tous les enrobés système
+                    }
+
+                    // Epsi0(10°C): selon table si non renseignée
+                    if (m.Epsi0_10C == null)
+                    {
+                        if (lname.StartsWith("eb-gb2")) m.Epsi0_10C = 80;
+                        else if (lname.StartsWith("eb-gb3")) m.Epsi0_10C = 90;
+                        else if (lname.StartsWith("eb-gb4")) m.Epsi0_10C = 100;
+                        else if (lname.StartsWith("eb-eme2")) m.Epsi0_10C = 130;
+                        else if (lname.StartsWith("eb-eme1") || lname.StartsWith("eb-bbsg") || lname.StartsWith("eb-bbme")) m.Epsi0_10C = 100;
+                        // sinon laisser null pour afficher "/"
+                    }
+
+                    // Sh/Kc selon le tableau de référence
+                    if (lname.Contains("eb-gb"))
+                    {
+                        if (m.Sh == null) m.Sh = 0.30;
+                        if (m.Kc == null) m.Kc = 1.3;
+                    }
+                    else if (lname.Contains("eme"))
+                    {
+                        if (m.Sh == null) m.Sh = 0.25;
+                        if (m.Kc == null) m.Kc = 1.0;
+                    }
+                    else
+                    {
+                        if (m.Sh == null) m.Sh = 0.25;
+                        if (m.Kc == null) m.Kc = 1.1;
+                    }
+                }
+                catch { }
+            }
         }
     }
 

@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace ChausseeNeuve.Domain.Models;
 
 public class Project
@@ -11,4 +13,7 @@ public class Project
 
     // Structure de chaussée NF P98-086
     public PavementStructure PavementStructure { get; set; } = new PavementStructure();
+
+    // Valeurs admissibles calculées (persistantes, DTO)
+    public ObservableCollection<ValeurAdmissibleCoucheDto> ValeursAdmissibles { get; set; } = new ObservableCollection<ValeurAdmissibleCoucheDto>();
 }

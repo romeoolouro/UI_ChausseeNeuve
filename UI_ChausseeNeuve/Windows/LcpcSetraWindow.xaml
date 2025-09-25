@@ -55,7 +55,7 @@
                                Margin="0,0,0,20" />
 
                     <!-- Zone 1: Classification du Trafic -->
-                    <Border Background="Black" BorderBrush="Transparent" BorderThickness="0" CornerRadius="8" Padding="15" Margin="0,0,0,15" TextElement.Foreground="#ECECEC">
+                    <Border Background="{StaticResource NormTablesBg}" BorderBrush="Transparent" BorderThickness="0" CornerRadius="8" Padding="15" Margin="0,0,0,15" TextElement.Foreground="#ECECEC">
                         <StackPanel>
                             <TextBlock Text="Classification du Trafic" FontWeight="Bold" FontSize="14" Foreground="White" Margin="0,0,0,10" />
                             <Grid HorizontalAlignment="Center">
@@ -116,7 +116,7 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Zone 2: CAM moyens et forts -->
-                        <Border x:Name="CamBlockMoyensForts" Grid.Column="0" Background="Black" BorderBrush="Transparent" BorderThickness="0" CornerRadius="8" Padding="15" Margin="0,0,8,15" TextElement.Foreground="#ECECEC">
+                        <Border x:Name="CamBlockMoyensForts" Grid.Column="0" Background="{StaticResource NormTablesBg}" BorderBrush="Transparent" BorderThickness="0" CornerRadius="8" Padding="15" Margin="0,0,8,15" TextElement.Foreground="#ECECEC">
                             <StackPanel>
                                 <TextBlock Text="CAM, trafics moyens et forts" FontWeight="Bold" FontSize="12" Foreground="White" Margin="0,0,0,10" />
                                 <Grid HorizontalAlignment="Center">
@@ -161,7 +161,7 @@
                         </Border>
 
                         <!-- Zone 3: CAM faibles trafics -->
-                        <Border x:Name="CamBlockFaibles" Grid.Column="1" Background="Black" BorderBrush="Transparent" BorderThickness="0" CornerRadius="8" Padding="15" Margin="8,0,0,15" TextElement.Foreground="#ECECEC">
+                        <Border x:Name="CamBlockFaibles" Grid.Column="1" Background="{StaticResource NormTablesBg}" BorderBrush="Transparent" BorderThickness="0" CornerRadius="8" Padding="15" Margin="8,0,0,15" TextElement.Foreground="#ECECEC">
                             <StackPanel>
                                 <TextBlock Text="CAM, faibles trafics" FontWeight="Bold" FontSize="12" Foreground="White" Margin="0,0,0,10" />
                                 <Grid HorizontalAlignment="Center">
@@ -201,7 +201,7 @@
                     </Grid>
 
                     <!-- Zone 4: Valeurs du risque en % (nouvelle) -->
-                    <Border x:Name="RiskBlock" Background="Black" BorderBrush="Transparent" BorderThickness="0" CornerRadius="8" Padding="15" Margin="0,0,0,15" TextElement.Foreground="#ECECEC">
+                    <Border x:Name="RiskBlock" Background="{StaticResource NormTablesBg}" BorderBrush="Transparent" BorderThickness="0" CornerRadius="8" Padding="15" Margin="0,0,0,15" TextElement.Foreground="#ECECEC">
                         <StackPanel>
                             <TextBlock Text="Valeurs du risque en %" FontWeight="Bold" FontSize="12" Foreground="White" Margin="0,0,0,10" />
                             <Grid HorizontalAlignment="Center">

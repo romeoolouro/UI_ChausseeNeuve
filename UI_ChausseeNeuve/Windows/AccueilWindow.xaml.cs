@@ -1,12 +1,17 @@
 using System.Windows;
 using System.Windows.Controls;
 using UI_ChausseeNeuve.Views;
+using UI_ChausseeNeuve.ViewModels;
 
 namespace UI_ChausseeNeuve.Windows
 {
     public partial class AccueilWindow : Window
     {
         public string HeaderTitle { get; set; } = "Projet";
+
+        // Instance persistante pour la navigation
+        private ValeursAdmissiblesViewModel _valeursAdmissiblesViewModel = new ValeursAdmissiblesViewModel();
+        private ValeursAdmissiblesView _valeursAdmissiblesView;
 
         public AccueilWindow()
         {
@@ -18,6 +23,10 @@ namespace UI_ChausseeNeuve.Windows
             {
                 NavBar.SectionSelected += OnSectionSelected;
             }
+
+            // Crée la vue et assigne le ViewModel unique
+            _valeursAdmissiblesView = new ValeursAdmissiblesView();
+            _valeursAdmissiblesView.DataContext = _valeursAdmissiblesViewModel;
 
             ShowHome();
         }
@@ -43,7 +52,8 @@ namespace UI_ChausseeNeuve.Windows
                     CenterLogo.Visibility = Visibility.Collapsed;
                     break;
                 case "valeurs":
-                    MainContent.Content = new ValeursAdmissiblesView();
+                    _valeursAdmissiblesViewModel.EnsureSyncedWithStructure();
+                    MainContent.Content = _valeursAdmissiblesView;
                     CenterLogo.Visibility = Visibility.Collapsed;
                     break;
                 case "resultats":

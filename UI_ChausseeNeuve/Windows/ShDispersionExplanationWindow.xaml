@@ -1,0 +1,251 @@
+<Window x:Class="UI_ChausseeNeuve.Windows.ShDispersionExplanationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Dispersion d'epaisseur standard des materiaux bitumineux"
+        Height="800" Width="1000" MinHeight="700" MinWidth="900"
+        Background="{StaticResource PrimaryBg}"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        FontFamily="Segoe UI">
+
+    <Window.Resources>
+        <!-- Style pour le titre -->
+        <Style x:Key="TitleStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,10,0,20"/>
+        </Style>
+
+        <!-- Couleurs locales (bleu fourni) -->
+        <SolidColorBrush x:Key="ShAccentBlue" Color="#1E3342"/>
+        <SolidColorBrush x:Key="ShLightBlueBg" Color="#E9F0F4"/>
+
+        <!-- Style pour les etiquettes du graphique -->
+        <Style x:Key="GraphLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{StaticResource TextDark}"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+
+        <!-- Style pour les valeurs du graphique -->
+        <Style x:Key="GraphValueStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{StaticResource ShAccentBlue}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <!-- Style pour les explications -->
+        <Style x:Key="ExplanationStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="LineHeight" Value="18"/>
+        </Style>
+        
+        <!-- Boutons arrondis jolis pour cette fenetre -->
+        <Style x:Key="RoundedPrimaryButton" TargetType="Button" BasedOn="{StaticResource PrimaryActionButtonStyle}">
+            <Setter Property="MinWidth" Value="140"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Background" Value="{StaticResource ShAccentBlue}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource ShAccentBlue}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="18" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.8"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="RoundedSecondaryButton" TargetType="Button" BasedOn="{StaticResource SecondaryActionButtonStyle}">
+            <Setter Property="MinWidth" Value="120"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="18" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#22FFFFFF"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource TextWhite}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#33FFFFFF"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource ShAccentBlue}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="CalcButtonStyle" TargetType="Button" BasedOn="{StaticResource RoundedPrimaryButton}">
+            <Setter Property="MinWidth" Value="150"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="12,6"/>
+        </Style>
+    </Window.Resources>
+
+    <Border Style="{StaticResource SectionCardStyle}" Margin="10">
+        <StackPanel>
+            <!-- Titre -->
+            <TextBlock Text="Dispersion d'epaisseur standard des materiaux bitumineux" 
+                       Style="{StaticResource TitleStyle}"/>
+
+            <!-- Zone graphique -->
+            <Border Background="#FFFDFDFD" BorderBrush="{StaticResource CardBorder}" BorderThickness="1" CornerRadius="6"
+                    Height="260" Margin="20,0,20,16">
+                <Grid Margin="18">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="26"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="0"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="60"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="40"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Titre Y -->
+                    <TextBlock Text="Ecart type" Grid.Row="0" Grid.Column="0" 
+                               Style="{StaticResource GraphLabelStyle}" 
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <TextBlock Text="d'epaisseur Sh" Grid.Row="0" Grid.Column="1" 
+                               Style="{StaticResource GraphLabelStyle}" 
+                               HorizontalAlignment="Left" VerticalAlignment="Center"/>
+
+                    <!-- Zone de dessin du graphique -->
+                    <Canvas Grid.Row="1" Grid.Column="1" Background="{StaticResource ShLightBlueBg}" x:Name="GraphCanvas"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Canvas.RenderTransform>
+                            <ScaleTransform ScaleX="0.82" ScaleY="0.82"/>
+                        </Canvas.RenderTransform>
+                        <!-- Arriere-plan bleute uniforme -->
+                        <Rectangle Canvas.Left="0" Canvas.Top="-10" Width="420" Height="220" Fill="{StaticResource ShLightBlueBg}"/>
+
+                        <!-- Axes avec ticks (ordonnee prolongee) -->
+                        <Line X1="40" Y1="-10" X2="40" Y2="200" Stroke="#333" StrokeThickness="2"/>
+                        <Line X1="40" Y1="200" X2="400" Y2="200" Stroke="#333" StrokeThickness="2"/>
+
+                        <!-- Graduations Y -->
+                        <Line X1="36" Y1="0" X2="44" Y2="0" Stroke="#333" StrokeThickness="1"/>
+                        <TextBlock Text="0.025m" Canvas.Left="0" Canvas.Top="-18" Style="{StaticResource GraphValueStyle}"/>
+                        
+                        <Line X1="36" Y1="100" X2="44" Y2="100" Stroke="#333" StrokeThickness="1"/>
+                        <TextBlock Text="0.01m" Canvas.Left="8" Canvas.Top="90" Style="{StaticResource GraphValueStyle}"/>
+                        
+                        <!-- Graduations X -->
+                        <Line X1="140" Y1="196" X2="140" Y2="204" Stroke="#333" StrokeThickness="1"/>
+                        <TextBlock Text="0.10m" Canvas.Left="124" Canvas.Top="206" Style="{StaticResource GraphValueStyle}"/>
+                        
+                        <Line X1="240" Y1="196" X2="240" Y2="204" Stroke="#333" StrokeThickness="1"/>
+                        <TextBlock Text="0.15m" Canvas.Left="224" Canvas.Top="206" Style="{StaticResource GraphValueStyle}"/>
+
+                        <!-- Courbe piecewise -->
+                        <Path Stroke="#E01111" StrokeThickness="3" Fill="Transparent">
+                            <Path.Data>
+                                <PathGeometry>
+                                    <!-- Echelle: (x,y) offsets axes (40,200). Y=100 => 0.01m; Y=0 => 0.025m; X=140 => 0.10m; X=240 => 0.15m -->
+                                    <PathFigure StartPoint="40,100">
+                                        <LineSegment Point="140,100"/>
+                                        <LineSegment Point="240,0"/>
+                                        <LineSegment Point="400,0"/>
+                                    </PathFigure>
+                                </PathGeometry>
+                            </Path.Data>
+                        </Path>
+
+                        <!-- Point et ligne verticale a 0.15m -->
+                        <Line X1="240" Y1="0" X2="240" Y2="200" Stroke="#999" StrokeThickness="1" StrokeDashArray="3,4"/>
+                        <Ellipse Canvas.Left="235" Canvas.Top="-5" Width="10" Height="10" Fill="#E01111" Stroke="#8B0000" StrokeThickness="2"/>
+
+                        <!-- Legendes -->
+                        <TextBlock Text="Epaisseur structurelle de materiau bitumineux" Canvas.Left="72" Canvas.Top="222" Style="{StaticResource GraphLabelStyle}"/>
+                    </Canvas>
+
+                    <!-- Titre X -->
+                    <TextBlock Text="Epaisseur structurelle de materiau bitumineux" 
+                               Grid.Row="2" Grid.Column="1" 
+                               Style="{StaticResource GraphLabelStyle}" 
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+
+            <!-- Explications textuelles + zone de calcul -->
+            <StackPanel Margin="20,0,20,10">
+                <TextBlock Style="{StaticResource ExplanationStyle}" Margin="0,0,0,10">
+                    <Run FontWeight="Bold">NF P 98-086 - Plateformes reglees +/-1,5 cm.</Run>
+                    <LineBreak/>
+                    <Run>Regle Sh: e &lt;= 0,10 m -&gt; 0,010 m; 0,10..0,15 m -&gt; lineaire jusqu'a 0,025 m; e &gt;= 0,15 m -&gt; 0,025 m.</Run>
+                    <LineBreak/>
+                    <Run x:Name="ShValueText"/> <!-- conserve pour mise a jour du titre si besoin -->
+                </TextBlock>
+                
+                <!-- Entree utilisateur: epaisseur -> Sh -->
+                <Border Background="#FFEDEDED" BorderBrush="#FFB9B9B9" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,8,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.ColumnSpan="3" Text="Entrer une epaisseur totale de BB (m) puis calculer Sh" Style="{StaticResource GraphLabelStyle}"/>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Epaisseur (m) :" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBox x:Name="ThicknessInput" Width="140" Height="30" Background="#F5F7FA" Foreground="#222" BorderBrush="#CBD5E1"/>
+                            <Button Content="Calculer Sh" Margin="10,0,0,0" Style="{StaticResource CalcButtonStyle}" Click="OnComputeShClick"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Vertical" VerticalAlignment="Center" Margin="12,0,0,0">
+                            <TextBlock Text="Sh calcule"/>
+                            <TextBlock x:Name="ComputedShText" Text="-" FontWeight="Bold" FontSize="16"/>
+                            <TextBlock x:Name="ComputedShExplain" Text=""/>
+                            <TextBlock x:Name="ComputeError" Text="" Foreground="{StaticResource AccentRed}" Visibility="Collapsed"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <!-- Boutons -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,10">
+                <Button Content="Appliquer cette valeur" 
+                        Width="200"
+                        Style="{StaticResource RoundedPrimaryButton}"
+                        Click="Apply_Click"/>
+                <Button Content="Fermer" 
+                        Margin="10,0,0,0"
+                        Width="140"
+                        Style="{StaticResource RoundedSecondaryButton}"
+                        Click="Close_Click"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

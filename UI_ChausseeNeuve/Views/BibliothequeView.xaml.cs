@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Controls;
 using UI_ChausseeNeuve.ViewModels;
 
@@ -8,6 +9,16 @@ namespace UI_ChausseeNeuve.Views
     /// </summary>
     public partial class BibliothequeView : UserControl
     {
+        // DP pour masquer/afficher la barre d'actions en bas
+        public static readonly DependencyProperty ShowActionBarProperty = DependencyProperty.Register(
+            nameof(ShowActionBar), typeof(bool), typeof(BibliothequeView), new PropertyMetadata(true));
+
+        public bool ShowActionBar
+        {
+            get => (bool)GetValue(ShowActionBarProperty);
+            set => SetValue(ShowActionBarProperty, value);
+        }
+
         public BibliothequeView()
         {
             InitializeComponent();

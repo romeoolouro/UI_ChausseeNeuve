@@ -7,6 +7,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using ChausseeNeuve.Domain.Models;
 using UI_ChausseeNeuve.Services;
+using UI_ChausseeNeuve.ViewModels;
+using System.Collections.Specialized;
 
 namespace UI_ChausseeNeuve.ViewModels
 {
@@ -25,6 +27,8 @@ namespace UI_ChausseeNeuve.ViewModels
         private string _calculationInfo = "";
         private bool _isHelpVisible;
         private bool _showDetailedInfo = true; // NOUVEAU : contrôle l'affichage des détails
+        private ObservableCollection<ChausseeNeuve.Domain.Models.ValeurAdmissibleCoucheDto>? _lastValeursAdmissibles;
+        private ObservableCollection<ValeurAdmissibleCouche>? _lastValeursAdmissiblesViewModel;
         #endregion
 
         #region Événements
@@ -48,6 +52,9 @@ namespace UI_ChausseeNeuve.ViewModels
 
             // S'abonner aux changements de structure pour synchronisation automatique
             SubscribeToStructureChanges();
+
+            // Synchronisation automatique des valeurs admissibles
+            SubscribeToValeursAdmissiblesChanges();
 
             // Charger la structure actuelle au démarrage
             LoadCurrentStructure();
@@ -251,6 +258,9 @@ namespace UI_ChausseeNeuve.ViewModels
                     
                     // Mise à jour finale de la validation
                     UpdateValidationStatus();
+
+                    // Forcer la synchronisation des valeurs admissibles dans les résultats
+                    InjectValeursAdmissiblesDansResultats();
                 }
                 else
                 {
@@ -290,13 +300,13 @@ namespace UI_ChausseeNeuve.ViewModels
                 lr => lr
             );
 
-            // Ajouter les couches normales avec leurs interfaces
+            /// Ajouter les couches normales avec leurs interfaces
             for (int i = 0; i < orderedLayers.Count; i++)
             {
                 var layer = orderedLayers[i];
-                
                 // Ajouter la couche avec les données calculées
                 var resultCouche = CreateResultCoucheWithCalculatedData(layer, layerResultsDict);
+                resultCouche.Numero = i + 1;
                 resultCouche.PropertyChanged += (sender, e) =>
                 {
                     if (e.PropertyName == nameof(ResultatCouche.EstValide))
@@ -322,6 +332,7 @@ namespace UI_ChausseeNeuve.ViewModels
             if (platform != null)
             {
                 var resultPlateforme = CreateResultCoucheWithCalculatedData(platform, layerResultsDict);
+                resultPlateforme.Numero = orderedLayers.Count + 1;
                 resultPlateforme.PropertyChanged += (sender, e) =>
                 {
                     if (e.PropertyName == nameof(ResultatCouche.EstValide))
@@ -331,6 +342,9 @@ namespace UI_ChausseeNeuve.ViewModels
                 };
                 Resultats.Add(resultPlateforme);
             }
+
+            // Injection des valeurs admissibles calculées
+            InjectValeursAdmissiblesDansResultats();
         }
 
         /// <summary>
@@ -720,6 +734,7 @@ namespace UI_ChausseeNeuve.ViewModels
                 
                 // Ajouter la couche
                 var resultCouche = CreateResultCoucheFromLayer(layer, structure);
+                resultCouche.Numero = i + 1; // Synchronise le numéro avec l'ordre de la structure
                 resultCouche.PropertyChanged += (sender, e) =>
                 {
                     if (e.PropertyName == nameof(ResultatCouche.EstValide))
@@ -745,6 +760,7 @@ namespace UI_ChausseeNeuve.ViewModels
             if (platform != null)
             {
                 var resultPlateforme = CreateResultCoucheFromLayer(platform, structure);
+                resultPlateforme.Numero = orderedLayers.Count + 1; // Numéro plateforme = dernier + 1
                 resultPlateforme.PropertyChanged += (sender, e) =>
                 {
                     if (e.PropertyName == nameof(ResultatCouche.EstValide))
@@ -755,6 +771,8 @@ namespace UI_ChausseeNeuve.ViewModels
                 Resultats.Add(resultPlateforme);
             }
 
+            // Injection des valeurs admissibles calculées
+            InjectValeursAdmissiblesDansResultats();
             UpdateValidationStatus();
         }
 
@@ -796,65 +814,8 @@ namespace UI_ChausseeNeuve.ViewModels
         /// </summary>
         private string GetMaterialDisplayName(Layer layer)
         {
-            // Si MaterialName contient un nom réel (pas le nom générique), l'utiliser
-            if (!string.IsNullOrEmpty(layer.MaterialName) && 
-                !IsGenericMaterialName(layer.MaterialName))
-            {
-                return layer.MaterialName;
-            }
-
-            // Sinon, générer un nom basé sur la famille et le rôle
-            return GenerateDisplayNameFromFamily(layer.Family, layer.Role);
-        }
-
-        /// <summary>
-        /// Vérifie si le nom de matériau est générique (généré automatiquement)
-        /// </summary>
-        private bool IsGenericMaterialName(string materialName)
-        {
-            string[] genericNames = { 
-                "MTLH Base", "MTLH Fondation", "GNT (suppl.)", "Plateforme",
-                "BetonBitumineux", "BetonCiment", "GNT & Sol", "MTLH"
-            };
-            
-            return genericNames.Contains(materialName);
-        }
-
-        /// <summary>
-        /// Génère un nom d'affichage basé sur la famille de matériau et le rôle
-        /// </summary>
-        private string GenerateDisplayNameFromFamily(MaterialFamily family, LayerRole role)
-        {
-            return family switch
-            {
-                MaterialFamily.BetonBitumineux => role switch
-                {
-                    LayerRole.Roulement => "EB-BBSG 0/10",
-                    LayerRole.Base => "EB-GB",
-                    _ => "Enrobé Bitumineux"
-                },
-                MaterialFamily.BetonCiment => role switch
-                {
-                    LayerRole.Roulement => "BC-DAC",
-                    LayerRole.Base => "BC",
-                    _ => "Béton de Ciment"
-                },
-                MaterialFamily.MTLH => role switch
-                {
-                    LayerRole.Base => "GC (Grave Ciment)",
-                    LayerRole.Fondation => "SC (Sable Ciment)", 
-                    _ => "MTLH"
-                },
-                MaterialFamily.GNT => role switch
-                {
-                    LayerRole.Plateforme => "Plateforme PF2",
-                    LayerRole.Base => "GNT 0/31.5",
-                    LayerRole.Fondation => "GNT 0/20",
-                    _ => "GNT"
-                },
-                MaterialFamily.Bibliotheque => "Matériau Bibliothèque",
-                _ => "Matériau"
-            };
+            // Toujours utiliser le nom exact du matériau défini dans la structure
+            return layer.MaterialName ?? string.Empty;
         }
 
         /// <summary>
@@ -897,6 +858,106 @@ namespace UI_ChausseeNeuve.ViewModels
                 InterfaceType.Decollee => "Décollée",
                 _ => "Collée"
             };
+        }
+
+        private ObservableCollection<ValeurAdmissibleCouche>? GetValeursAdmissiblesViewModelCollection()
+        {
+            var dtoCol = AppState.CurrentProject?.ValeursAdmissibles;
+            if (dtoCol == null) return null;
+
+            // Always rebuild the VM collection from DTOs to ensure updates (names, values) are reflected
+            var vmList = dtoCol.Select(d => new ValeurAdmissibleCouche
+            {
+                Materiau = (d as dynamic).Materiau,
+                Niveau = (int)(d as dynamic).Niveau,
+                Critere = (d as dynamic).Critere,
+                Sn = (double)(d as dynamic).Sn,
+                Sh = (double)(d as dynamic).Sh,
+                B = (double)(d as dynamic).B,
+                Kc = (double)(d as dynamic).Kc,
+                Kr = (double)(d as dynamic).Kr,
+                Ks = (double)(d as dynamic).Ks,
+                Ktheta = (double)(d as dynamic).Ktheta,
+                Kd = (double)(d as dynamic).Kd,
+                Risque = (double)(d as dynamic).Risque,
+                Ne = (double)(d as dynamic).Ne,
+                Epsilon6 = (double)(d as dynamic).Epsilon6,
+                ValeurAdmissible = (double)(d as dynamic).ValeurAdmissible,
+                AmplitudeValue = (double)(d as dynamic).AmplitudeValue,
+                Sigma6 = (double)(d as dynamic).Sigma6,
+                Cam = (double)(d as dynamic).Cam,
+                E10C10Hz = (double)(d as dynamic).E10C10Hz,
+                Eteq10Hz = (double)(d as dynamic).Eteq10Hz,
+                KthetaAuto = (bool)(d as dynamic).KthetaAuto
+            }).ToList();
+
+            // Replace cached reference and return a fresh ObservableCollection
+            _lastValeursAdmissiblesViewModel = new ObservableCollection<ValeurAdmissibleCouche>(vmList);
+            return _lastValeursAdmissiblesViewModel;
+        }
+
+        private void SubscribeToValeursAdmissiblesChanges()
+        {
+            // Désabonnement de l'ancienne collection
+            if (_lastValeursAdmissiblesViewModel != null)
+            {
+                _lastValeursAdmissiblesViewModel.CollectionChanged -= ValeursAdmissibles_CollectionChanged;
+                foreach (var v in _lastValeursAdmissiblesViewModel)
+                    v.PropertyChanged -= ValeurAdmissible_PropertyChanged;
+            }
+
+            var valeurs = GetValeursAdmissiblesViewModelCollection();
+            if (valeurs == null) return;
+            valeurs.CollectionChanged -= ValeursAdmissibles_CollectionChanged;
+            valeurs.CollectionChanged += ValeursAdmissibles_CollectionChanged;
+            foreach (var v in valeurs)
+            {
+                v.PropertyChanged -= ValeurAdmissible_PropertyChanged;
+                v.PropertyChanged += ValeurAdmissible_PropertyChanged;
+            }
+            _lastValeursAdmissiblesViewModel = valeurs;
+            InjectValeursAdmissiblesDansResultats();
+        }
+
+        private void ValeursAdmissibles_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.NewItems != null)
+                foreach (var v in e.NewItems)
+                    if (v is INotifyPropertyChanged npc)
+                    {
+                        npc.PropertyChanged -= ValeurAdmissible_PropertyChanged;
+                        npc.PropertyChanged += ValeurAdmissible_PropertyChanged;
+                    }
+            if (e.OldItems != null)
+                foreach (var v in e.OldItems)
+                    if (v is INotifyPropertyChanged npc)
+                        npc.PropertyChanged -= ValeurAdmissible_PropertyChanged;
+            InjectValeursAdmissiblesDansResultats();
+        }
+
+        private void ValeurAdmissible_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "ValeurAdmissible" || e.PropertyName == "Materiau" || e.PropertyName == "Niveau")
+                InjectValeursAdmissiblesDansResultats();
+        }
+
+        // Ajout : synchronisation des valeurs admissibles dans les résultats
+        private void InjectValeursAdmissiblesDansResultats()
+        {
+            // Synchroniser chaque couche résultat avec la valeur admissible correspondante
+            var valeursAdmissibles = GetValeursAdmissiblesViewModelCollection();
+            if (valeursAdmissibles == null) return;
+            foreach (var resultat in Resultats.OfType<ResultatCouche>())
+            {
+                // Correspondance stricte sur N (Numero) et Materiau
+                var coucheAdmissible = valeursAdmissibles.FirstOrDefault(c =>
+                    c.Niveau == resultat.Numero &&
+                    string.Equals(c.Materiau?.Trim(), resultat.Materiau?.Trim(), StringComparison.InvariantCultureIgnoreCase)
+                );
+                resultat.ValeurAdmissible = coucheAdmissible?.ValeurAdmissible ?? 0;
+            }
+            // Forcer la notification de la propriété Resultats
+            OnPropertyChanged(nameof(Resultats));
         }
 
         #endregion
@@ -958,6 +1019,7 @@ namespace UI_ChausseeNeuve.ViewModels
         private double _deflexionInf;
         private double _valeurAdmissible;
         private bool _estValide;
+        private int _numero;
 
         /// <summary>Interface de la couche (Surface, Fondation, etc.)</summary>
         public string Interface
@@ -1116,6 +1178,24 @@ namespace UI_ChausseeNeuve.ViewModels
 
         /// <summary>Niveau inférieur formaté pour l'affichage (avec tiret pour la plateforme)</summary>
         public string NiveauInfDisplay => EstPlateforme ? "-" : NiveauInf.ToString("F0");
+
+        /// <summary>Numéro de la couche (pour affichage dans la grille des résultats)</summary>
+        public int Numero
+        {
+            get => _numero;
+            set { _numero = value; OnPropertyChanged(); OnPropertyChanged(nameof(NiveauDisplay)); }
+        }
+
+        /// <summary>Niveau affiché (pour utilisation dans la grille)</summary>
+        public string NiveauDisplay => (Numero > 0) ? Numero.ToString() : "";
+
+        /// <summary>Nature de la couche (correspond à l'interface)</summary>
+        public string Nature => Interface;
+
+        /// <summary>
+        /// Affichage de l'interface sans doublon avec la nature
+        /// </summary>
+        public string InterfaceAffichee => Interface == Nature ? string.Empty : Interface;
     }
 
     /// <summary>
