@@ -6,10 +6,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UI_ChausseeNeuve", "UI_Chau
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChausseeNeuve.Domain", "ChausseeNeuve.Domain\ChausseeNeuve.Domain.csproj", "{9C4B2592-46BB-4A8A-9F1A-2AEED2E8ADFA}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UI_ChausseeNeuve.Tests", "UI_ChausseeNeuve.Tests\UI_ChausseeNeuve.Tests.csproj", "{F2A71F9B-5D33-4E36-B31C-2AEED2E8ADFD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|ARM64 = Debug|ARM64
+		Debug-NoTests|Any CPU = Debug-NoTests|Any CPU
+		Debug-NoTests|ARM64 = Debug-NoTests|ARM64
 		Release|Any CPU = Release|Any CPU
 		Release|ARM64 = Release|ARM64
 	EndGlobalSection
@@ -30,6 +34,16 @@ Global
 		{9C4B2592-46BB-4A8A-9F1A-2AEED2E8ADFA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9C4B2592-46BB-4A8A-9F1A-2AEED2E8ADFA}.Release|ARM64.ActiveCfg = Release|ARM64
 		{9C4B2592-46BB-4A8A-9F1A-2AEED2E8ADFA}.Release|ARM64.Build.0 = Release|ARM64
+		{F2A71F9B-5D33-4E36-B31C-2AEED2E8ADFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F2A71F9B-5D33-4E36-B31C-2AEED2E8ADFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F2A71F9B-5D33-4E36-B31C-2AEED2E8ADFD}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{F2A71F9B-5D33-4E36-B31C-2AEED2E8ADFD}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{F2A71F9B-5D33-4E36-B31C-2AEED2E8ADFD}.Debug-NoTests|Any CPU.ActiveCfg = Debug|Any CPU
+		{F2A71F9B-5D33-4E36-B31C-2AEED2E8ADFD}.Debug-NoTests|ARM64.ActiveCfg = Debug|Any CPU
+		{F2A71F9B-5D33-4E36-B31C-2AEED2E8ADFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F2A71F9B-5D33-4E36-B31C-2AEED2E8ADFD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F2A71F9B-5D33-4E36-B31C-2AEED2E8ADFD}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{F2A71F9B-5D33-4E36-B31C-2AEED2E8ADFD}.Release|ARM64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

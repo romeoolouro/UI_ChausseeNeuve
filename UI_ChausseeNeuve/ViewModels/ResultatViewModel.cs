@@ -9,16 +9,19 @@ using ChausseeNeuve.Domain.Models;
 using UI_ChausseeNeuve.Services;
 using UI_ChausseeNeuve.ViewModels;
 using System.Collections.Specialized;
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace UI_ChausseeNeuve.ViewModels
 {
     /// <summary>
-    /// ViewModel pour l'affichage des résultats de calcul de la chaussée
-    /// Intégré avec le service de calcul basé sur votre code C++
+    /// ViewModel pour l'affichage des rï¿½sultats de calcul de la chaussï¿½e
+    /// Intï¿½grï¿½ avec le service de calcul basï¿½ sur votre code C++
     /// </summary>
     public class ResultatViewModel : INotifyPropertyChanged, IDisposable
     {
-        #region Champs privés
+        #region Champs privï¿½s
         private bool _isCalculationInProgress;
         private string _calculationDuration = "0 sec";
         private bool _isStructureValid;
@@ -26,14 +29,15 @@ namespace UI_ChausseeNeuve.ViewModels
         private readonly SolicitationCalculationService _calculationService;
         private string _calculationInfo = "";
         private bool _isHelpVisible;
-        private bool _showDetailedInfo = true; // NOUVEAU : contrôle l'affichage des détails
+        private bool _showDetailedInfo = true; // NOUVEAU : contrï¿½le l'affichage des dï¿½tails
         private ObservableCollection<ChausseeNeuve.Domain.Models.ValeurAdmissibleCoucheDto>? _lastValeursAdmissibles;
+
         private ObservableCollection<ValeurAdmissibleCouche>? _lastValeursAdmissiblesViewModel;
         #endregion
 
-        #region Événements
+        #region ï¿½vï¿½nements
         /// <summary>
-        /// Événement pour les notifications toast
+        /// ï¿½vï¿½nement pour les notifications toast
         /// </summary>
         public event Action<string, ToastType>? ToastRequested;
         #endregion
@@ -56,12 +60,12 @@ namespace UI_ChausseeNeuve.ViewModels
             // Synchronisation automatique des valeurs admissibles
             SubscribeToValeursAdmissiblesChanges();
 
-            // Charger la structure actuelle au démarrage
+            // Charger la structure actuelle au dï¿½marrage
             LoadCurrentStructure();
         }
         #endregion
 
-        #region Propriétés publiques
+        #region Propriï¿½tï¿½s publiques
 
         /// <summary>
         /// Indique si un calcul est en cours
@@ -78,7 +82,7 @@ namespace UI_ChausseeNeuve.ViewModels
         }
 
         /// <summary>
-        /// Durée du dernier calcul
+        /// Durï¿½e du dernier calcul
         /// </summary>
         public string CalculationDuration
         {
@@ -91,7 +95,7 @@ namespace UI_ChausseeNeuve.ViewModels
         }
 
         /// <summary>
-        /// Informations sur le calcul effectué
+        /// Informations sur le calcul effectuï¿½
         /// </summary>
         public string CalculationInfo
         {
@@ -104,7 +108,7 @@ namespace UI_ChausseeNeuve.ViewModels
         }
 
         /// <summary>
-        /// Indique si la structure calculée est valide
+        /// Indique si la structure calculï¿½e est valide
         /// </summary>
         public bool IsStructureValid
         {
@@ -120,11 +124,11 @@ namespace UI_ChausseeNeuve.ViewModels
         }
 
         /// <summary>
-        /// Message de validation affiché à l'utilisateur
+        /// Message de validation affichï¿½ ï¿½ l'utilisateur
         /// </summary>
         public string ValidationMessage => IsStructureValid
-            ? "? Structure validée - Tous les critères sont respectés"
-            : "? Structure non validée - Certains critères ne sont pas respectés";
+            ? "? Structure validï¿½e - Tous les critï¿½res sont respectï¿½s"
+            : "? Structure non validï¿½e - Certains critï¿½res ne sont pas respectï¿½s";
 
         /// <summary>
         /// Couleur du message de validation
@@ -132,24 +136,24 @@ namespace UI_ChausseeNeuve.ViewModels
         public string ValidationColor => IsStructureValid ? "#28a745" : "#dc3545";
 
         /// <summary>
-        /// Résumé détaillé de la validation avec compteurs
+        /// Rï¿½sumï¿½ dï¿½taillï¿½ de la validation avec compteurs
         /// </summary>
         public string ValidationSummary
         {
             get
             {
                 var couches = Resultats.OfType<ResultatCouche>().ToList();
-                if (couches.Count == 0) return "Aucune couche à valider";
-                
+                if (couches.Count == 0) return "Aucune couche ï¿½ valider";
+
                 var validCount = couches.Count(c => c.EstValide);
                 var totalCount = couches.Count;
-                
-                return $"{validCount}/{totalCount} couches validées";
+
+                return $"{validCount}/{totalCount} couches validï¿½es";
             }
         }
 
         /// <summary>
-        /// Collection des résultats (couches + interfaces intercalées)
+        /// Collection des rï¿½sultats (couches + interfaces intercalï¿½es)
         /// </summary>
         public ObservableCollection<ResultatItem> Resultats
         {
@@ -176,8 +180,8 @@ namespace UI_ChausseeNeuve.ViewModels
         }
 
         /// <summary>
-        /// Indique si les informations détaillées de calcul doivent être affichées
-        /// Masqué automatiquement après un calcul réussi pour économiser l'espace
+        /// Indique si les informations dï¿½taillï¿½es de calcul doivent ï¿½tre affichï¿½es
+        /// Masquï¿½ automatiquement aprï¿½s un calcul rï¿½ussi pour ï¿½conomiser l'espace
         /// </summary>
         public bool ShowDetailedInfo
         {
@@ -209,57 +213,57 @@ namespace UI_ChausseeNeuve.ViewModels
         public RelayCommand HideHelpCommand { get; }
 
         /// <summary>
-        /// Commande pour basculer l'affichage des détails de calcul
+        /// Commande pour basculer l'affichage des dï¿½tails de calcul
         /// </summary>
         public RelayCommand ToggleDetailedInfoCommand { get; }
 
         #endregion
 
-        #region Méthodes publiques
+        #region Mï¿½thodes publiques
 
         /// <summary>
-        /// Lance le calcul de la structure de façon asynchrone
+        /// Lance le calcul de la structure de faï¿½on asynchrone
         /// Utilise votre code C++ via le service de calcul
         /// </summary>
         public async Task CalculateStructureAsync()
         {
             IsCalculationInProgress = true;
-            
+
             try
             {
                 var startTime = DateTime.Now;
-                
-                // Validation préalable de la structure
+
+                // Validation prï¿½alable de la structure
                 if (!ValidateCurrentStructure())
                 {
-                    ToastRequested?.Invoke("Structure invalide - Veuillez vérifier la configuration", ToastType.Error);
+                    ToastRequested?.Invoke("Structure invalide - Veuillez vï¿½rifier la configuration", ToastType.Error);
                     return;
                 }
 
                 ToastRequested?.Invoke("Calcul des sollicitations en cours...", ToastType.Info);
 
-                // Calcul via le service basé sur votre code C++
-                var calculationResult = await Task.Run(() => 
+                // Calcul via le service basï¿½ sur votre code C++
+                var calculationResult = await Task.Run(() =>
                     _calculationService.CalculateSolicitations(AppState.CurrentProject.PavementStructure));
-                
+
                 if (calculationResult.IsSuccessful)
                 {
                     // Affichage des informations de calcul SIMPLIFIEES
                     CalculationInfo = "Calcul termine avec succes";
-                    
-                    // MASQUER automatiquement les détails après un calcul réussi
+
+                    // MASQUER automatiquement les dï¿½tails aprï¿½s un calcul rï¿½ussi
                     ShowDetailedInfo = false;
-                    
-                    // Reconstruction complète avec couches ET interfaces 
+
+                    // Reconstruction complï¿½te avec couches ET interfaces 
                     PopulateResultsWithCalculatedData(calculationResult);
 
                     var duration = DateTime.Now - startTime;
                     CalculationDuration = FormatDuration(calculationResult.CalculationTimeMs / 1000.0);
-                    
-                    // Mise à jour finale de la validation
+
+                    // Mise ï¿½ jour finale de la validation
                     UpdateValidationStatus();
 
-                    // Forcer la synchronisation des valeurs admissibles dans les résultats
+                    // Forcer la synchronisation des valeurs admissibles dans les rï¿½sultats
                     InjectValeursAdmissiblesDansResultats();
                 }
                 else
@@ -278,7 +282,7 @@ namespace UI_ChausseeNeuve.ViewModels
         }
 
         /// <summary>
-        /// Peuple les résultats avec les données calculées, en incluant les interfaces
+        /// Peuple les rï¿½sultats avec les donnï¿½es calculï¿½es, en incluant les interfaces
         /// </summary>
         private void PopulateResultsWithCalculatedData(SolicitationCalculationResult calculationResult)
         {
@@ -294,7 +298,7 @@ namespace UI_ChausseeNeuve.ViewModels
 
             Resultats.Clear();
 
-            // Créer un dictionnaire pour retrouver facilement les résultats par couche
+            // Crï¿½er un dictionnaire pour retrouver facilement les rï¿½sultats par couche
             var layerResultsDict = calculationResult.LayerResults.ToDictionary(
                 lr => lr.Layer.Order,
                 lr => lr
@@ -304,7 +308,7 @@ namespace UI_ChausseeNeuve.ViewModels
             for (int i = 0; i < orderedLayers.Count; i++)
             {
                 var layer = orderedLayers[i];
-                // Ajouter la couche avec les données calculées
+                // Ajouter la couche avec les donnï¿½es calculï¿½es
                 var resultCouche = CreateResultCoucheWithCalculatedData(layer, layerResultsDict);
                 resultCouche.Numero = i + 1;
                 resultCouche.PropertyChanged += (sender, e) =>
@@ -316,7 +320,7 @@ namespace UI_ChausseeNeuve.ViewModels
                 };
                 Resultats.Add(resultCouche);
 
-                // Ajouter l'interface si ce n'est pas la dernière couche
+                // Ajouter l'interface si ce n'est pas la derniï¿½re couche
                 if (i < orderedLayers.Count - 1 || platform != null)
                 {
                     var nextLayer = i < orderedLayers.Count - 1 ? orderedLayers[i + 1] : platform;
@@ -343,19 +347,19 @@ namespace UI_ChausseeNeuve.ViewModels
                 Resultats.Add(resultPlateforme);
             }
 
-            // Injection des valeurs admissibles calculées
+            // Injection des valeurs admissibles calculï¿½es
             InjectValeursAdmissiblesDansResultats();
         }
 
         /// <summary>
-        /// Crée un ResultatCouche avec les données calculées
+        /// Crï¿½e un ResultatCouche avec les donnï¿½es calculï¿½es
         /// </summary>
         private ResultatCouche CreateResultCoucheWithCalculatedData(Layer layer, Dictionary<int, LayerSolicitationResult> layerResultsDict)
         {
-            // Récupérer les données calculées si disponibles
+            // Rï¿½cupï¿½rer les donnï¿½es calculï¿½es si disponibles
             if (layerResultsDict.TryGetValue(layer.Order, out var layerResult))
             {
-                // Couche avec données calculées
+                // Couche avec donnï¿½es calculï¿½es
                 return new ResultatCouche
                 {
                     Interface = layer.Role.ToString(),
@@ -382,14 +386,14 @@ namespace UI_ChausseeNeuve.ViewModels
             }
             else
             {
-                // Fallback : couche sans données calculées (ne devrait pas arriver)
+                // Fallback : couche sans donnï¿½es calculï¿½es (ne devrait pas arriver)
                 return CreateResultCoucheFromLayer(layer, AppState.CurrentProject.PavementStructure);
             }
         }
 
         /// <summary>
-        /// Méthode publique pour forcer la mise à jour depuis l'extérieur
-        /// À appeler depuis StructureEditorViewModel quand la structure change
+        /// Mï¿½thode publique pour forcer la mise ï¿½ jour depuis l'extï¿½rieur
+        /// ï¿½ appeler depuis StructureEditorViewModel quand la structure change
         /// </summary>
         public void RefreshFromStructure()
         {
@@ -398,12 +402,12 @@ namespace UI_ChausseeNeuve.ViewModels
 
         #endregion
 
-        #region Méthodes privées
+        #region Mï¿½thodes privï¿½es
 
         private bool ValidateCurrentStructure()
         {
             var structure = AppState.CurrentProject.PavementStructure;
-            
+
             if (structure.Layers.Count < 2)
             {
                 return false;
@@ -424,7 +428,7 @@ namespace UI_ChausseeNeuve.ViewModels
                 .Where(l => l.Role != LayerRole.Plateforme)
                 .OrderBy(l => l.Order)
                 .ToList();
-            
+
             double cumul = 0;
             foreach (var l in layers)
             {
@@ -438,15 +442,15 @@ namespace UI_ChausseeNeuve.ViewModels
         {
             if (layer.Role == LayerRole.Plateforme)
             {
-                return GetLayerTopLevel(layer); // La plateforme n'a pas de niveau inférieur affiché
+                return GetLayerTopLevel(layer); // La plateforme n'a pas de niveau infï¿½rieur affichï¿½
             }
             return GetLayerTopLevel(layer) + layer.Thickness_m * 100;
         }
 
         private double CalculateAdmissibleValue(LayerSolicitationResult layerResult)
         {
-            // Calcul des valeurs admissibles selon le type de matériau
-            // TODO: Implémenter les formules NF P98-086 complètes
+            // Calcul des valeurs admissibles selon le type de matï¿½riau
+            // TODO: Implï¿½menter les formules NF P98-086 complï¿½tes
             return layerResult.Layer.Family switch
             {
                 MaterialFamily.BetonBitumineux => 100.0, // ?t admissible en ?def
@@ -459,9 +463,9 @@ namespace UI_ChausseeNeuve.ViewModels
 
         private bool ValidateLayerResult(LayerSolicitationResult layerResult)
         {
-            // Validation selon les critères NF P98-086
+            // Validation selon les critï¿½res NF P98-086
             var admissibleValue = CalculateAdmissibleValue(layerResult);
-            
+
             return layerResult.Layer.Family switch
             {
                 MaterialFamily.BetonBitumineux => layerResult.EpsilonTCritical < admissibleValue,
@@ -473,17 +477,17 @@ namespace UI_ChausseeNeuve.ViewModels
         }
 
         /// <summary>
-        /// Chargement des données d'exemple basées sur votre code C++
-        /// Simule l'affichage style Alizé avec interfaces entre les couches
+        /// Chargement des donnï¿½es d'exemple basï¿½es sur votre code C++
+        /// Simule l'affichage style Alizï¿½ avec interfaces entre les couches
         /// </summary>
         private void LoadSampleData()
         {
-            // Données d'exemple qui correspondent à votre main() C++
+            // Donnï¿½es d'exemple qui correspondent ï¿½ votre main() C++
             // nbrecouche = 4, roue = 2, Poids = 0.662, a = 0.125, d = 0.375
             CalculationInfo = "Donnees d'exemple chargees (4 couches)";
-            
+
             Resultats.Clear();
-            
+
             // Fonction helper pour ajouter une couche avec abonnement automatique
             void AddCoucheWithValidation(ResultatCouche couche)
             {
@@ -496,7 +500,7 @@ namespace UI_ChausseeNeuve.ViewModels
                 };
                 Resultats.Add(couche);
             }
-            
+
             // Couche 1 : Surface
             AddCoucheWithValidation(new ResultatCouche
             {
@@ -525,7 +529,7 @@ namespace UI_ChausseeNeuve.ViewModels
             // Interface 1 : Surface/Base
             Resultats.Add(new ResultatInterface
             {
-                TypeInterface = "Collée",
+                TypeInterface = "Collï¿½e",
                 Description = "Interface Surface/Base"
             });
 
@@ -555,7 +559,7 @@ namespace UI_ChausseeNeuve.ViewModels
             // Interface 2 : Base/Fondation
             Resultats.Add(new ResultatInterface
             {
-                TypeInterface = "Semi-collée",
+                TypeInterface = "Semi-collï¿½e",
                 Description = "Interface Base/Fondation"
             });
 
@@ -585,7 +589,7 @@ namespace UI_ChausseeNeuve.ViewModels
             // Interface 3 : Fondation/Plateforme
             Resultats.Add(new ResultatInterface
             {
-                TypeInterface = "Collée",
+                TypeInterface = "Collï¿½e",
                 Description = "Interface Fondation/Plateforme"
             });
 
@@ -599,27 +603,27 @@ namespace UI_ChausseeNeuve.ViewModels
                 Module = 120,
                 CoefficientPoisson = 0.35,
                 SigmaTSup = 0.020,  // Seule valeur de la plateforme
-                SigmaTInf = 0,      // Sera remplacé par "-" dans l'affichage
+                SigmaTInf = 0,      // Sera remplacï¿½ par "-" dans l'affichage
                 EpsilonTSup = 5.2,  // Seule valeur de la plateforme  
-                EpsilonTInf = 0,    // Sera remplacé par "-" dans l'affichage
+                EpsilonTInf = 0,    // Sera remplacï¿½ par "-" dans l'affichage
                 SigmaZ = -0.200,
                 EpsilonZ = -85.1,
                 SigmaZSup = -0.200, // Seule valeur de la plateforme
-                SigmaZInf = 0,      // Sera remplacé par "-" dans l'affichage
+                SigmaZInf = 0,      // Sera remplacï¿½ par "-" dans l'affichage
                 EpsilonZSup = -85.1, // Seule valeur de la plateforme
-                EpsilonZInf = 0,     // Sera remplacé par "-" dans l'affichage
-                DeflexionSup = 0.0,  // Pas de déflexion pour la plateforme
-                DeflexionInf = 0,    // Sera remplacé par "-" dans l'affichage  
+                EpsilonZInf = 0,     // Sera remplacï¿½ par "-" dans l'affichage
+                DeflexionSup = 0.0,  // Pas de dï¿½flexion pour la plateforme
+                DeflexionInf = 0,    // Sera remplacï¿½ par "-" dans l'affichage  
                 ValeurAdmissible = 200.0,
                 EstValide = true
             });
 
-            // Mise à jour de la validation après ajout des données
+            // Mise ï¿½ jour de la validation aprï¿½s ajout des donnï¿½es
             UpdateValidationStatus();
         }
 
         /// <summary>
-        /// Met à jour le statut de validation en fonction des résultats actuels
+        /// Met ï¿½ jour le statut de validation en fonction des rï¿½sultats actuels
         /// </summary>
         private void UpdateValidationStatus()
         {
@@ -643,7 +647,7 @@ namespace UI_ChausseeNeuve.ViewModels
         }
 
         /// <summary>
-        /// Bascule l'affichage des détails de calcul
+        /// Bascule l'affichage des dï¿½tails de calcul
         /// </summary>
         private void ToggleDetailedInfo()
         {
@@ -651,16 +655,16 @@ namespace UI_ChausseeNeuve.ViewModels
         }
 
         /// <summary>
-        /// Formate la durée d'un calcul
+        /// Formate la durï¿½e d'un calcul
         /// </summary>
         private string FormatDuration(double seconds)
         {
             if (seconds < 60)
-                return $"Durée : {seconds:F2} sec";
+                return $"Durï¿½e : {seconds:F2} sec";
 
             int minutes = (int)(seconds / 60);
             seconds %= 60;
-            return $"Durée : {minutes} min {seconds:F2} sec";
+            return $"Durï¿½e : {minutes} min {seconds:F2} sec";
         }
 
         /// <summary>
@@ -668,16 +672,16 @@ namespace UI_ChausseeNeuve.ViewModels
         /// </summary>
         private void SubscribeToStructureChanges()
         {
-            // S'abonner à l'événement global de changement de structure
+            // S'abonner ï¿½ l'ï¿½vï¿½nement global de changement de structure
             AppState.StructureChanged += OnStructureChanged;
         }
-        
+
         /// <summary>
-        /// Appelé quand la structure change dans AppState
+        /// Appelï¿½ quand la structure change dans AppState
         /// </summary>
         private void OnStructureChanged()
         {
-            // Exécuter sur le thread UI si nécessaire
+            // Exï¿½cuter sur le thread UI si nï¿½cessaire
             System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
             {
                 LoadCurrentStructure();
@@ -685,7 +689,7 @@ namespace UI_ChausseeNeuve.ViewModels
         }
 
         /// <summary>
-        /// Charge la structure actuelle depuis AppState et met à jour l'affichage
+        /// Charge la structure actuelle depuis AppState et met ï¿½ jour l'affichage
         /// </summary>
         private void LoadCurrentStructure()
         {
@@ -697,20 +701,20 @@ namespace UI_ChausseeNeuve.ViewModels
                 }
                 else
                 {
-                    LoadSampleData(); // Fallback sur les données d'exemple
+                    LoadSampleData(); // Fallback sur les donnï¿½es d'exemple
                 }
             }
             catch (Exception ex)
             {
-                // En cas d'erreur, charger les données d'exemple
+                // En cas d'erreur, charger les donnï¿½es d'exemple
                 LoadSampleData();
                 System.Diagnostics.Debug.WriteLine($"Erreur lors du chargement de la structure: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// Met à jour les résultats depuis la structure actuelle (sans calcul de sollicitations)
-        /// Affiche les propriétés de base : matériaux, niveaux, modules, etc.
+        /// Met ï¿½ jour les rï¿½sultats depuis la structure actuelle (sans calcul de sollicitations)
+        /// Affiche les propriï¿½tï¿½s de base : matï¿½riaux, niveaux, modules, etc.
         /// </summary>
         private void UpdateResultsFromCurrentStructure()
         {
@@ -731,10 +735,10 @@ namespace UI_ChausseeNeuve.ViewModels
             for (int i = 0; i < orderedLayers.Count; i++)
             {
                 var layer = orderedLayers[i];
-                
+
                 // Ajouter la couche
                 var resultCouche = CreateResultCoucheFromLayer(layer, structure);
-                resultCouche.Numero = i + 1; // Synchronise le numéro avec l'ordre de la structure
+                resultCouche.Numero = i + 1; // Synchronise le numï¿½ro avec l'ordre de la structure
                 resultCouche.PropertyChanged += (sender, e) =>
                 {
                     if (e.PropertyName == nameof(ResultatCouche.EstValide))
@@ -744,7 +748,7 @@ namespace UI_ChausseeNeuve.ViewModels
                 };
                 Resultats.Add(resultCouche);
 
-                // Ajouter l'interface si ce n'est pas la dernière couche
+                // Ajouter l'interface si ce n'est pas la derniï¿½re couche
                 if (i < orderedLayers.Count - 1 || platform != null)
                 {
                     var nextLayer = i < orderedLayers.Count - 1 ? orderedLayers[i + 1] : platform;
@@ -760,7 +764,7 @@ namespace UI_ChausseeNeuve.ViewModels
             if (platform != null)
             {
                 var resultPlateforme = CreateResultCoucheFromLayer(platform, structure);
-                resultPlateforme.Numero = orderedLayers.Count + 1; // Numéro plateforme = dernier + 1
+                resultPlateforme.Numero = orderedLayers.Count + 1; // Numï¿½ro plateforme = dernier + 1
                 resultPlateforme.PropertyChanged += (sender, e) =>
                 {
                     if (e.PropertyName == nameof(ResultatCouche.EstValide))
@@ -771,13 +775,13 @@ namespace UI_ChausseeNeuve.ViewModels
                 Resultats.Add(resultPlateforme);
             }
 
-            // Injection des valeurs admissibles calculées
+            // Injection des valeurs admissibles calculï¿½es
             InjectValeursAdmissiblesDansResultats();
             UpdateValidationStatus();
         }
 
         /// <summary>
-        /// Crée un ResultatCouche depuis une Layer (sans sollicitations calculées)
+        /// Crï¿½e un ResultatCouche depuis une Layer (sans sollicitations calculï¿½es)
         /// </summary>
         private ResultatCouche CreateResultCoucheFromLayer(Layer layer, PavementStructure structure)
         {
@@ -789,8 +793,8 @@ namespace UI_ChausseeNeuve.ViewModels
                 NiveauInf = GetLayerBottomLevel(layer),
                 Module = layer.Modulus_MPa,
                 CoefficientPoisson = layer.Poisson,
-                
-                // Sollicitations initialisées à zéro (à calculer)
+
+                // Sollicitations initialisï¿½es ï¿½ zï¿½ro (ï¿½ calculer)
                 SigmaTSup = 0,
                 SigmaTInf = 0,
                 EpsilonTSup = 0,
@@ -803,23 +807,23 @@ namespace UI_ChausseeNeuve.ViewModels
                 EpsilonZInf = 0,
                 DeflexionSup = 0,
                 DeflexionInf = 0,
-                
+
                 ValeurAdmissible = GetDefaultAdmissibleValue(layer.Family),
-                EstValide = true // Par défaut, sera mis à jour après calcul
+                EstValide = true // Par dï¿½faut, sera mis ï¿½ jour aprï¿½s calcul
             };
         }
 
         /// <summary>
-        /// Obtient le nom d'affichage du matériau pour synchronisation parfaite avec la structure
+        /// Obtient le nom d'affichage du matï¿½riau pour synchronisation parfaite avec la structure
         /// </summary>
         private string GetMaterialDisplayName(Layer layer)
         {
-            // Toujours utiliser le nom exact du matériau défini dans la structure
+            // Toujours utiliser le nom exact du matï¿½riau dï¿½fini dans la structure
             return layer.MaterialName ?? string.Empty;
         }
 
         /// <summary>
-        /// Crée un ResultatInterface depuis deux layers
+        /// Crï¿½e un ResultatInterface depuis deux layers
         /// </summary>
         private ResultatInterface CreateResultInterfaceFromLayer(Layer upperLayer, Layer lowerLayer)
         {
@@ -832,7 +836,7 @@ namespace UI_ChausseeNeuve.ViewModels
         }
 
         /// <summary>
-        /// Obtient une valeur admissible par défaut selon la famille de matériau
+        /// Obtient une valeur admissible par dï¿½faut selon la famille de matï¿½riau
         /// </summary>
         private double GetDefaultAdmissibleValue(MaterialFamily family)
         {
@@ -853,10 +857,10 @@ namespace UI_ChausseeNeuve.ViewModels
         {
             return interfaceType switch
             {
-                InterfaceType.Collee => "Collée",
-                InterfaceType.SemiCollee => "Semi-collée",
-                InterfaceType.Decollee => "Décollée",
-                _ => "Collée"
+                InterfaceType.Collee => "Collï¿½e",
+                InterfaceType.SemiCollee => "Semi-collï¿½e",
+                InterfaceType.Decollee => "Dï¿½collï¿½e",
+                _ => "Collï¿½e"
             };
         }
 
@@ -898,7 +902,7 @@ namespace UI_ChausseeNeuve.ViewModels
 
         private void SubscribeToValeursAdmissiblesChanges()
         {
-            // Désabonnement de l'ancienne collection
+            // Dï¿½sabonnement de l'ancienne collection
             if (_lastValeursAdmissiblesViewModel != null)
             {
                 _lastValeursAdmissiblesViewModel.CollectionChanged -= ValeursAdmissibles_CollectionChanged;
@@ -941,35 +945,119 @@ namespace UI_ChausseeNeuve.ViewModels
                 InjectValeursAdmissiblesDansResultats();
         }
 
-        // Ajout : synchronisation des valeurs admissibles dans les résultats
+        // Ajout : synchronisation des valeurs admissibles dans les rï¿½sultats
         private void InjectValeursAdmissiblesDansResultats()
         {
-            // Synchroniser chaque couche résultat avec la valeur admissible correspondante
+            // Synchroniser chaque couche rï¿½sultat avec la valeur admissible correspondante
             var valeursAdmissibles = GetValeursAdmissiblesViewModelCollection();
             if (valeursAdmissibles == null) return;
+
             foreach (var resultat in Resultats.OfType<ResultatCouche>())
             {
-                // Correspondance stricte sur N (Numero) et Materiau
-                var coucheAdmissible = valeursAdmissibles.FirstOrDefault(c =>
-                    c.Niveau == resultat.Numero &&
-                    string.Equals(c.Materiau?.Trim(), resultat.Materiau?.Trim(), StringComparison.InvariantCultureIgnoreCase)
-                );
+                // Utiliser la nouvelle logique de correspondance avancÃ©e
+                var coucheAdmissible = FindBestMatch(resultat, valeursAdmissibles);
                 resultat.ValeurAdmissible = coucheAdmissible?.ValeurAdmissible ?? 0;
             }
-            // Forcer la notification de la propriété Resultats
+
+            // Forcer la notification de la propriï¿½tï¿½ Resultats
             OnPropertyChanged(nameof(Resultats));
+        }
+
+        /// <summary>
+        /// Normalise le nom d'un matÃ©riau pour comparaison robuste
+        /// GÃ¨re les accents, espaces multiples, caractÃ¨res spÃ©ciaux
+        /// </summary>
+        private static string NormalizeMaterialName(string? materialName)
+        {
+            if (string.IsNullOrWhiteSpace(materialName))
+                return string.Empty;
+
+            // 1. Normaliser Unicode (dÃ©composition des accents)
+            var normalized = materialName.Normalize(NormalizationForm.FormD);
+
+            // 2. Supprimer les diacritiques (accents)
+            var stringBuilder = new StringBuilder();
+            foreach (var c in normalized)
+            {
+                var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
+                if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+                {
+                    stringBuilder.Append(c);
+                }
+            }
+
+            // 3. Nettoyer les caractÃ¨res spÃ©ciaux et espaces
+            var cleaned = stringBuilder.ToString()
+                .Replace(',', '.')  // Normaliser sÃ©parateurs dÃ©cimaux
+                .Trim()
+                .ToLowerInvariant();
+
+            // 4. RÃ©duire espaces multiples Ã  un seul espace
+            return Regex.Replace(cleaned, @"\s+", " ");
+        }
+
+        /// <summary>
+        /// Compare deux noms de matÃ©riaux avec normalisation robuste
+        /// </summary>
+        private static bool MaterialNamesMatch(string? name1, string? name2)
+        {
+            return string.Equals(
+                NormalizeMaterialName(name1),
+                NormalizeMaterialName(name2),
+                StringComparison.Ordinal
+            );
+        }
+
+        /// <summary>
+        /// Trouve la meilleure correspondance pour un rÃ©sultat donnÃ©
+        /// PrioritÃ© 1: Correspondance exacte Niveau + MatÃ©riau
+        /// PrioritÃ© 2: Correspondance MatÃ©riau seul (si niveau unique)
+        /// PrioritÃ© 3: Pas de correspondance (retourne null)
+        /// </summary>  
+        private ValeurAdmissibleCouche? FindBestMatch(
+            ResultatCouche resultat,
+            System.Collections.Generic.IEnumerable<ValeurAdmissibleCouche> valeursAdmissibles)
+        {
+            // PrioritÃ© 1: Correspondance exacte Niveau + MatÃ©riau
+            var exactMatch = valeursAdmissibles.FirstOrDefault(c =>
+                c.Niveau == resultat.Numero &&
+                MaterialNamesMatch(c.Materiau, resultat.Materiau)
+            );
+
+            if (exactMatch != null)
+                return exactMatch;
+
+            // PrioritÃ© 2: Correspondance MatÃ©riau seul (si pas d'ambiguÃ¯tÃ©)
+            var materialMatches = valeursAdmissibles
+                .Where(c => MaterialNamesMatch(c.Materiau, resultat.Materiau))
+                .ToList();
+
+            // Si une seule correspondance matÃ©riau (pas d'ambiguÃ¯tÃ©)
+            if (materialMatches.Count == 1)
+                return materialMatches[0];
+
+            // Si plusieurs correspondances, prendre celle du niveau le plus proche
+            if (materialMatches.Count > 1)
+            {
+                return materialMatches
+                    .OrderBy(c => Math.Abs(c.Niveau - resultat.Numero))
+                    .First();
+            }
+
+            // Aucune correspondance trouvÃ©e
+            return null;
         }
 
         #endregion
 
         #region IDisposable
-        
+
         public void Dispose()
         {
-            // Se désabonner de l'événement pour éviter les fuites mémoire
+            // Se dï¿½sabonner de l'ï¿½vï¿½nement pour ï¿½viter les fuites mï¿½moire
             AppState.StructureChanged -= OnStructureChanged;
         }
-        
+
         #endregion
 
         #region INotifyPropertyChanged
@@ -983,7 +1071,7 @@ namespace UI_ChausseeNeuve.ViewModels
     }
 
     /// <summary>
-    /// Classe de base pour les éléments de résultat (couches ou interfaces)
+    /// Classe de base pour les ï¿½lï¿½ments de rï¿½sultat (couches ou interfaces)
     /// </summary>
     public abstract class ResultatItem : INotifyPropertyChanged
     {
@@ -995,7 +1083,7 @@ namespace UI_ChausseeNeuve.ViewModels
     }
 
     /// <summary>
-    /// Résultat pour une couche de chaussée
+    /// Rï¿½sultat pour une couche de chaussï¿½e
     /// </summary>
     public class ResultatCouche : ResultatItem
     {
@@ -1028,28 +1116,28 @@ namespace UI_ChausseeNeuve.ViewModels
             set { _interface = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Type de matériau (BBSG, GNT, etc.)</summary>
+        /// <summary>Type de matï¿½riau (BBSG, GNT, etc.)</summary>
         public string Materiau
         {
             get => _materiau;
             set { _materiau = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Niveau supérieur en cm</summary>
+        /// <summary>Niveau supï¿½rieur en cm</summary>
         public double NiveauSup
         {
             get => _niveauSup;
             set { _niveauSup = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Niveau inférieur en cm</summary>
+        /// <summary>Niveau infï¿½rieur en cm</summary>
         public double NiveauInf
         {
             get => _niveauInf;
             set { _niveauInf = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Module d'élasticité en MPa</summary>
+        /// <summary>Module d'ï¿½lasticitï¿½ en MPa</summary>
         public double Module
         {
             get => _module;
@@ -1063,28 +1151,28 @@ namespace UI_ChausseeNeuve.ViewModels
             set { _coefficientPoisson = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Contrainte horizontale supérieure en MPa</summary>
+        /// <summary>Contrainte horizontale supï¿½rieure en MPa</summary>
         public double SigmaTSup
         {
             get => _sigmaTSup;
             set { _sigmaTSup = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Contrainte horizontale inférieure en MPa</summary>
+        /// <summary>Contrainte horizontale infï¿½rieure en MPa</summary>
         public double SigmaTInf
         {
             get => _sigmaTInf;
             set { _sigmaTInf = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Déformation horizontale supérieure en micro-déformation</summary>
+        /// <summary>Dï¿½formation horizontale supï¿½rieure en micro-dï¿½formation</summary>
         public double EpsilonTSup
         {
             get => _epsilonTSup;
             set { _epsilonTSup = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Déformation horizontale inférieure en micro-déformation</summary>
+        /// <summary>Dï¿½formation horizontale infï¿½rieure en micro-dï¿½formation</summary>
         public double EpsilonTInf
         {
             get => _epsilonTInf;
@@ -1098,98 +1186,98 @@ namespace UI_ChausseeNeuve.ViewModels
             set { _sigmaZ = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Déformation verticale en micro-déformation</summary>
+        /// <summary>Dï¿½formation verticale en micro-dï¿½formation</summary>
         public double EpsilonZ
         {
             get => _epsilonZ;
             set { _epsilonZ = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Contrainte verticale supérieure en MPa</summary>
+        /// <summary>Contrainte verticale supï¿½rieure en MPa</summary>
         public double SigmaZSup
         {
             get => _sigmaZSup;
             set { _sigmaZSup = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Contrainte verticale inférieure en MPa</summary>
+        /// <summary>Contrainte verticale infï¿½rieure en MPa</summary>
         public double SigmaZInf
         {
             get => _sigmaZInf;
             set { _sigmaZInf = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Déformation verticale supérieure en micro-déformation</summary>
+        /// <summary>Dï¿½formation verticale supï¿½rieure en micro-dï¿½formation</summary>
         public double EpsilonZSup
         {
             get => _epsilonZSup;
             set { _epsilonZSup = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Déformation verticale inférieure en micro-déformation</summary>
+        /// <summary>Dï¿½formation verticale infï¿½rieure en micro-dï¿½formation</summary>
         public double EpsilonZInf
         {
             get => _epsilonZInf;
             set { _epsilonZInf = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Déflexion supérieure en mm/100</summary>
+        /// <summary>Dï¿½flexion supï¿½rieure en mm/100</summary>
         public double DeflexionSup
         {
             get => _deflexionSup;
             set { _deflexionSup = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Déflexion inférieure en mm/100</summary>
+        /// <summary>Dï¿½flexion infï¿½rieure en mm/100</summary>
         public double DeflexionInf
         {
             get => _deflexionInf;
             set { _deflexionInf = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Valeur admissible pour le critère sélectionné</summary>
+        /// <summary>Valeur admissible pour le critï¿½re sï¿½lectionnï¿½</summary>
         public double ValeurAdmissible
         {
             get => _valeurAdmissible;
             set { _valeurAdmissible = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Indique si cette couche respecte les critères</summary>
+        /// <summary>Indique si cette couche respecte les critï¿½res</summary>
         public bool EstValide
         {
             get => _estValide;
             set { _estValide = value; OnPropertyChanged(); OnPropertyChanged(nameof(CouleurValidation)); OnPropertyChanged(nameof(StatutValidation)); }
         }
 
-        /// <summary>Couleur à utiliser pour afficher le statut de validation</summary>
+        /// <summary>Couleur ï¿½ utiliser pour afficher le statut de validation</summary>
         public string CouleurValidation => EstValide ? "#d4edda" : "#f8d7da";
 
         /// <summary>Symbole de statut de validation (alternative directe sans converter)</summary>
         public string StatutValidation => EstValide ? "\u2713" : "\u2717"; // ? ou ?
 
-        /// <summary>Valeur critique utilisée pour la validation</summary>
+        /// <summary>Valeur critique utilisï¿½e pour la validation</summary>
         public double ValeurCritique => Math.Max(Math.Abs(EpsilonTSup), Math.Abs(EpsilonTInf));
 
         /// <summary>Taux d'utilisation en pourcentage</summary>
         public double TauxUtilisation => ValeurAdmissible > 0 ? (ValeurCritique / ValeurAdmissible) * 100 : 0;
 
-        /// <summary>Indique si c'est la plateforme (niveau inférieur infini)</summary>
+        /// <summary>Indique si c'est la plateforme (niveau infï¿½rieur infini)</summary>
         public bool EstPlateforme => Interface == "Plateforme" || double.IsPositiveInfinity(NiveauInf);
 
-        /// <summary>Niveau inférieur formaté pour l'affichage (avec tiret pour la plateforme)</summary>
+        /// <summary>Niveau infï¿½rieur formatï¿½ pour l'affichage (avec tiret pour la plateforme)</summary>
         public string NiveauInfDisplay => EstPlateforme ? "-" : NiveauInf.ToString("F0");
 
-        /// <summary>Numéro de la couche (pour affichage dans la grille des résultats)</summary>
+        /// <summary>Numï¿½ro de la couche (pour affichage dans la grille des rï¿½sultats)</summary>
         public int Numero
         {
             get => _numero;
             set { _numero = value; OnPropertyChanged(); OnPropertyChanged(nameof(NiveauDisplay)); }
         }
 
-        /// <summary>Niveau affiché (pour utilisation dans la grille)</summary>
+        /// <summary>Niveau affichï¿½ (pour utilisation dans la grille)</summary>
         public string NiveauDisplay => (Numero > 0) ? Numero.ToString() : "";
 
-        /// <summary>Nature de la couche (correspond à l'interface)</summary>
+        /// <summary>Nature de la couche (correspond ï¿½ l'interface)</summary>
         public string Nature => Interface;
 
         /// <summary>
@@ -1199,14 +1287,14 @@ namespace UI_ChausseeNeuve.ViewModels
     }
 
     /// <summary>
-    /// Résultat pour une interface entre deux couches
+    /// Rï¿½sultat pour une interface entre deux couches
     /// </summary>
     public class ResultatInterface : ResultatItem
     {
         private string _typeInterface = "";
         private string _description = "";
 
-        /// <summary>Type d'interface (Collée, Semi-collée, Décollée)</summary>
+        /// <summary>Type d'interface (Collï¿½e, Semi-collï¿½e, Dï¿½collï¿½e)</summary>
         public string TypeInterface
         {
             get => _typeInterface;
@@ -1220,12 +1308,12 @@ namespace UI_ChausseeNeuve.ViewModels
             set { _description = value; OnPropertyChanged(); }
         }
 
-        /// <summary>Couleur à utiliser pour afficher le type d'interface</summary>
+        /// <summary>Couleur ï¿½ utiliser pour afficher le type d'interface</summary>
         public string CouleurInterface => TypeInterface switch
         {
-            "Collée" => "#28a745",      // Vert pour interface collée
-            "Semi-collée" => "#ffc107", // Jaune pour interface semi-collée
-            "Décollée" => "#dc3545",    // Rouge pour interface décollée
+            "Collï¿½e" => "#28a745",      // Vert pour interface collï¿½e
+            "Semi-collï¿½e" => "#ffc107", // Jaune pour interface semi-collï¿½e
+            "Dï¿½collï¿½e" => "#dc3545",    // Rouge pour interface dï¿½collï¿½e
             _ => "#6c757d"              // Gris pour interface inconnue
         };
     }
