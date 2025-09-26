@@ -74,7 +74,8 @@ namespace UI_ChausseeNeuve.ViewModels
 
         private void OnStructureChanged()
         {
-            System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(SyncFromStructure));
+            // CORRECTION: Synchronisation immédiate au lieu de BeginInvoke pour éviter race conditions
+            SyncFromStructure();
         }
 
         private void InitializeCommands()
