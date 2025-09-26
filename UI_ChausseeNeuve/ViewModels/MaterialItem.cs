@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using UI_ChausseeNeuve.Services; // ajout pour accès NormativeBitumeModel
 
 namespace UI_ChausseeNeuve.ViewModels
 {
@@ -158,33 +159,30 @@ namespace UI_ChausseeNeuve.ViewModels
         /// </summary>
         public double GetModulusAt(int temperatureC, int frequencyHz)
         {
+            // Tentative modèle normatif pour enrobés (retourne null si non applicable / non tabulé)
+            var normative = NormativeBitumeModel.ComputeNormativeE(this, temperatureC, frequencyHz);
+            if (normative.HasValue)
+            {
+                // CalibrationFactor neutralisé (doit être 1.0 pour MB, enforcement défensif)
+                return normative.Value;
+            }
+
             // Prefer 2D table if available
             if (EvsTempFreq != null && EvsTempFreq.Count > 0)
             {
-                // Get sorted temperature keys
                 var temps = EvsTempFreq.Keys.OrderBy(t => t).ToArray();
-                // Clamp temperature to available range
                 int tLow = temps.First();
                 int tHigh = temps.Last();
                 if (temperatureC <= tLow) temperatureC = tLow;
                 if (temperatureC >= tHigh) temperatureC = tHigh;
-
-                // Find bounding temperatures
                 int t0 = temps.Where(t => t <= temperatureC).Max();
                 int t1 = temps.Where(t => t >= temperatureC).Min();
-
-                // For each temperature row, perform frequency interpolation
                 double e_t0 = InterpolateInFrequencyRow(EvsTempFreq[t0], frequencyHz);
                 double e_t1 = InterpolateInFrequencyRow(EvsTempFreq[t1], frequencyHz);
-
-                if (t0 == t1) return e_t0; // exact temp available
-
-                // Linear interpolation in temperature between t0 and t1
+                if (t0 == t1) return e_t0 * CalibrationFactor;
                 double e = e_t0 + (e_t1 - e_t0) * (temperatureC - t0) / (double)(t1 - t0);
-                return e;
+                return e * CalibrationFactor;
             }
-
-            // Fallback to 1D temperature table if available
             double baseE;
             if (EvsTemperature != null && EvsTemperature.Count > 0)
             {
@@ -196,13 +194,9 @@ namespace UI_ChausseeNeuve.ViewModels
                 {
                     var keys = EvsTemperature.Keys.OrderBy(k => k).ToArray();
                     if (temperatureC <= keys.First())
-                    {
                         baseE = EvsTemperature[keys.First()];
-                    }
                     else if (temperatureC >= keys.Last())
-                    {
                         baseE = EvsTemperature[keys.Last()];
-                    }
                     else
                     {
                         int lower = keys.Where(k => k < temperatureC).Max();
@@ -217,13 +211,9 @@ namespace UI_ChausseeNeuve.ViewModels
             {
                 baseE = Modulus_MPa;
             }
-
-            // Adjust for frequency using power law
-            if (frequencyHz <= 0) return baseE;
-
+            if (frequencyHz <= 0) return baseE * CalibrationFactor;
             int fRef = ReferenceFrequency > 0 ? ReferenceFrequency : 10;
             double m = FrequencyExponent ?? 0.25;
-
             try
             {
                 if (frequencyHz == fRef) return baseE * CalibrationFactor;
@@ -235,7 +225,6 @@ namespace UI_ChausseeNeuve.ViewModels
                 return baseE * CalibrationFactor;
             }
         }
-
         // Helper: interpolate in a frequency row (dictionary freq -> E), clamped to bounds, linear interpolation
         private double InterpolateInFrequencyRow(Dictionary<int, double> freqRow, int frequencyHz)
         {

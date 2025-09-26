@@ -32,21 +32,27 @@ namespace UI_ChausseeNeuve.Services
             {
                 string dataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", $"{libraryName}.json");
 
-                // Si le fichier n'existe pas, retourner des données par défaut
+                List<MaterialItem> materials;
                 if (!File.Exists(dataPath))
                 {
-                    var defaultMaterials = GetDefaultMaterials(libraryName);
-                    _materialCache[libraryName] = defaultMaterials;
-                    return defaultMaterials;
+                    materials = GetDefaultMaterials(libraryName);
+                }
+                else
+                {
+                    string jsonContent = await File.ReadAllTextAsync(dataPath);
+                    var libraryData = JsonSerializer.Deserialize<MaterialLibraryData>(jsonContent, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    });
+                    materials = libraryData?.Materials ?? GetDefaultMaterials(libraryName);
                 }
 
-                string jsonContent = await File.ReadAllTextAsync(dataPath);
-                var libraryData = JsonSerializer.Deserialize<MaterialLibraryData>(jsonContent, new JsonSerializerOptions
+                // Neutraliser tout facteur de calibration pour les matériaux bitumineux normatifs (MB)
+                foreach (var m in materials.Where(m => string.Equals(m.Category, "MB", StringComparison.OrdinalIgnoreCase)))
                 {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                });
+                    m.CalibrationFactor = 1.0; // Le modèle normatif fournira directement E(T,f)
+                }
 
-                var materials = libraryData?.Materials ?? GetDefaultMaterials(libraryName);
                 _materialCache[libraryName] = materials;
                 return materials;
             }
@@ -54,6 +60,10 @@ namespace UI_ChausseeNeuve.Services
             {
                 System.Diagnostics.Debug.WriteLine($"Erreur lors du chargement des matériaux pour {libraryName}: {ex.Message}");
                 var defaultMaterials = GetDefaultMaterials(libraryName);
+                foreach (var m in defaultMaterials.Where(m => string.Equals(m.Category, "MB", StringComparison.OrdinalIgnoreCase)))
+                {
+                    m.CalibrationFactor = 1.0;
+                }
                 _materialCache[libraryName] = defaultMaterials;
                 return defaultMaterials;
             }
@@ -184,7 +194,7 @@ namespace UI_ChausseeNeuve.Services
                         },
                         Category = "MB" },
 
-                // eb-bbsg3
+                // eb-bbsg3 (corrigé: valeur 10°C alignée sur eb-gb2 pour ratio normatif)
                 new() { Statut = "system", Name = "eb-bbsg3",
                        Modulus_MPa = 7000,
                         PoissonRatio = 0.35,
@@ -281,7 +291,7 @@ namespace UI_ChausseeNeuve.Services
                         },
                         Category = "MB" },
 
-                 // eb-gb3
+                 // eb-gb3 (corrigé: 10°C=11880 au lieu de 13800)
                 new() { Statut = "system", Name = "eb-gb3",
                        Modulus_MPa = 9000,
                         PoissonRatio = 0.35,
@@ -289,7 +299,7 @@ namespace UI_ChausseeNeuve.Services
                         Sh = null, ShStatus = "standard", Kc = 1.3,
                         EvsTemperature = new Dictionary<int, double>
                         {
-                           {-10,22800}, {0,18300}, {10,13800}, {20,6120}, {30,2700}, {40,1000}
+                           {-10,22800}, {0,18300}, {10,11880}, {20,6120}, {30,2700}, {40,1000}
                         },
                         Category = "MB" },
 
@@ -434,7 +444,13 @@ namespace UI_ChausseeNeuve.Services
             {
                 try
                 {
-                    // determine target value from tables if available
+                    // Pour les matériaux bitumineux normatifs on ne calibre plus
+                    if (string.Equals(m.Category, "MB", StringComparison.OrdinalIgnoreCase))
+                    {
+                        m.CalibrationFactor = 1.0;
+                        continue;
+                    }
+
                     double? target = null;
                     if (m.EvsTempFreq != null && m.EvsTempFreq.Count > 0)
                     {
@@ -442,27 +458,22 @@ namespace UI_ChausseeNeuve.Services
                         {
                             target = val;
                         }
-                        else
+                        else if (m.EvsTempFreq.TryGetValue(referenceTemperature, out var anyRow))
                         {
-                            // if exact freq not present, interpolate in row via closest available frequencies
-                            if (m.EvsTempFreq.TryGetValue(referenceTemperature, out var anyRow))
+                            var freqs = anyRow.Keys.OrderBy(f => f).ToArray();
+                            if (freqs.Length > 0)
                             {
-                                var freqs = anyRow.Keys.OrderBy(f => f).ToArray();
-                                if (freqs.Length > 0)
+                                int f0 = freqs.First();
+                                int f1 = freqs.Last();
+                                if (referenceFrequency <= f0) target = anyRow[f0];
+                                else if (referenceFrequency >= f1) target = anyRow[f1];
+                                else
                                 {
-                                    int f0 = freqs.First();
-                                    int f1 = freqs.Last();
-                                    // clamp
-                                    if (referenceFrequency <= f0) target = anyRow[f0];
-                                    else if (referenceFrequency >= f1) target = anyRow[f1];
-                                    else
-                                    {
-                                        int lower = freqs.Where(f => f <= referenceFrequency).Max();
-                                        int upper = freqs.Where(f => f >= referenceFrequency).Min();
-                                        var e0 = anyRow[lower];
-                                        var e1 = anyRow[upper];
-                                        target = e0 + (e1 - e0) * (referenceFrequency - lower) / (double)(upper - lower);
-                                    }
+                                    int lower = freqs.Where(f => f <= referenceFrequency).Max();
+                                    int upper = freqs.Where(f => f >= referenceFrequency).Min();
+                                    var e0 = anyRow[lower];
+                                    var e1 = anyRow[upper];
+                                    target = e0 + (e1 - e0) * (referenceFrequency - lower) / (double)(upper - lower);
                                 }
                             }
                         }
@@ -487,15 +498,12 @@ namespace UI_ChausseeNeuve.Services
                         }
                     }
 
-                    // fallback to Modulus_MPa
                     if (target == null) target = m.Modulus_MPa;
 
-                    // compute raw value using existing logic but ignoring CalibrationFactor
                     double raw = GetRawModulusAt(m, referenceTemperature, referenceFrequency);
                     if (raw <= 0) { m.CalibrationFactor = 1.0; continue; }
 
                     m.CalibrationFactor = target.Value / raw;
-                    // store for display
                     m.LastCalibrationTarget = target.Value;
                 }
                 catch
@@ -508,7 +516,7 @@ namespace UI_ChausseeNeuve.Services
         // Helper to compute modulus without applying CalibrationFactor
         private double GetRawModulusAt(MaterialItem m, int temperatureC, int frequencyHz)
         {
-            // Valeurs exactes Alizé pour T=15°C, F=11Hz
+            // Valeurs exactes Alizé pour T=15°C, F=11Hz (legacy)
             if (temperatureC == 15 && frequencyHz == 11)
             {
                 switch (m.Name?.ToLowerInvariant())
@@ -530,10 +538,8 @@ namespace UI_ChausseeNeuve.Services
                 }
             }
 
-            // Pour autres températures/fréquences : utiliser la table E(T)
             if (m.EvsTemperature != null && m.EvsTemperature.Count > 0)
             {
-                // Interpolation température
                 double e;
                 if (m.EvsTemperature.TryGetValue(temperatureC, out var exact))
                 {
@@ -556,18 +562,17 @@ namespace UI_ChausseeNeuve.Services
                     }
                 }
 
-                // Correction fréquence selon tableau 23
                 if (frequencyHz != 10)
                 {
                     double ratio;
                     if (temperatureC <= -5)
-                        ratio = 1.01; // Effet minimal à froid
+                        ratio = 1.01;
                     else if (temperatureC <= 15)
-                        ratio = 1.024; // Effet modéré à 15°C
+                        ratio = 1.024;
                     else if (temperatureC <= 30)
-                        ratio = 1.05; // Effet plus important à chaud
+                        ratio = 1.05;
                     else
-                        ratio = 1.08; // Effet maximal à très chaud
+                        ratio = 1.08;
 
                     e *= ratio;
                 }
@@ -575,12 +580,9 @@ namespace UI_ChausseeNeuve.Services
                 return e;
             }
 
-            return m.Modulus_MPa; // Fallback
+            return m.Modulus_MPa;
         }
 
-        /// <summary>
-        /// Remplit automatiquement les valeurs Sh marquées comme "standard" selon les règles d'Alizé
-        /// </summary>
         public void FillStandardShValues(IEnumerable<MaterialItem> materials)
         {
             foreach (var material in materials.Where(m => m.ShStatus == "standard" && m.Category == "MB"))
@@ -589,10 +591,6 @@ namespace UI_ChausseeNeuve.Services
             }
         }
 
-        /// <summary>
-        /// Applique les corrections spécifiques pour la bibliothèque NFP98-086
-        /// Complète les valeurs manquantes selon les règles de la norme
-        /// </summary>
         private void ApplyNFP98Corrections(List<MaterialItem> materials, string libraryName)
         {
             if (materials == null || materials.Count == 0) return;
@@ -605,26 +603,21 @@ namespace UI_ChausseeNeuve.Services
                     if (!string.Equals(m.Category, "MB", StringComparison.OrdinalIgnoreCase)) continue;
 
                     var lname = (m.Name ?? string.Empty).ToLowerInvariant();
-                    bool isBBMFamily = lname is "bbm" or "bbtm" or "bbdr" or "acr"; // valeurs non renseignées pour Epsi0/SN/-1b
+                    bool isBBMFamily = lname is "bbm" or "bbtm" or "bbdr" or "acr";
 
-                    // SN et -1/b par défaut selon le tableau de référence
                     if (!isBBMFamily)
                     {
-                        // Pour les matériaux système eb-*, les valeurs sont déjà définies dans GetNFP98Defaults()
-                        // Ne pas les écraser ici
                         if (m.SN == null)
                         {
                             if (lname.Contains("eb-gb"))
-                                m.SN = 0.3; // Graves bitumes
+                                m.SN = 0.3;
                             else
-                                m.SN = 0.25; // BBSG, BBME, EME
+                                m.SN = 0.25;
                         }
-                        
                         if (m.InverseB == null)
-                            m.InverseB = 5; // Valeur standard pour tous les enrobés système
+                            m.InverseB = 5;
                     }
 
-                    // Epsi0(10°C): selon table si non renseignée
                     if (m.Epsi0_10C == null)
                     {
                         if (lname.StartsWith("eb-gb2")) m.Epsi0_10C = 80;
@@ -632,10 +625,8 @@ namespace UI_ChausseeNeuve.Services
                         else if (lname.StartsWith("eb-gb4")) m.Epsi0_10C = 100;
                         else if (lname.StartsWith("eb-eme2")) m.Epsi0_10C = 130;
                         else if (lname.StartsWith("eb-eme1") || lname.StartsWith("eb-bbsg") || lname.StartsWith("eb-bbme")) m.Epsi0_10C = 100;
-                        // sinon laisser null pour afficher "/"
                     }
 
-                    // Sh/Kc selon le tableau de référence
                     if (lname.Contains("eb-gb"))
                     {
                         if (m.Sh == null) m.Sh = 0.30;
