@@ -10,6 +10,7 @@ namespace UI_ChausseeNeuve.Windows
     public partial class NFP98086Window : Window
     {
         private readonly string _mode;
+        public NFP98086ViewModel? ViewModel => DataContext as NFP98086ViewModel;
 
         public NFP98086Window() : this("CAM") { }
 
@@ -17,10 +18,17 @@ namespace UI_ChausseeNeuve.Windows
         {
             InitializeComponent();
             _mode = string.IsNullOrWhiteSpace(mode) ? "CAM" : mode.ToUpperInvariant();
+            DataContext = new NFP98086ViewModel();
+            if (ViewModel != null)
+            {
+                ViewModel.OnCamValueSelected += (_, materialType) => { /* handled in ApplyCamFromValue via command */ };
+                ViewModel.OnCamValueSelected += OnCamValueSelected; // real handler
+                ViewModel.OnRiskValueSelected += OnRiskValueSelected;
+            }
 
-            AttachCellClick(GridPeriNonAuto, OnPeriNonAutoCellClick);
-            AttachCellClick(GridPeriAuto, OnPeriAutoCellClick);
-            AttachCellClick(GridUrbain, OnUrbainCellClick);
+            AttachCellClick(GridPeriNonAuto, OnGridCellClick_PeriNonAuto);
+            AttachCellClick(GridPeriAuto, OnGridCellClick_PeriAuto);
+            AttachCellClick(GridUrbain, OnGridCellClick_Urbain);
 
             if (_mode == "RISQUE")
             {
@@ -42,12 +50,57 @@ namespace UI_ChausseeNeuve.Windows
             }
         }
 
+        private void OnCamValueSelected(double value, string materialType)
+        {
+            ApplyCamFromValue(value, materialType);
+        }
+
+        private void OnRiskValueSelected(double value, string label)
+        {
+            ApplyRiskFromValue(value, label);
+        }
+
         private void AttachCellClick(Grid grid, MouseButtonEventHandler handler)
         {
             if (grid != null)
             {
                 grid.MouseLeftButtonUp += handler;
                 grid.Cursor = Cursors.Hand;
+            }
+        }
+
+        private void OnGridCellClick_PeriNonAuto(object sender, MouseButtonEventArgs e) => DispatchGridClick("PNON", sender, e, maxCols:4);
+        private void OnGridCellClick_PeriAuto(object sender, MouseButtonEventArgs e) => DispatchGridClick("PAUTO", sender, e, maxCols:1);
+        private void OnGridCellClick_Urbain(object sender, MouseButtonEventArgs e) => DispatchGridClick("URB", sender, e, maxCols:3);
+
+        private void DispatchGridClick(string areaKey, object sender, MouseButtonEventArgs e, int maxCols)
+        {
+            if (ViewModel == null) return;
+            if (sender is not Grid grid) return;
+            var fe = e.OriginalSource as FrameworkElement;
+            if (fe == null) return;
+            var border = FindParent<Border>(fe);
+            if (border == null) return;
+            int row = Grid.GetRow(border);   // includes header row 0
+            int col = Grid.GetColumn(border); // includes header col 0
+
+            // Normalize row/col for data zones
+            if (areaKey == "PNON")
+            {
+                // Data rows now 1..4 (MB, MTLH, Sols traites, Plate-forme GNT) and columns 1..5 (T5,T4,T3-,T3+,T2T1T0)
+                if (row < 1 || row > 4 || col < 1 || col > 5) return;
+                ViewModel.SelectCamCommand.Execute($"{areaKey}|{row-1}|{col-1}");
+            }
+            else if (areaKey == "PAUTO")
+            {
+                if (row < 1 || row > 3) return;
+                // single value row wise
+                ViewModel.SelectCamCommand.Execute($"{areaKey}|{row-1}|0");
+            }
+            else if (areaKey == "URB")
+            {
+                if (row < 1 || row > 3 || col < 1 || col > 3) return;
+                ViewModel.SelectCamCommand.Execute($"{areaKey}|{row-1}|{col-1}");
             }
         }
 
@@ -65,77 +118,6 @@ namespace UI_ChausseeNeuve.Windows
             selectWin.ShowDialog();
         }
 
-        private void OnPeriNonAutoCellClick(object sender, MouseButtonEventArgs e)
-        {
-            if (TryGetCellValue(sender as Grid, e, out double value, out string materialType))
-            {
-                ApplyCamFromValue(value, materialType);
-            }
-        }
-
-        private void OnPeriAutoCellClick(object sender, MouseButtonEventArgs e)
-        {
-            if (TryGetCellValue(sender as Grid, e, out double value, out string materialType))
-            {
-                ApplyCamFromValue(value, materialType);
-            }
-        }
-
-        private void OnUrbainCellClick(object sender, MouseButtonEventArgs e)
-        {
-            if (TryGetCellValue(sender as Grid, e, out double value, out string materialType))
-            {
-                ApplyCamFromValue(value, materialType);
-            }
-        }
-
-        private bool TryGetCellValue(Grid grid, MouseButtonEventArgs e, out double cam, out string materialType)
-        {
-            cam = 0;
-            materialType = "";
-            if (grid == null) return false;
-
-            var element = e.OriginalSource as FrameworkElement;
-            if (element == null) return false;
-
-            var border = FindParent<Border>(element);
-            if (border == null) return false;
-
-            if (border.Child is TextBlock tb)
-            {
-                var text = tb.Text?.Trim();
-                if (double.TryParse(text?.Replace(',', '.'), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var v))
-                {
-                    cam = v;
-
-                    int row = Grid.GetRow(border);
-                    if (grid == GridPeriNonAuto || grid == GridPeriAuto)
-                    {
-                        materialType = row switch
-                        {
-                            1 => "bitumineux",
-                            2 => "traites_hydrauliques",
-                            3 => "granulaires",
-                            _ => "bitumineux"
-                        };
-                    }
-                    else if (grid == GridUrbain)
-                    {
-                        materialType = row switch
-                        {
-                            1 => "bitumineux",
-                            2 => "traites_hydrauliques",
-                            3 => "giratoire",
-                            _ => "bitumineux"
-                        };
-                    }
-
-                    return true;
-                }
-            }
-            return false;
-        }
-
         private static T? FindParent<T>(DependencyObject child) where T : DependencyObject
         {
             var parent = VisualTreeHelper.GetParent(child);
@@ -150,17 +132,15 @@ namespace UI_ChausseeNeuve.Windows
         {
             if (sender is Button btn && btn.Tag is string tag)
             {
-                var parts = tag.Split('|');
-                if (parts.Length >= 2 && double.TryParse(parts[0].Replace(',', '.'), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var r))
-                {
-                    string label = parts.Length > 1 ? parts[1] : "R NFP";
-                    ApplyRiskFromValue(r, label);
-                }
+                ViewModel?.SelectRiskCommand.Execute(tag);
             }
         }
 
         private void Close_Click(object sender, RoutedEventArgs e) => Close();
         private void Cancel_Click(object sender, RoutedEventArgs e) { DialogResult = false; Close(); }
         private void Ok_Click(object sender, RoutedEventArgs e) { DialogResult = true; Close(); }
+
+        // Classe interne conservée pour compatibilité Hot Reload (ancien stockage des tables CAM)
+        internal static class NfpCamData { }
     }
 }

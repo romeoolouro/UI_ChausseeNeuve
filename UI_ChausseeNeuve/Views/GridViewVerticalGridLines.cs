@@ -109,10 +109,9 @@ namespace UI_ChausseeNeuve.Views
                 _listView = adornedElement;
                 _gridView = (GridView)_listView.View!;
 
-                // Use white separators (theme resource fallback)
+                // Use gray separators for light theme (similar to Alizé)
                 var brush = TryFindResource(_listView, "GridSeparatorBrush") as Brush
-                            ?? TryFindResource(_listView, "TextWhite") as Brush
-                            ?? Brushes.White;
+                            ?? new SolidColorBrush(Color.FromRgb(204, 204, 204)); // Light gray for Alizé style
                 _pen = new Pen(brush, 1.0);
                 _pen.Freeze();
 

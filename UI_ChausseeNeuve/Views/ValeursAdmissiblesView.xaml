@@ -8,13 +8,17 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-        <!-- Converters locaux nécessaires -->
         <c:SimpleInverseBooleanConverter x:Key="InverseBooleanConverter"/>
         <c:SimpleCountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
         <c:EpsiZTooltipConverter x:Key="EpsiZTooltipConverter"/>
         <c:EpsiZBgConverter x:Key="EpsiZBgConverter"/>
+        <c:BooleanToBackgroundConverter x:Key="BooleanToBackgroundConverter" TrueValue="{StaticResource WhiteBrush}" FalseValue="{StaticResource CardBg}"/>
+        <c:EmptyIfZeroExpertConverter x:Key="EmptyIfZeroExpert"/>
+        <c:EmptyIfNeutralExpertConverter x:Key="EmptyIfNeutralExpert"/>
+        <c:DecimalDirectConverter x:Key="DecimalDirect"/>
+        <!-- Converter multi-binding pour masquer 0 tant que non saisi -->
+        <!-- <c:EmptyIfZeroUnlessUserSetMultiConverter x:Key="EmptyIfZeroUnlessUserSet" /> -->
 
-        <!-- Styles locaux -->
         <Style x:Key="HelpGhostButtonStyle" TargetType="Button">
             <Setter Property="Foreground" Value="{StaticResource TextWhite}"/>
             <Setter Property="Padding" Value="10,6"/>
@@ -40,7 +44,6 @@
             </Setter>
         </Style>
 
-        <!-- Items noirs sur fond blanc pour ComboBox -->
         <Style x:Key="LightComboBoxItemStyle" TargetType="ComboBoxItem">
             <Setter Property="Foreground" Value="{StaticResource TextDark}"/>
             <Setter Property="Background" Value="{StaticResource WhiteBrush}"/>
@@ -64,6 +67,15 @@
             <Setter Property="Background" Value="{StaticResource WhiteBrush}"/>
             <Setter Property="Foreground" Value="{StaticResource TextDark}"/>
             <Setter Property="ItemContainerStyle" Value="{StaticResource LightComboBoxItemStyle}"/>
+        </Style>
+
+        <Style x:Key="AmplitudeTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource ModernTextBoxStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsEpsiZ}" Value="False">
+                    <Setter Property="IsEnabled" Value="False"/>
+                    <Setter Property="Background" Value="{StaticResource CardBg}"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
     </UserControl.Resources>
 
@@ -110,9 +122,6 @@
                         <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,10">
                             <TextBlock Text="Type de taux" Style="{StaticResource LabelStyle}" />
                             <ComboBox ItemsSource="{Binding TypesTauxAccroissement}" SelectedItem="{Binding TypeTauxAccroissement}" Style="{StaticResource LightComboBoxStyle}"/>
-                        </StackPanel>
-                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="5,0,5,10">
-                            <TextBlock Text=" " Style="{StaticResource LabelStyle}" />
                         </StackPanel>
                         <StackPanel Grid.Row="1" Grid.Column="2" Margin="10,0,0,10">
                             <TextBlock Text="Trafic cumulé (PL)" Style="{StaticResource LabelStyle}" />
@@ -166,7 +175,7 @@
                             <ColumnDefinition Width="56" />  <!-- kθ -->
                             <ColumnDefinition Width="56" />  <!-- kd -->
                             <ColumnDefinition Width="80" />  <!-- Val. Adm. -->
-                            <ColumnDefinition Width="40" />  <!-- Actions -->
+                            <ColumnDefinition Width="40" />  <!-- Actions col -->
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="N°" Style="{StaticResource TableHeaderStyle}" />
                         <TextBlock Grid.Column="1" Text="Matériau" Style="{StaticResource TableHeaderStyle}" />
@@ -216,38 +225,47 @@
                                             <ColumnDefinition Width="80" />
                                             <ColumnDefinition Width="40" />
                                         </Grid.ColumnDefinitions>
+                                        <!-- N° / Matériau / Critère -->
                                         <TextBox Grid.Column="0" Text="{Binding Niveau, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InlineTextBoxStyle}" />
                                         <TextBox Grid.Column="1" Text="{Binding Materiau, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InlineTextBoxStyle}" />
                                         <ComboBox Grid.Column="2"
-                              ItemsSource="{Binding CriteresDisponibles}"
-                              SelectedItem="{Binding Critere}"
-                              Style="{StaticResource LightInlineComboBoxStyle}"/>
-                                        <TextBox Grid.Column="3" Text="{Binding AmplitudeValue, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}" Style="{StaticResource InlineTextBoxStyle}" />
-                                        <TextBox Grid.Column="4" Text="{Binding Cam, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F1}'}" Style="{StaticResource InlineTextBoxStyle}" Background="{StaticResource InputBg}" Foreground="{StaticResource TextWhite}" />
-                                        <TextBox Grid.Column="5" Text="{Binding Risque, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F1}'}" Style="{StaticResource InlineTextBoxStyle}" />
-                                        <TextBox Grid.Column="6" Text="{Binding Ne, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}" Style="{StaticResource InlineTextBoxStyle}" />
-                                        <TextBox Grid.Column="7" Text="{Binding Epsilon6, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}" Style="{StaticResource InlineTextBoxStyle}" IsEnabled="{Binding CanEditEpsilon6}" />
-                                        <TextBox Grid.Column="8" Text="{Binding Sigma6, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}" Style="{StaticResource InlineTextBoxStyle}" IsEnabled="{Binding IsSigmaT}" />
+                                                  ItemsSource="{Binding CriteresDisponibles}"
+                                                  SelectedItem="{Binding Critere}"
+                                                  Style="{StaticResource LightInlineComboBoxStyle}"/>
+                                        <!-- Amplitude (A / ε6) -->
+                                        <TextBox Grid.Column="3"
+                                                 Text="{Binding AmplitudeValue, UpdateSourceTrigger=LostFocus, Converter={StaticResource EmptyIfZeroExpert}, ConverterParameter=F2}"
+                                                 Style="{StaticResource AmplitudeTextBoxStyle}"
+                                                 Height="28"
+                                                 ToolTip="{Binding AmplitudeLabel}"
+                                                 IsEnabled="{Binding CanEditAmplitude}"/>
+                                        <!-- CAM / Risque / NE -->
+                                        <TextBox Grid.Column="4" Text="{Binding Cam, UpdateSourceTrigger=LostFocus, Converter={StaticResource EmptyIfZeroExpert}, ConverterParameter=F1}" Style="{StaticResource InlineTextBoxStyle}" Background="{StaticResource InputBg}" Foreground="{StaticResource TextWhite}" />
+                                        <!-- Risque simple fallback -->
+                                        <TextBox Grid.Column="5" Text="{Binding Risque, UpdateSourceTrigger=LostFocus, Converter={StaticResource EmptyIfZeroExpert}, ConverterParameter=F1}" Style="{StaticResource InlineTextBoxStyle}" IsEnabled="{Binding CanEditRisque}" />
+                                        <TextBox Grid.Column="6" Text="{Binding Ne, UpdateSourceTrigger=LostFocus, Converter={StaticResource EmptyIfZeroExpert}, ConverterParameter=F2}" Style="{StaticResource InlineTextBoxStyle}" IsReadOnly="True"/>
+                                        <!-- ε6 / σ6 -->
+                                        <TextBox Grid.Column="7" Text="{Binding Epsilon6, UpdateSourceTrigger=LostFocus, Converter={StaticResource EmptyIfZeroExpert}, ConverterParameter=F2}" Style="{StaticResource InlineTextBoxStyle}" IsEnabled="{Binding CanEditEpsilon6}" />
+                                        <TextBox Grid.Column="8" Text="{Binding Sigma6, UpdateSourceTrigger=LostFocus, Converter={StaticResource EmptyIfZeroExpert}, ConverterParameter=F2}" Style="{StaticResource InlineTextBoxStyle}" IsEnabled="{Binding IsSigmaT}" />
+                                        <!-- -1/b (colonne uniformisée) -->
                                         <TextBox Grid.Column="9"
-                             Text="{Binding B, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F3}'}"
-                             Style="{StaticResource InlineTextBoxStyle}"
-                             ToolTip="{Binding Critere, Converter={StaticResource EpsiZTooltipConverter}}"
-                             Background="{Binding Critere, Converter={StaticResource EpsiZBgConverter}}"
-                    />
-                    <TextBox Grid.Column="10" Text="{Binding Sn, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}" Style="{StaticResource InlineTextBoxStyle}" IsEnabled="{Binding CanEditSn}" />
-                    <TextBox Grid.Column="11" Text="{Binding Sh, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}" Style="{StaticResource InlineTextBoxStyle}" IsEnabled="{Binding CanEditSh}" />
-                    <TextBox Grid.Column="12" Text="{Binding Kc, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}" Style="{StaticResource InlineTextBoxStyle}" IsEnabled="{Binding CanEditKc}" />
-                    <TextBox Grid.Column="13" Text="{Binding Kr, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F3}'}" Style="{StaticResource InlineTextBoxStyle}" IsEnabled="{Binding CanEditKr}" />
-                    <TextBox Grid.Column="14" Text="{Binding Ks, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}" Style="{StaticResource InlineTextBoxStyle}" IsReadOnly="True" MouseDoubleClick="KsCell_MouseDoubleClick" />
-                    <!-- kθ : calcul auto ou manuel -->
-                    <TextBox Grid.Column="15"
-                             Text="{Binding Ktheta, StringFormat='{}{0:F2}'}"
-                             Style="{StaticResource InlineTextBoxStyle}"
-                             IsReadOnly="True"
-                             MouseDoubleClick="KthetaCell_MouseDoubleClick" />
-                    <TextBox Grid.Column="16" Text="{Binding Kd, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F2}'}" Style="{StaticResource InlineTextBoxStyle}" IsEnabled="{Binding CanEditKd}" MouseDoubleClick="KdCell_MouseDoubleClick" />
-                    <TextBox Grid.Column="17" Text="{Binding ValeurAdmissible, StringFormat='{}{0:F3}'}" Style="{StaticResource InlineTextBoxStyle}" IsReadOnly="True" Background="{StaticResource SecondaryBg}" />
-                    <Button Grid.Column="18" Content="🗑️" Style="{StaticResource DeleteButtonStyle}" Command="{Binding Path=DataContext.SupprimerCoucheCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
+                                                 Text="{Binding B, UpdateSourceTrigger=LostFocus, Converter={StaticResource EmptyIfZeroExpert}, ConverterParameter=F3}"
+                                                 Style="{StaticResource InlineTextBoxStyle}"
+                                                 ToolTip="{Binding Critere, Converter={StaticResource EpsiZTooltipConverter}}"
+                                                 Background="{StaticResource InputBg}"/>
+                                        <!-- Sn / Sh -->
+                                        <TextBox Grid.Column="10" Text="{Binding Sn, UpdateSourceTrigger=LostFocus, Converter={StaticResource EmptyIfZeroExpert}, ConverterParameter=F2}" Style="{StaticResource InlineTextBoxStyle}" IsEnabled="{Binding CanEditSn}" />
+                                        <TextBox Grid.Column="11" Text="{Binding Sh, UpdateSourceTrigger=LostFocus, Converter={StaticResource EmptyIfZeroExpert}, ConverterParameter=F2}" Style="{StaticResource InlineTextBoxStyle}" IsEnabled="{Binding CanEditSh}" />
+                                        <!-- kc / kr / ks / ktheta / kd (multi-binding pour masquer 0 tant non saisi) -->
+                                        <TextBox Grid.Column="12" Text="{Binding Kc, UpdateSourceTrigger=LostFocus, Converter={StaticResource EmptyIfZeroExpert}, ConverterParameter=F2}" Style="{StaticResource InlineTextBoxStyle}" IsEnabled="{Binding CanEditKc}" />
+                                        <TextBox Grid.Column="13" Text="{Binding Kr, UpdateSourceTrigger=LostFocus, Converter={StaticResource EmptyIfZeroExpert}, ConverterParameter=F2}" Style="{StaticResource InlineTextBoxStyle}" IsEnabled="{Binding CanEditKr}" />
+                                        <TextBox Grid.Column="14" Text="{Binding Ks, UpdateSourceTrigger=LostFocus, Converter={StaticResource EmptyIfZeroExpert}, ConverterParameter=F2}" Style="{StaticResource InlineTextBoxStyle}" IsEnabled="{Binding CanEditKs}" MouseDoubleClick="KsCell_MouseDoubleClick" />
+                                        <TextBox Grid.Column="15" Text="{Binding Ktheta, UpdateSourceTrigger=LostFocus, Converter={StaticResource EmptyIfZeroExpert}, ConverterParameter=F2}" Style="{StaticResource InlineTextBoxStyle}" IsEnabled="{Binding CanEditKtheta}" MouseDoubleClick="KthetaCell_MouseDoubleClick" />
+                                        <TextBox Grid.Column="16" Text="{Binding Kd, UpdateSourceTrigger=LostFocus, Converter={StaticResource EmptyIfZeroExpert}, ConverterParameter=F2}" Style="{StaticResource InlineTextBoxStyle}" IsEnabled="{Binding CanEditKd}" MouseDoubleClick="KdCell_MouseDoubleClick" />
+                                        <!-- Valeur admissible -->
+                                        <TextBox Grid.Column="17" Text="{Binding ValeurAdmissible, Converter={StaticResource EmptyIfZeroExpert}, ConverterParameter=F3}" Style="{StaticResource InlineTextBoxStyle}" IsReadOnly="True" Background="{StaticResource SecondaryBg}" />
+                                        <!-- Actions -->
+                                        <Button Grid.Column="18" Content="🗑️" Style="{StaticResource DeleteButtonStyle}" Command="{Binding Path=DataContext.SupprimerCoucheCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
                                     </Grid>
                                 </Border>
                             </DataTemplate>
@@ -300,7 +318,6 @@
                                         <Button Content="Guide lcpc-setra 94" Style="{StaticResource HelpGhostButtonStyle}" Click="LcpcSetraButton_Click"/>
                                         <Button Content="Catalogue 1998" Style="{StaticResource HelpGhostButtonStyle}" Click="Catalogue1998Button_Click"/>
                                         <Button Content="Norme NF P98-086" Style="{StaticResource HelpGhostButtonStyle}" Click="NormeNFP98Button_Click"/>
-                                        <Button Content="Infos Kd / Sh (rigides)" Style="{StaticResource HelpGhostButtonStyle}" Click="RigidInfo_Click"/>
                                     </StackPanel>
                                     <StackPanel Margin="0,10,0,0">
                                         <TextBlock Text="💡 Astuce : Vous pouvez appliquer des valeurs depuis les normes, puis les modifier manuellement dans le tableau selon vos besoins." Style="{StaticResource InfoTextStyle}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource {x:Static SystemColors.ActiveCaptionTextBrushKey}}" TextWrapping="Wrap" />

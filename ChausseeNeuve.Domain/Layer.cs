@@ -6,12 +6,10 @@ using System.Linq;
 
 namespace ChausseeNeuve.Domain.Models
 {
-    public class Layer : INotifyPropertyChanged, INotifyDataErrorInfo
+    public partial class Layer : INotifyPropertyChanged, INotifyDataErrorInfo
     {
-        // Constante pour l'épaisseur de la plateforme (représente l'infini dans les calculs)
         private const double PLATFORM_INFINITE_THICKNESS = 10_000_000.0; // 10 millions de mètres
 
-        // Délégué pour notifications toast
         public static Action<string, ToastType>? NotifyToast { get; set; }
 
         private int _order;
@@ -24,19 +22,75 @@ namespace ChausseeNeuve.Domain.Models
         private InterfaceType? _iface;
         private readonly Dictionary<string, List<string>> _errors = new();
 
+        // Nouveau: mode dimensionnement (impacte la validation)
+        private DimensionnementMode _mode = DimensionnementMode.Expert;
+        public DimensionnementMode Mode
+        {
+            get => _mode;
+            set
+            {
+                if (_mode != value)
+                {
+                    _mode = value;
+                    OnPropertyChanged();
+                    // Revalider selon le mode courant sans perdre les valeurs utilisateur
+                    ValidateAll();
+                }
+            }
+        }
+
+        // États hors norme (pour styliser l'UI)
+        private bool _isThicknessOutOfNorm;
+        public bool IsThicknessOutOfNorm { get => _isThicknessOutOfNorm; private set { if (_isThicknessOutOfNorm != value) { _isThicknessOutOfNorm = value; OnPropertyChanged(); OnPropertyChanged(nameof(ThicknessWarningText)); } } }
+        private bool _isModulusOutOfNorm;
+        public bool IsModulusOutOfNorm { get => _isModulusOutOfNorm; private set { if (_isModulusOutOfNorm != value) { _isModulusOutOfNorm = value; OnPropertyChanged(); OnPropertyChanged(nameof(ModulusWarningText)); } } }
+        private bool _isPoissonOutOfNorm;
+        public bool IsPoissonOutOfNorm { get => _isPoissonOutOfNorm; private set { if (_isPoissonOutOfNorm != value) { _isPoissonOutOfNorm = value; OnPropertyChanged(); OnPropertyChanged(nameof(PoissonWarningText)); } } }
+
+        // Textes d'avertissement pour tooltip (vides si conforme ou mode Automatique)
+        public string ThicknessWarningText
+        {
+            get
+            {
+                if (!IsThicknessOutOfNorm) return string.Empty;
+                var (min, max) = GetThicknessRange();
+                return $"Épaisseur {Thickness_m:F3} m hors plage normative [{min:F3}; {max:F3}] (NF P98-086).";
+            }
+        }
+        public string ModulusWarningText
+        {
+            get
+            {
+                if (!IsModulusOutOfNorm) return string.Empty;
+                var (min, max) = GetModulusRange();
+                return $"Module E={Modulus_MPa:0.##} MPa hors plage normative [{min}-{max}] (NF P98-086).";
+            }
+        }
+        public string PoissonWarningText
+        {
+            get
+            {
+                if (!IsPoissonOutOfNorm) return string.Empty;
+                double exp = GetExpectedPoisson();
+                return $"Coefficient ?={Poisson:0.###} ? valeur normative attendue {exp:0.##} (NF P98-086).";
+            }
+        }
+
+        // Pour limiter les toasts répétés en mode Expert
+        private readonly HashSet<string> _expertWarned = new();
+
         public int Order { get => _order; set { _order = value; OnPropertyChanged(); } }
-        
-        public LayerRole Role 
-        { 
-            get => _role; 
-            set 
-            { 
-                _role = value; 
-                OnPropertyChanged(); 
-                ValidateAll(); 
+
+        public LayerRole Role
+        {
+            get => _role;
+            set
+            {
+                _role = value;
+                OnPropertyChanged();
+                ValidateAll();
                 NotifyCoefficientsChanged();
-                
-                // Fixer automatiquement l'épaisseur si c'est une plateforme
+
                 if (_role == LayerRole.Plateforme && Math.Abs(_t - PLATFORM_INFINITE_THICKNESS) > 0.001)
                 {
                     _t = PLATFORM_INFINITE_THICKNESS;
@@ -44,9 +98,9 @@ namespace ChausseeNeuve.Domain.Models
                     OnPropertyChanged(nameof(ThicknessDisplay));
                     NotifyToast?.Invoke($"Épaisseur plateforme fixée à {PLATFORM_INFINITE_THICKNESS:N0} m (infini)", ToastType.Info);
                 }
-            } 
+            }
         }
-        
+
         public string MaterialName { get => _material; set { _material = value; OnPropertyChanged(); } }
         public MaterialFamily Family { get => _family; set { _family = value; OnPropertyChanged(); ValidateAll(); NotifyCoefficientsChanged(); } }
 
@@ -56,7 +110,7 @@ namespace ChausseeNeuve.Domain.Models
             set
             {
                 var validatedValue = ValidateThickness(value);
-                if (_t != validatedValue)
+                if (Math.Abs(_t - validatedValue) > 1e-9)
                 {
                     _t = validatedValue;
                     OnPropertyChanged();
@@ -72,7 +126,7 @@ namespace ChausseeNeuve.Domain.Models
             set
             {
                 var validatedValue = ValidateModulus(value);
-                if (_E != validatedValue)
+                if (Math.Abs(_E - validatedValue) > 1e-9)
                 {
                     _E = validatedValue;
                     OnPropertyChanged();
@@ -86,7 +140,7 @@ namespace ChausseeNeuve.Domain.Models
             set
             {
                 var validatedValue = ValidatePoisson(value);
-                if (_nu != validatedValue)
+                if (Math.Abs(_nu - validatedValue) > 1e-9)
                 {
                     _nu = validatedValue;
                     OnPropertyChanged();
@@ -100,41 +154,102 @@ namespace ChausseeNeuve.Domain.Models
 
         public InterfaceType? InterfaceWithBelow { get => _iface; set { _iface = value; OnPropertyChanged(); } }
 
-        // Propriétés utilitaires pour l'interface utilisateur
         public bool IsPlatform => Role == LayerRole.Plateforme;
         public string ThicknessDisplay => Role == LayerRole.Plateforme ? "?" : $"{Thickness_m:F3} m";
+
+        private bool _hasAutoCorrection;
+        public bool HasAutoCorrection { get => _hasAutoCorrection; private set { if (_hasAutoCorrection != value) { _hasAutoCorrection = value; OnPropertyChanged(); } } }
+        private string _autoCorrectionNote = string.Empty;
+        public string AutoCorrectionNote { get => _autoCorrectionNote; private set { if (_autoCorrectionNote != value) { _autoCorrectionNote = value; OnPropertyChanged(); } } }
+
+        private void AppendCorrectionNote(string msg)
+        {
+            if (string.IsNullOrWhiteSpace(_autoCorrectionNote)) _autoCorrectionNote = msg;
+            else if (!_autoCorrectionNote.Contains(msg, StringComparison.OrdinalIgnoreCase)) _autoCorrectionNote += " | " + msg;
+            HasAutoCorrection = true;
+            OnPropertyChanged(nameof(AutoCorrectionNote));
+        }
+
+        private void ResetAutoCorrection()
+        {
+            if (HasAutoCorrection || !string.IsNullOrEmpty(_autoCorrectionNote))
+            {
+                _autoCorrectionNote = string.Empty;
+                HasAutoCorrection = false;
+                OnPropertyChanged(nameof(AutoCorrectionNote));
+            }
+        }
+
+        public double? LibraryEpsilon6 { get; set; }
+        public double? LibrarySh { get; set; }
 
         private double ValidateModulus(double value)
         {
             ClearErrors(nameof(Modulus_MPa));
-
             var (min, max) = GetModulusRange();
+
+            if (Mode == DimensionnementMode.Expert)
+            {
+                bool outNorm = value < min || value > max;
+                IsModulusOutOfNorm = outNorm;
+                if (outNorm)
+                {
+                    AddError(nameof(Modulus_MPa), $"Avertissement: E={value:0.##} MPa hors plage [{min}-{max}] (Expert—non corrigé)");
+                    WarnOnce(nameof(Modulus_MPa), $"Module hors norme conservé (E={value:0.##}). Basculez en mode Automatique pour corrections.");
+                }
+                return value; // Pas de correction
+            }
+
+            // Automatique: correction
             if (value < min)
             {
-                AddError(nameof(Modulus_MPa), $"Module ajusté à {min} MPa (min. NF P98-086 pour {Family})");
-                NotifyToast?.Invoke($"Module E ajusté à {min} MPa pour {Family} ({Role})", ToastType.Warning);
+                IsModulusOutOfNorm = false; // après correction
+                AddError(nameof(Modulus_MPa), $"Module ajusté à {min} MPa (min NF P98-086)");
+                NotifyToast?.Invoke($"E corrigé ({value:0.##}?{min}) - passez en mode Expert pour dépasser", ToastType.Warning);
+                AppendCorrectionNote($"Module E ajusté à {min} MPa (min NF P98-086)");
                 return min;
             }
             if (value > max)
             {
-                AddError(nameof(Modulus_MPa), $"Module ajusté à {max} MPa (max. NF P98-086 pour {Family})");
-                NotifyToast?.Invoke($"Module E ajusté à {max} MPa pour {Family} ({Role})", ToastType.Warning);
+                IsModulusOutOfNorm = false;
+                AddError(nameof(Modulus_MPa), $"Module ajusté à {max} MPa (max NF P98-086)");
+                NotifyToast?.Invoke($"E corrigé ({value:0.##}?{max}) - passez en mode Expert pour dépasser", ToastType.Warning);
+                AppendCorrectionNote($"Module E ajusté à {max} MPa (max NF P98-086)");
                 return max;
             }
+            IsModulusOutOfNorm = false;
+            // Valeur déjà conforme: on efface un éventuel indicateur de correction précédente
+            ResetAutoCorrection();
             return value;
         }
 
         private double ValidatePoisson(double value)
         {
             ClearErrors(nameof(Poisson));
+            var expected = GetExpectedPoisson();
 
-            var expectedPoisson = GetExpectedPoisson();
-            if (Math.Abs(value - expectedPoisson) > 0.001)
+            if (Mode == DimensionnementMode.Expert)
             {
-                AddError(nameof(Poisson), $"Coefficient de Poisson fixé à {expectedPoisson} (NF P98-086 pour {Family})");
-                NotifyToast?.Invoke($"Coefficient ? ajusté à {expectedPoisson} pour {Family}", ToastType.Info);
-                return expectedPoisson;
+                bool outNorm = Family != MaterialFamily.Bibliotheque && Math.Abs(value - expected) > 0.0005;
+                IsPoissonOutOfNorm = outNorm;
+                if (outNorm)
+                {
+                    AddError(nameof(Poisson), $"Avertissement: ?={value:0.###} ? {expected:0.##} attendu (Expert—non forcé)");
+                    WarnOnce(nameof(Poisson), $"? hors valeur normative conservé ({value:0.###}). Mode Automatique le forcera.");
+                }
+                return value;
             }
+
+            if (Family != MaterialFamily.Bibliotheque && Math.Abs(value - expected) > 0.0005)
+            {
+                IsPoissonOutOfNorm = false; // corrigé
+                AddError(nameof(Poisson), $"? fixé à {expected:0.##} (NF P98-086)");
+                NotifyToast?.Invoke($"? corrigé ({value:0.###}?{expected:0.##}) - passez en mode Expert pour le garder", ToastType.Info);
+                AppendCorrectionNote($"Coefficient de Poisson ? corrigé à {expected:0.##} (NF P98-086)");
+                return expected;
+            }
+            IsPoissonOutOfNorm = false;
+            ResetAutoCorrection();
             return value;
         }
 
@@ -142,122 +257,129 @@ namespace ChausseeNeuve.Domain.Models
         {
             ClearErrors(nameof(Thickness_m));
 
-            // Gestion spéciale pour la plateforme : toujours fixer à la valeur "infinie"
             if (Role == LayerRole.Plateforme)
             {
-                if (Math.Abs(value - PLATFORM_INFINITE_THICKNESS) > 0.001)
-                {
-                    NotifyToast?.Invoke($"Épaisseur plateforme fixée à {PLATFORM_INFINITE_THICKNESS:N0} m (infini)", ToastType.Info);
-                }
+                IsThicknessOutOfNorm = false;
                 return PLATFORM_INFINITE_THICKNESS;
             }
 
             var (min, max) = GetThicknessRange();
+
+            if (Mode == DimensionnementMode.Expert)
+            {
+                bool outNorm = value < min || value > max;
+                IsThicknessOutOfNorm = outNorm;
+                if (outNorm)
+                {
+                    AddError(nameof(Thickness_m), $"Avertissement: épaisseur {value:F3} m hors plage [{min:F3};{max:F3}] (Expert—non corrigée)");
+                    WarnOnce(nameof(Thickness_m), $"Épaisseur hors norme conservée ({value:F3} m). Mode Automatique l'ajusterait.");
+                }
+                return value;
+            }
+
             if (value < min)
             {
-                AddError(nameof(Thickness_m), $"Épaisseur ajustée à {min:F3} m (min. NF P98-086 pour {Family})");
+                IsThicknessOutOfNorm = false;
+                AddError(nameof(Thickness_m), $"Épaisseur ajustée à {min:F3} m (min NF P98-086)");
+                NotifyToast?.Invoke($"Épaisseur corrigée ({value:F3}?{min:F3}) - passez en mode Expert pour conserver", ToastType.Warning);
+                AppendCorrectionNote($"Épaisseur ajustée à {min:F3} m (min NF P98-086)");
                 return min;
             }
             if (value > max)
             {
-                AddError(nameof(Thickness_m), $"Épaisseur ajustée à {max:F3} m (max. NF P98-086 pour {Family})");
+                IsThicknessOutOfNorm = false;
+                AddError(nameof(Thickness_m), $"Épaisseur ajustée à {max:F3} m (max NF P98-086)");
+                NotifyToast?.Invoke($"Épaisseur corrigée ({value:F3}?{max:F3}) - passez en mode Expert pour dépasser", ToastType.Warning);
+                AppendCorrectionNote($"Épaisseur ajustée à {max:F3} m (max NF P98-086)");
                 return max;
             }
+            IsThicknessOutOfNorm = false;
+            ResetAutoCorrection();
             return value;
         }
 
         private void ValidateAll()
         {
-            // Re-validate all properties when Family or Role changes
-            Modulus_MPa = ValidateModulus(_E);
-            Poisson = ValidatePoisson(_nu);
-            Thickness_m = ValidateThickness(_t);
+            if (Mode == DimensionnementMode.Automatique)
+            {
+                // Réinitialiser les notes de correction avant une nouvelle passe
+                HasAutoCorrection = false;
+                _autoCorrectionNote = string.Empty;
+                OnPropertyChanged(nameof(AutoCorrectionNote));
+            }
+            _E = ValidateModulus(_E);
+            _nu = ValidatePoisson(_nu);
+            _t = ValidateThickness(_t);
+            OnPropertyChanged(nameof(Modulus_MPa));
+            OnPropertyChanged(nameof(Poisson));
+            OnPropertyChanged(nameof(Thickness_m));
+            OnPropertyChanged(nameof(ThicknessDisplay));
+            OnPropertyChanged(nameof(ThicknessWarningText));
+            OnPropertyChanged(nameof(ModulusWarningText));
+            OnPropertyChanged(nameof(PoissonWarningText));
         }
 
-        private (double min, double max) GetModulusRange()
+        private (double min, double max) GetModulusRange() => Family switch
         {
-            return Family switch
-            {
-                MaterialFamily.GNT => (100, 1000),
-                MaterialFamily.MTLH => (3000, 32000),
-                MaterialFamily.BetonBitumineux => (3000, 18000),
-                MaterialFamily.BetonCiment => (18000, 40000),
-                MaterialFamily.Bibliotheque => (1, 100000), // Pas de limite pour bibliothèque
-                _ => (1, 100000)
-            };
-        }
+            MaterialFamily.GNT => (100, 1000),
+            MaterialFamily.MTLH => (3000, 32000),
+            MaterialFamily.BetonBitumineux => (3000, 18000),
+            MaterialFamily.BetonCiment => (18000, 40000),
+            MaterialFamily.Bibliotheque => (1, 100000),
+            _ => (1, 100000)
+        };
 
-        private double GetExpectedPoisson()
+        private double GetExpectedPoisson() => Family switch
         {
-            return Family switch
-            {
-                MaterialFamily.GNT => 0.35,
-                MaterialFamily.BetonBitumineux => 0.35,
-                MaterialFamily.MTLH => 0.25,
-                MaterialFamily.BetonCiment => 0.25,
-                MaterialFamily.Bibliotheque => _nu, // Pas de contrainte pour bibliothèque
-                _ => _nu
-            };
-        }
+            MaterialFamily.GNT => 0.35,
+            MaterialFamily.BetonBitumineux => 0.35,
+            MaterialFamily.MTLH => 0.25,
+            MaterialFamily.BetonCiment => 0.25,
+            MaterialFamily.Bibliotheque => _nu, // libre
+            _ => _nu
+        };
 
         private (double min, double max) GetThicknessRange()
         {
-            return Family switch
+            // Si c'est une couche de fondation en GNT dans une structure souple en mode automatique,
+            // on ne met pas de limite maximale d'épaisseur
+            if (Mode == DimensionnementMode.Automatique && 
+                Role == LayerRole.Fondation && 
+                Family == MaterialFamily.GNT)
             {
-                MaterialFamily.GNT => (0.10, 0.35),
-                MaterialFamily.MTLH => (0.15, 0.32),
-                MaterialFamily.BetonBitumineux => (0.05, 0.16),
-                MaterialFamily.BetonCiment => (0.12, 0.45),
-                MaterialFamily.Bibliotheque => (0.01, 2.0), // Plage large pour bibliothèque
-                _ => (0.01, 2.0)
+                return (0.15, double.MaxValue); // Minimum 15cm, pas de maximum
+            }
+
+            return Role switch
+            {
+                LayerRole.Roulement => (0.02, 0.08),
+                LayerRole.Base => (0.10, 0.35),
+                LayerRole.Fondation => (0.15, 0.35),
+                _ => (0.0, double.MaxValue)
             };
         }
 
-        // INotifyDataErrorInfo implementation
+        // INotifyDataErrorInfo
         public bool HasErrors => _errors.Count > 0;
-
         public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
-
         public System.Collections.IEnumerable GetErrors(string? propertyName)
         {
-            if (string.IsNullOrEmpty(propertyName))
-                return _errors.Values.SelectMany(x => x);
-
+            if (string.IsNullOrEmpty(propertyName)) return _errors.Values.SelectMany(x => x);
             return _errors.ContainsKey(propertyName) ? _errors[propertyName] : Enumerable.Empty<string>();
         }
-
         private void AddError(string propertyName, string error)
         {
-            if (!_errors.ContainsKey(propertyName))
-                _errors[propertyName] = new List<string>();
-
-            if (!_errors[propertyName].Contains(error))
-            {
-                _errors[propertyName].Add(error);
-                OnErrorsChanged(propertyName);
-            }
+            if (!_errors.ContainsKey(propertyName)) _errors[propertyName] = new List<string>();
+            if (!_errors[propertyName].Contains(error)) { _errors[propertyName].Add(error); OnErrorsChanged(propertyName); }
         }
-
         private void ClearErrors(string propertyName)
         {
-            if (_errors.ContainsKey(propertyName))
-            {
-                _errors.Remove(propertyName);
-                OnErrorsChanged(propertyName);
-            }
+            if (_errors.ContainsKey(propertyName)) { _errors.Remove(propertyName); OnErrorsChanged(propertyName); }
         }
-
-        private void OnErrorsChanged(string propertyName)
-        {
-            ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
-        }
+        private void OnErrorsChanged(string propertyName) => ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
 
         public event PropertyChangedEventHandler? PropertyChanged;
-
-        private void OnPropertyChanged([CallerMemberName] string? name = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-        }
+        private void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
         private void NotifyCoefficientsChanged()
         {
@@ -265,10 +387,18 @@ namespace ChausseeNeuve.Domain.Models
             OnPropertyChanged(nameof(CoeffKd));
         }
 
+        private void WarnOnce(string propKey, string message)
+        {
+            var key = $"{propKey}:{Order}";
+            if (_mode == DimensionnementMode.Expert && _expertWarned.Add(key))
+            {
+                NotifyToast?.Invoke(message, ToastType.Warning);
+            }
+        }
+
         // LOT 4 - Calcul coefficients ks/kd selon NF P98-086
         private double CalculateKs()
         {
-            // Coefficient de structure ks selon Section 6.2.2 NF P98-086
             return Role switch
             {
                 LayerRole.Roulement => Family switch
@@ -299,7 +429,6 @@ namespace ChausseeNeuve.Domain.Models
 
         private double CalculateKd()
         {
-            // Coefficient de déformation kd selon Section 6.2.3 NF P98-086
             var baseKd = Family switch
             {
                 MaterialFamily.GNT => 2.0,
@@ -310,8 +439,6 @@ namespace ChausseeNeuve.Domain.Models
                 _ => 2.0
             };
 
-            // Ajustement selon l'épaisseur (Section 6.2.3.2)
-            // Pour la plateforme, pas d'ajustement d'épaisseur car elle est "infinie"
             if (Role == LayerRole.Plateforme)
             {
                 return Math.Round(baseKd, 2);
@@ -330,7 +457,7 @@ namespace ChausseeNeuve.Domain.Models
         }
     }
 
-    // ToastType enum for Layer.cs compatibility
+    // ToastType enum for Layer.cs compatibility (inchangé)
     public enum ToastType
     {
         Success,

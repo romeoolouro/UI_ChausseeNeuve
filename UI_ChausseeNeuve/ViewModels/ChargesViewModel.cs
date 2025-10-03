@@ -4,8 +4,11 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using System.Windows.Controls;
 using ChausseeNeuve.Domain.Models;
 using UI_ChausseeNeuve.Services;
+using UI_ChausseeNeuve.Windows;
+using UI_ChausseeNeuve.Views;
 
 namespace UI_ChausseeNeuve.ViewModels
 {
@@ -24,6 +27,7 @@ namespace UI_ChausseeNeuve.ViewModels
 
             // Initialiser les commandes
             SelectChargeTypeCommand = new RelayCommand<ChargeType>(SelectChargeType);
+            NavigateToValeursAdmissiblesCommand = new RelayCommand(NavigateToValeursAdmissibles);
         }
 
         #region Propriétés
@@ -75,22 +79,56 @@ namespace UI_ChausseeNeuve.ViewModels
         public bool IsRoueIsoleeSelected => SelectedChargeType == ChargeType.RoueIsolee;
 
         // Propriétés pour contrôler l'état des TextBox
-        public bool IsRayonEnabled => true; // Toujours activé
-        public bool IsPressionEnabled => true; // Toujours activé
-        public bool IsPoidsEnabled => true; // Toujours activé
+        public bool IsRayonEnabled => true;
+        public bool IsPressionEnabled => true;
+        public bool IsPoidsEnabled => true;
         public bool IsDistanceRouesEnabled => SelectedChargeType != ChargeType.RoueIsolee;
-        public bool IsPositionXEnabled => true; // Toujours activé
-        public bool IsPositionYEnabled => true; // Toujours activé
+        public bool IsPositionXEnabled => true;
+        public bool IsPositionYEnabled => true;
 
         #endregion
 
         #region Commandes
 
         public RelayCommand<ChargeType> SelectChargeTypeCommand { get; }
+        public RelayCommand NavigateToValeursAdmissiblesCommand { get; }
 
         #endregion
 
-        #region Méthodes
+        #region Méthodes privées
+
+        private void NavigateToValeursAdmissibles()
+        {
+            try
+            {
+                // Rechercher AccueilWindow dans les fenêtres ouvertes
+                var mainWindow = Application.Current.Windows.OfType<AccueilWindow>().FirstOrDefault();
+                if (mainWindow != null)
+                {
+                    var navBar = mainWindow.FindName("NavBar") as HoverNavBar;
+                    if (navBar != null)
+                    {
+                        // Trouver et cocher le RadioButton de la section valeurs
+                        var grid = navBar.FindName("Root") as Grid;
+                        if (grid != null)
+                        {
+                            foreach (var child in grid.Children.OfType<RadioButton>())
+                            {
+                                if (child.Tag as string == "valeurs")
+                                {
+                                    child.IsChecked = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ToastRequested?.Invoke($"Erreur de navigation : {ex.Message}", ToastType.Error);
+            }
+        }
 
         private void LoadFromAppState()
         {

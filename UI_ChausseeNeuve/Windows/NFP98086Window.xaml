@@ -275,43 +275,55 @@
                                             <ColumnDefinition Width="60"/>
                                             <ColumnDefinition Width="60"/>
                                             <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="70"/>
                                         </Grid.ColumnDefinitions>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
 
-                                        <!-- Entetes T5 T4 T3- T3+ -->
+                                        <!-- Entetes T5 T4 T3- T3+ T2,T1,T0 -->
                                         <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text=""/></Border>
                                         <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T5"/></Border>
-                                        <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T4"/>
-                                        </Border>
+                                        <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T4"/></Border>
                                         <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T3-"/></Border>
                                         <Border Grid.Row="0" Grid.Column="4" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T3+"/></Border>
+                                        <Border Grid.Row="0" Grid.Column="5" Style="{StaticResource HeaderCellBox}"><TextBlock Text="T2,T1,T0" TextWrapping="Wrap"/></Border>
 
-                                        <!-- Lignes valeurs -->
-                                        <!-- MB -->
+                                        <!-- Materiaux bitumineux (ligne) -->
                                         <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Materiaux bitumineux"/></Border>
                                         <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="0,3"/></Border>
                                         <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="0,3"/></Border>
                                         <Border Grid.Row="1" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="0,4"/></Border>
                                         <Border Grid.Row="1" Grid.Column="4" Style="{StaticResource CellBox}"><TextBlock Text="0,5"/></Border>
+                                        <Border Grid.Row="1" Grid.Column="5" Style="{StaticResource CellBox}"><TextBlock Text="0,5"/></Border>
 
-                                        <!-- MTLH + betons -->
-                                        <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Mat. traites LH et betons"/></Border>
+                                        <!-- Materiaux traites LH et betons -->
+                                        <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Mat. traites LH et betons" TextWrapping="Wrap"/></Border>
                                         <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="0,4"/></Border>
                                         <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="0,5"/></Border>
                                         <Border Grid.Row="2" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="0,6"/></Border>
-                                        <Border Grid.Row="2" Grid.Column="4" Style="{StaticResource CellBox}"><TextBlock Text="0,8"/></Border>
+                                        <Border Grid.Row="2" Grid.Column="4" Style="{StaticResource CellBox}"><TextBlock Text="0,6"/></Border>
+                                        <Border Grid.Row="2" Grid.Column="5" Style="{StaticResource CellBox}"><TextBlock Text="0,8"/></Border>
 
-                                        <!-- GNT et sol -->
-                                        <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="GNT et sol"/></Border>
+                                        <!-- Sols traites -->
+                                        <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Sols traites"/></Border>
                                         <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="0,4"/></Border>
                                         <Border Grid.Row="3" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="0,5"/></Border>
-                                        <Border Grid.Row="3" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="0,6"/></Border>
-                                        <Border Grid.Row="3" Grid.Column="4" Style="{StaticResource CellBox}"><TextBlock Text="0,75"/></Border>
+                                        <Border Grid.Row="3" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="0,7"/></Border>
+                                        <Border Grid.Row="3" Grid.Column="4" Style="{StaticResource CellBox}"><TextBlock Text="0,7"/></Border>
+                                        <Border Grid.Row="3" Grid.Column="5" Style="{StaticResource CellBox}"><TextBlock Text="0,8"/></Border>
+
+                                        <!-- Plate-forme GNT -->
+                                        <Border Grid.Row="4" Grid.Column="0" Style="{StaticResource HeaderCellBox}"><TextBlock Text="Plate-forme, GNT" TextWrapping="Wrap"/></Border>
+                                        <Border Grid.Row="4" Grid.Column="1" Style="{StaticResource CellBox}"><TextBlock Text="0,4"/></Border>
+                                        <Border Grid.Row="4" Grid.Column="2" Style="{StaticResource CellBox}"><TextBlock Text="0,5"/></Border>
+                                        <Border Grid.Row="4" Grid.Column="3" Style="{StaticResource CellBox}"><TextBlock Text="0,6"/></Border>
+                                        <Border Grid.Row="4" Grid.Column="4" Style="{StaticResource CellBox}"><TextBlock Text="0,75"/></Border>
+                                        <Border Grid.Row="4" Grid.Column="5" Style="{StaticResource CellBox}"><TextBlock Text="1"/></Border>
                                     </Grid>
                                 </StackPanel>
 

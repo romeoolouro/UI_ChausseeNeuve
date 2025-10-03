@@ -63,7 +63,7 @@ namespace UI_ChausseeNeuve.Views
             return null;
         }
 
-        // Ajout des handlers pour les flèches température
+        // Ajout des handlers pour les flèches température (SEULEMENT pour MB)
         private void OnTemperatureDown(object sender, RoutedEventArgs e)
         {
             var vm = GetCurrentMaterialVM();
@@ -75,6 +75,7 @@ namespace UI_ChausseeNeuve.Views
                 vm.SelectedTemperature -= 1;
             }
         }
+        
         private void OnTemperatureUp(object sender, RoutedEventArgs e)
         {
             var vm = GetCurrentMaterialVM();
@@ -86,7 +87,8 @@ namespace UI_ChausseeNeuve.Views
                 vm.SelectedTemperature += 1;
             }
         }
-        // Ajout des handlers pour les flèches fréquence
+        
+        // Ajout des handlers pour les flèches fréquence (SEULEMENT pour MB)
         private void OnFrequenceDown(object sender, RoutedEventArgs e)
         {
             var vm = GetCurrentMaterialVM();
@@ -98,6 +100,7 @@ namespace UI_ChausseeNeuve.Views
                 vm.SelectedFrequence -= 1;
             }
         }
+        
         private void OnFrequenceUp(object sender, RoutedEventArgs e)
         {
             var vm = GetCurrentMaterialVM();

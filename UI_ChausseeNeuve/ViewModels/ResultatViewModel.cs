@@ -12,10 +12,8 @@ using System.Collections.Specialized;
 
 namespace UI_ChausseeNeuve.ViewModels
 {
-    /// <summary>
-    /// ViewModel pour l'affichage des résultats de calcul de la chaussée
-    /// Intégré avec le service de calcul basé sur votre code C++
-    /// </summary>
+    public enum CritereVerification { EpsiZ, SigmaT, EpsiT }
+
     public class ResultatViewModel : INotifyPropertyChanged, IDisposable
     {
         #region Champs privés
@@ -55,6 +53,9 @@ namespace UI_ChausseeNeuve.ViewModels
 
             // Synchronisation automatique des valeurs admissibles
             SubscribeToValeursAdmissiblesChanges();
+
+            // Abonnement au nouvel évènement pour mise à jour directe des Val. Adm.
+            AppState.ValeursAdmissiblesUpdated += OnValeursAdmissiblesUpdated;
 
             // Charger la structure actuelle au démarrage
             LoadCurrentStructure();
@@ -944,20 +945,66 @@ namespace UI_ChausseeNeuve.ViewModels
         // Ajout : synchronisation des valeurs admissibles dans les résultats
         private void InjectValeursAdmissiblesDansResultats()
         {
-            // Synchroniser chaque couche résultat avec la valeur admissible correspondante
             var valeursAdmissibles = GetValeursAdmissiblesViewModelCollection();
             if (valeursAdmissibles == null) return;
+
             foreach (var resultat in Resultats.OfType<ResultatCouche>())
             {
-                // Correspondance stricte sur N (Numero) et Materiau
+                // Désabonner ancien handler pour éviter doublons
+                resultat.CritereChanged -= Resultat_CritereChanged;
+
                 var coucheAdmissible = valeursAdmissibles.FirstOrDefault(c =>
                     c.Niveau == resultat.Numero &&
                     string.Equals(c.Materiau?.Trim(), resultat.Materiau?.Trim(), StringComparison.InvariantCultureIgnoreCase)
                 );
-                resultat.ValeurAdmissible = coucheAdmissible?.ValeurAdmissible ?? 0;
+
+                if (coucheAdmissible != null)
+                {
+                    // Synchroniser critere (VA prioritaire)
+                    if (!string.Equals(resultat.Critere, coucheAdmissible.Critere, StringComparison.OrdinalIgnoreCase))
+                        resultat.Critere = coucheAdmissible.Critere;
+
+                    if (coucheAdmissible.ValeurAdmissible > 0)
+                    {
+                        resultat.ValeurAdmissible = coucheAdmissible.ValeurAdmissible;
+                        resultat.HasValeurAdmissible = true;
+                    }
+                    else
+                    {
+                        resultat.ValeurAdmissible = 0;
+                        resultat.HasValeurAdmissible = false;
+                    }
+                }
+                else
+                {
+                    resultat.HasValeurAdmissible = false;
+                }
+
+                resultat.CritereChanged += Resultat_CritereChanged;
             }
-            // Forcer la notification de la propriété Resultats
             OnPropertyChanged(nameof(Resultats));
+        }
+
+        private void Resultat_CritereChanged(object? sender, EventArgs e)
+        {
+            if (sender is not ResultatCouche rc) return;
+            var valeursAdmissibles = GetValeursAdmissiblesViewModelCollection();
+            if (valeursAdmissibles == null) return;
+            var coucheAdmissible = valeursAdmissibles.FirstOrDefault(c => c.Niveau == rc.Numero);
+            if (coucheAdmissible != null && !string.Equals(coucheAdmissible.Critere, rc.Critere, StringComparison.OrdinalIgnoreCase))
+            {
+                coucheAdmissible.Critere = rc.Critere; // propage vers VA
+                // Recalculer valeur admissible si besoin (logique déjà dans VA via PropertyChanged)
+                AppState.RaiseValeursAdmissiblesUpdated();
+            }
+        }
+
+        private void OnValeursAdmissiblesUpdated()
+        {
+            System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                InjectValeursAdmissiblesDansResultats();
+            }));
         }
 
         #endregion
@@ -966,8 +1013,8 @@ namespace UI_ChausseeNeuve.ViewModels
         
         public void Dispose()
         {
-            // Se désabonner de l'événement pour éviter les fuites mémoire
             AppState.StructureChanged -= OnStructureChanged;
+            AppState.ValeursAdmissiblesUpdated -= OnValeursAdmissiblesUpdated;
         }
         
         #endregion
@@ -988,10 +1035,7 @@ namespace UI_ChausseeNeuve.ViewModels
     public abstract class ResultatItem : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
     /// <summary>
@@ -999,6 +1043,7 @@ namespace UI_ChausseeNeuve.ViewModels
     /// </summary>
     public class ResultatCouche : ResultatItem
     {
+        // Champs
         private string _interface = "";
         private string _materiau = "";
         private double _niveauSup;
@@ -1020,182 +1065,114 @@ namespace UI_ChausseeNeuve.ViewModels
         private double _valeurAdmissible;
         private bool _estValide;
         private int _numero;
+        private bool _hasValeurAdmissible;
+        private CritereVerification _selectedCritere = CritereVerification.EpsiT;
+        private string _critere = "EpsiT";
 
-        /// <summary>Interface de la couche (Surface, Fondation, etc.)</summary>
-        public string Interface
-        {
-            get => _interface;
-            set { _interface = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Type de matériau (BBSG, GNT, etc.)</summary>
-        public string Materiau
-        {
-            get => _materiau;
-            set { _materiau = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Niveau supérieur en cm</summary>
-        public double NiveauSup
-        {
-            get => _niveauSup;
-            set { _niveauSup = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Niveau inférieur en cm</summary>
-        public double NiveauInf
-        {
-            get => _niveauInf;
-            set { _niveauInf = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Module d'élasticité en MPa</summary>
-        public double Module
-        {
-            get => _module;
-            set { _module = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Coefficient de Poisson</summary>
-        public double CoefficientPoisson
-        {
-            get => _coefficientPoisson;
-            set { _coefficientPoisson = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Contrainte horizontale supérieure en MPa</summary>
-        public double SigmaTSup
-        {
-            get => _sigmaTSup;
-            set { _sigmaTSup = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Contrainte horizontale inférieure en MPa</summary>
-        public double SigmaTInf
-        {
-            get => _sigmaTInf;
-            set { _sigmaTInf = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Déformation horizontale supérieure en micro-déformation</summary>
-        public double EpsilonTSup
-        {
-            get => _epsilonTSup;
-            set { _epsilonTSup = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Déformation horizontale inférieure en micro-déformation</summary>
-        public double EpsilonTInf
-        {
-            get => _epsilonTInf;
-            set { _epsilonTInf = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Contrainte verticale en MPa</summary>
-        public double SigmaZ
-        {
-            get => _sigmaZ;
-            set { _sigmaZ = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Déformation verticale en micro-déformation</summary>
-        public double EpsilonZ
-        {
-            get => _epsilonZ;
-            set { _epsilonZ = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Contrainte verticale supérieure en MPa</summary>
-        public double SigmaZSup
-        {
-            get => _sigmaZSup;
-            set { _sigmaZSup = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Contrainte verticale inférieure en MPa</summary>
-        public double SigmaZInf
-        {
-            get => _sigmaZInf;
-            set { _sigmaZInf = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Déformation verticale supérieure en micro-déformation</summary>
-        public double EpsilonZSup
-        {
-            get => _epsilonZSup;
-            set { _epsilonZSup = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Déformation verticale inférieure en micro-déformation</summary>
-        public double EpsilonZInf
-        {
-            get => _epsilonZInf;
-            set { _epsilonZInf = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Déflexion supérieure en mm/100</summary>
-        public double DeflexionSup
-        {
-            get => _deflexionSup;
-            set { _deflexionSup = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Déflexion inférieure en mm/100</summary>
-        public double DeflexionInf
-        {
-            get => _deflexionInf;
-            set { _deflexionInf = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Valeur admissible pour le critère sélectionné</summary>
-        public double ValeurAdmissible
-        {
-            get => _valeurAdmissible;
-            set { _valeurAdmissible = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Indique si cette couche respecte les critères</summary>
-        public bool EstValide
-        {
-            get => _estValide;
-            set { _estValide = value; OnPropertyChanged(); OnPropertyChanged(nameof(CouleurValidation)); OnPropertyChanged(nameof(StatutValidation)); }
-        }
-
-        /// <summary>Couleur à utiliser pour afficher le statut de validation</summary>
+        // Propriétés de base
+        public string Interface { get => _interface; set { _interface = value; OnPropertyChanged(); } }
+        public string Materiau { get => _materiau; set { _materiau = value; OnPropertyChanged(); } }
+        public double NiveauSup { get => _niveauSup; set { _niveauSup = value; OnPropertyChanged(); } }
+        public double NiveauInf { get => _niveauInf; set { _niveauInf = value; OnPropertyChanged(); } }
+        public double Module { get => _module; set { _module = value; OnPropertyChanged(); } }
+        public double CoefficientPoisson { get => _coefficientPoisson; set { _coefficientPoisson = value; OnPropertyChanged(); } }
+        public double SigmaTSup { get => _sigmaTSup; set { _sigmaTSup = value; OnPropertyChanged(); ReevaluateValidation(); } }
+        public double SigmaTInf { get => _sigmaTInf; set { _sigmaTInf = value; OnPropertyChanged(); OnPropertyChanged(nameof(SigmaTInfDepasse)); ReevaluateValidation(); } }
+        public double EpsilonTSup { get => _epsilonTSup; set { _epsilonTSup = value; OnPropertyChanged(); ReevaluateValidation(); } }
+        public double EpsilonTInf { get => _epsilonTInf; set { _epsilonTInf = value; OnPropertyChanged(); OnPropertyChanged(nameof(EpsilonTInfDepasse)); ReevaluateValidation(); } }
+        public double SigmaZ { get => _sigmaZ; set { _sigmaZ = value; OnPropertyChanged(); } }
+        public double EpsilonZ { get => _epsilonZ; set { _epsilonZ = value; OnPropertyChanged(); } }
+        public double SigmaZSup { get => _sigmaZSup; set { _sigmaZSup = value; OnPropertyChanged(); } }
+        public double SigmaZInf { get => _sigmaZInf; set { _sigmaZInf = value; OnPropertyChanged(); } }
+        public double EpsilonZSup { get => _epsilonZSup; set { _epsilonZSup = value; OnPropertyChanged(); OnPropertyChanged(nameof(EpsilonZSupDisplay)); OnPropertyChanged(nameof(EpsilonZSupDepasse)); ReevaluateValidation(); } }
+        public double EpsilonZInf { get => _epsilonZInf; set { _epsilonZInf = value; OnPropertyChanged(); ReevaluateValidation(); } }
+        public double DeflexionSup { get => _deflexionSup; set { _deflexionSup = value; OnPropertyChanged(); } }
+        public double DeflexionInf { get => _deflexionInf; set { _deflexionInf = value; OnPropertyChanged(); } }
+        public double ValeurAdmissible { get => _valeurAdmissible; set { _valeurAdmissible = value; OnPropertyChanged(); OnPropertyChanged(nameof(ValeurAdmissibleDisplay)); OnPropertyChanged(nameof(EpsilonZSupDepasse)); OnPropertyChanged(nameof(SigmaTInfDepasse)); OnPropertyChanged(nameof(EpsilonTInfDepasse)); ReevaluateValidation(); } }
+        public bool HasValeurAdmissible { get => _hasValeurAdmissible; set { _hasValeurAdmissible = value; OnPropertyChanged(); OnPropertyChanged(nameof(ValeurAdmissibleDisplay)); } }
+        public string ValeurAdmissibleDisplay => HasValeurAdmissible && ValeurAdmissible > 0 ? ValeurAdmissible.ToString("F1") : string.Empty;
+        public bool EstValide { get => _estValide; set { _estValide = value; OnPropertyChanged(); OnPropertyChanged(nameof(CouleurValidation)); OnPropertyChanged(nameof(StatutValidation)); } }
         public string CouleurValidation => EstValide ? "#d4edda" : "#f8d7da";
-
-        /// <summary>Symbole de statut de validation (alternative directe sans converter)</summary>
-        public string StatutValidation => EstValide ? "\u2713" : "\u2717"; // ? ou ?
-
-        /// <summary>Valeur critique utilisée pour la validation</summary>
-        public double ValeurCritique => Math.Max(Math.Abs(EpsilonTSup), Math.Abs(EpsilonTInf));
-
-        /// <summary>Taux d'utilisation en pourcentage</summary>
-        public double TauxUtilisation => ValeurAdmissible > 0 ? (ValeurCritique / ValeurAdmissible) * 100 : 0;
-
-        /// <summary>Indique si c'est la plateforme (niveau inférieur infini)</summary>
-        public bool EstPlateforme => Interface == "Plateforme" || double.IsPositiveInfinity(NiveauInf);
-
-        /// <summary>Niveau inférieur formaté pour l'affichage (avec tiret pour la plateforme)</summary>
-        public string NiveauInfDisplay => EstPlateforme ? "-" : NiveauInf.ToString("F0");
-
-        /// <summary>Numéro de la couche (pour affichage dans la grille des résultats)</summary>
-        public int Numero
+        public string StatutValidation => EstValide ? "\u2713" : "\u2717";
+        // Valeur critique : pour SigmaT et EpsiT on utilise uniquement la valeur inférieure (absolue)
+        public double ValeurCritique => Critere switch
         {
-            get => _numero;
-            set { _numero = value; OnPropertyChanged(); OnPropertyChanged(nameof(NiveauDisplay)); }
+            "EpsiZ" => Math.Abs(EpsilonZSup),
+            "SigmaT" => Math.Abs(SigmaTInf),
+            _ => Math.Abs(EpsilonTInf)
+        };
+
+        public double TauxUtilisation => ValeurAdmissible > 0 ? (ValeurCritique / ValeurAdmissible) * 100 : 0;
+        public bool EstPlateforme => Interface == "Plateforme" || double.IsPositiveInfinity(NiveauInf);
+        public string NiveauInfDisplay => EstPlateforme ? "-" : NiveauInf.ToString("F0");
+        public int Numero { get => _numero; set { _numero = value; OnPropertyChanged(); OnPropertyChanged(nameof(NiveauDisplay)); } }
+        public string NiveauDisplay => (Numero > 0) ? Numero.ToString() : "";
+        public string Nature => Interface;
+        public string InterfaceAffichee => Interface == Nature ? string.Empty : Interface;
+
+        // Affichages et depassements
+        public string EpsilonZSupDisplay => Critere == "EpsiZ" ? Math.Abs(EpsilonZSup).ToString("F1") : EpsilonZSup.ToString("F1");
+        public bool EpsilonZSupDepasse => Critere == "EpsiZ" && ValeurAdmissible > 0 && Math.Abs(EpsilonZSup) > ValeurAdmissible;
+        public bool SigmaTInfDepasse => Critere == "SigmaT" && ValeurAdmissible > 0 && Math.Abs(SigmaTInf) > ValeurAdmissible;
+        public bool EpsilonTInfDepasse => Critere == "EpsiT" && ValeurAdmissible > 0 && Math.Abs(EpsilonTInf) > ValeurAdmissible;
+
+        public CritereVerification SelectedCritere
+        {
+            get => _selectedCritere;
+            set
+            {
+                if (_selectedCritere != value)
+                {
+                    _selectedCritere = value;
+                    Critere = value switch
+                    {
+                        CritereVerification.EpsiZ => "EpsiZ",
+                        CritereVerification.SigmaT => "SigmaT",
+                        _ => "EpsiT"
+                    };
+                    OnPropertyChanged();
+                }
+            }
         }
 
-        /// <summary>Niveau affiché (pour utilisation dans la grille)</summary>
-        public string NiveauDisplay => (Numero > 0) ? Numero.ToString() : "";
+        public string Critere
+        {
+            get => _critere;
+            set
+            {
+                if (_critere != value && !string.IsNullOrWhiteSpace(value))
+                {
+                    _critere = value;
+                    _selectedCritere = value switch
+                    {
+                        "EpsiZ" => CritereVerification.EpsiZ,
+                        "SigmaT" => CritereVerification.SigmaT,
+                        _ => CritereVerification.EpsiT
+                    };
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(EpsilonZSupDisplay));
+                    OnPropertyChanged(nameof(ValeurCritique));
+                    OnPropertyChanged(nameof(TauxUtilisation));
+                    OnPropertyChanged(nameof(EpsilonZSupDepasse));
+                    OnPropertyChanged(nameof(SigmaTInfDepasse));
+                    OnPropertyChanged(nameof(EpsilonTInfDepasse));
+                    ReevaluateValidation();
+                    CritereChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
 
-        /// <summary>Nature de la couche (correspond à l'interface)</summary>
-        public string Nature => Interface;
+        public event EventHandler? CritereChanged;
 
-        /// <summary>
-        /// Affichage de l'interface sans doublon avec la nature
-        /// </summary>
-        public string InterfaceAffichee => Interface == Nature ? string.Empty : Interface;
+        private void ReevaluateValidation()
+        {
+            if (ValeurAdmissible <= 0) return;
+            EstValide = Math.Abs(ValeurCritique) <= ValeurAdmissible;
+            OnPropertyChanged(nameof(TauxUtilisation));
+            OnPropertyChanged(nameof(EpsilonZSupDepasse));
+            OnPropertyChanged(nameof(SigmaTInfDepasse));
+            OnPropertyChanged(nameof(EpsilonTInfDepasse));
+        }
     }
 
     /// <summary>
@@ -1205,28 +1182,14 @@ namespace UI_ChausseeNeuve.ViewModels
     {
         private string _typeInterface = "";
         private string _description = "";
-
-        /// <summary>Type d'interface (Collée, Semi-collée, Décollée)</summary>
-        public string TypeInterface
-        {
-            get => _typeInterface;
-            set { _typeInterface = value; OnPropertyChanged(); OnPropertyChanged(nameof(CouleurInterface)); }
-        }
-
-        /// <summary>Description de l'interface (ex: "Interface Surface/Base")</summary>
-        public string Description
-        {
-            get => _description;
-            set { _description = value; OnPropertyChanged(); }
-        }
-
-        /// <summary>Couleur à utiliser pour afficher le type d'interface</summary>
+        public string TypeInterface { get => _typeInterface; set { _typeInterface = value; OnPropertyChanged(); OnPropertyChanged(nameof(CouleurInterface)); } }
+        public string Description { get => _description; set { _description = value; OnPropertyChanged(); } }
         public string CouleurInterface => TypeInterface switch
         {
-            "Collée" => "#28a745",      // Vert pour interface collée
-            "Semi-collée" => "#ffc107", // Jaune pour interface semi-collée
-            "Décollée" => "#dc3545",    // Rouge pour interface décollée
-            _ => "#6c757d"              // Gris pour interface inconnue
+            "Collée" => "#28a745",
+            "Semi-collée" => "#ffc107",
+            "Décollée" => "#dc3545",
+            _ => "#6c757d"
         };
     }
 }

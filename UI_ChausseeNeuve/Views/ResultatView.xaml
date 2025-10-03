@@ -4,6 +4,7 @@
              xmlns:local="clr-namespace:UI_ChausseeNeuve.Views"
              xmlns:vm="clr-namespace:UI_ChausseeNeuve.ViewModels"
              xmlns:c="clr-namespace:UI_ChausseeNeuve.Converters"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              MinWidth="1000"
              MinHeight="700">
 
@@ -123,6 +124,13 @@
         <c:SimpleBooleanToStatusColorConverter x:Key="BooleanToStatusColorConverter"/>
         <c:SimpleCountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
 
+        <!-- Liste statique des criteres -->
+        <x:Array x:Key="ListeCriteres" Type="sys:String">
+            <sys:String>EpsiT</sys:String>
+            <sys:String>SigmaT</sys:String>
+            <sys:String>EpsiZ</sys:String>
+        </x:Array>
+
         <!-- Template pour afficher une couche -->
         <DataTemplate x:Key="CoucheTemplate">
             <Border BorderBrush="#DEE2E6" BorderThickness="0,0,0,1" Padding="5">
@@ -132,20 +140,21 @@
                 
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="50"/> <!-- Numero -->
-                        <ColumnDefinition Width="85"/>
-                        <ColumnDefinition Width="100"/>
-                        <ColumnDefinition Width="140"/>
-                        <ColumnDefinition Width="70"/>
-                        <ColumnDefinition Width="80"/>
-                        <ColumnDefinition Width="55"/>
-                        <ColumnDefinition Width="70"/>
-                        <ColumnDefinition Width="70"/>
-                        <ColumnDefinition Width="70"/>
-                        <ColumnDefinition Width="70"/>
-                        <ColumnDefinition Width="70"/>
-                        <ColumnDefinition Width="80"/>
-                        <ColumnDefinition Width="60"/>
+                        <ColumnDefinition Width="50"/><!-- N -->
+                        <ColumnDefinition Width="85"/><!-- Interface -->
+                        <ColumnDefinition Width="100"/><!-- Nature -->
+                        <ColumnDefinition Width="140"/><!-- Materiau -->
+                        <ColumnDefinition Width="70"/><!-- Niveaux -->
+                        <ColumnDefinition Width="80"/><!-- Module -->
+                        <ColumnDefinition Width="55"/><!-- nu -->
+                        <ColumnDefinition Width="70"/><!-- Critere -->
+                        <ColumnDefinition Width="70"/><!-- sigT -->
+                        <ColumnDefinition Width="70"/><!-- epsT -->
+                        <ColumnDefinition Width="70"/><!-- sigZ -->
+                        <ColumnDefinition Width="70"/><!-- epsZ -->
+                        <ColumnDefinition Width="70"/><!-- w -->
+                        <ColumnDefinition Width="80"/><!-- Val Adm -->
+                        <ColumnDefinition Width="60"/><!-- OK -->
                     </Grid.ColumnDefinitions>
 
                     <TextBlock Grid.Column="0" Text="{Binding NiveauDisplay}" Style="{StaticResource CellStyle}"/>
@@ -162,8 +171,21 @@
                     <TextBlock Grid.Column="5" Text="{Binding Module, StringFormat='{}{0:F0}'}" Style="{StaticResource CellStyle}"/>
                     <TextBlock Grid.Column="6" Text="{Binding CoefficientPoisson, StringFormat='{}{0:F2}'}" Style="{StaticResource CellStyle}"/>
                     
-                    <StackPanel Grid.Column="7" VerticalAlignment="Center" Margin="0">
-                        <TextBlock Text="{Binding SigmaTSup, StringFormat='{}{0:F3}'}" Style="{StaticResource NumericCellStyle}" Margin="0,-1,0,-1"/>
+                    <!-- Nouvelle colonne Critere -->
+                    <ComboBox Grid.Column="7" ItemsSource="{StaticResource ListeCriteres}" SelectedItem="{Binding Critere, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="2" FontSize="10" Width="65" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                    
+                    <StackPanel Grid.Column="8" VerticalAlignment="Center" Margin="0">
+                        <TextBlock Text="{Binding SigmaTSup, StringFormat='{}{0:F3}'}" Margin="0,-1,0,-1">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource NumericCellStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Critere}" Value="SigmaT">
+                                            <Setter Property="FontWeight" Value="Normal"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                         <TextBlock Margin="0,-1,0,-1">
                             <TextBlock.Style>
                                 <Style BasedOn="{StaticResource NumericCellStyle}" TargetType="TextBlock">
@@ -172,14 +194,31 @@
                                         <DataTrigger Binding="{Binding EstPlateforme}" Value="True">
                                             <Setter Property="Text" Value="-"/>
                                         </DataTrigger>
+                                        <DataTrigger Binding="{Binding Critere}" Value="SigmaT">
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding SigmaTInfDepasse}" Value="True">
+                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="Background" Value="#dc3545"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
                     </StackPanel>
-                    
-                    <StackPanel Grid.Column="8" VerticalAlignment="Center" Margin="0">
-                        <TextBlock Text="{Binding EpsilonTSup, StringFormat='{}{0:F1}'}" Style="{StaticResource NumericCellStyle}" Margin="0,-1,0,-1"/>
+                    <StackPanel Grid.Column="9" VerticalAlignment="Center" Margin="0">
+                        <TextBlock Text="{Binding EpsilonTSup, StringFormat='{}{0:F1}'}" Margin="0,-1,0,-1">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource NumericCellStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Critere}" Value="EpsiT">
+                                            <Setter Property="FontWeight" Value="Normal"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                         <TextBlock Margin="0,-1,0,-1">
                             <TextBlock.Style>
                                 <Style BasedOn="{StaticResource NumericCellStyle}" TargetType="TextBlock">
@@ -188,13 +227,21 @@
                                         <DataTrigger Binding="{Binding EstPlateforme}" Value="True">
                                             <Setter Property="Text" Value="-"/>
                                         </DataTrigger>
+                                        <DataTrigger Binding="{Binding Critere}" Value="EpsiT">
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding EpsilonTInfDepasse}" Value="True">
+                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="Background" Value="#dc3545"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
                     </StackPanel>
                     
-                    <StackPanel Grid.Column="9" VerticalAlignment="Center" Margin="0">
+                    <StackPanel Grid.Column="10" VerticalAlignment="Center" Margin="0">
                         <TextBlock Text="{Binding SigmaZSup, StringFormat='{}{0:F3}'}" Style="{StaticResource NumericCellStyle}" Foreground="Red" Margin="0,-1,0,-1"/>
                         <TextBlock Margin="0,-1,0,-1">
                             <TextBlock.Style>
@@ -211,8 +258,24 @@
                         </TextBlock>
                     </StackPanel>
                     
-                    <StackPanel Grid.Column="10" VerticalAlignment="Center" Margin="0">
-                        <TextBlock Text="{Binding EpsilonZSup, StringFormat='{}{0:F1}'}" Style="{StaticResource NumericCellStyle}" Margin="0,-1,0,-1"/>
+                    <StackPanel Grid.Column="11" VerticalAlignment="Center" Margin="0">
+                        <TextBlock Margin="0,-1,0,-1">
+                            <TextBlock.Style>
+                                <Style BasedOn="{StaticResource NumericCellStyle}" TargetType="TextBlock">
+                                    <Setter Property="Text" Value="{Binding EpsilonZSupDisplay}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Critere}" Value="EpsiZ">
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding EpsilonZSupDepasse}" Value="True">
+                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="Background" Value="#dc3545"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                         <TextBlock Margin="0,-1,0,-1">
                             <TextBlock.Style>
                                 <Style BasedOn="{StaticResource NumericCellStyle}" TargetType="TextBlock">
@@ -221,37 +284,41 @@
                                         <DataTrigger Binding="{Binding EstPlateforme}" Value="True">
                                             <Setter Property="Text" Value="-"/>
                                         </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </StackPanel>
-                    
-                    <StackPanel Grid.Column="11" VerticalAlignment="Center" Margin="0">
-                        <TextBlock Text="{Binding DeflexionSup, StringFormat='{}{0:F2}'}" Style="{StaticResource NumericCellStyle}" Margin="0,-1,0,-1"/>
-                        <TextBlock Margin="0,-1,0,-1">
-                            <TextBlock.Style>
-                                <Style BasedOn="{StaticResource NumericCellStyle}" TargetType="TextBlock">
-                                    <Setter Property="Text" Value="{Binding DeflexionInf, StringFormat='{}{0:F2}'}"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding EstPlateforme}" Value="True">
-                                            <Setter Property="Text" Value="-"/>
+                                        <DataTrigger Binding="{Binding Critere}" Value="EpsiZ">
+                                            <Setter Property="Opacity" Value="0.35"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
                     </StackPanel>
-                    
-                    <TextBlock Grid.Column="12" Text="{Binding ValeurAdmissible, StringFormat='{}{0:F1}'}" Style="{StaticResource NumericCellStyle}" Foreground="Blue" FontWeight="Bold"/>
-                    
-                    <TextBlock Grid.Column="13" Text="{Binding StatutValidation}" Style="{StaticResource CellStyle}" FontWeight="Bold" FontSize="16">
+                    <!-- Valeur admissible avec coloration si depassement -->
+                    <TextBlock Grid.Column="13" Margin="0,-1,0,-1">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource NumericCellStyle}">
+                                <Setter Property="Text" Value="{Binding ValeurAdmissible, StringFormat='{}{0:F1}'}"/>
+                                <Setter Property="Foreground" Value="Blue"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding EpsilonZSupDepasse}" Value="True">
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="Background" Value="#dc3545"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding SigmaTInfDepasse}" Value="True">
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="Background" Value="#dc3545"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding EpsilonTInfDepasse}" Value="True">
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="Background" Value="#dc3545"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Grid.Column="14" Text="{Binding StatutValidation}" Style="{StaticResource CellStyle}" FontWeight="Bold" FontSize="16">
                         <TextBlock.Foreground>
-                            <Binding Path="EstValide">
-                                <Binding.Converter>
-                                    <StaticResource ResourceKey="BooleanToStatusColorConverter"/>
-                                </Binding.Converter>
-                            </Binding>
+                            <Binding Path="EstValide" Converter="{StaticResource BooleanToStatusColorConverter}"/>
                         </TextBlock.Foreground>
                     </TextBlock>
                 </Grid>
@@ -262,13 +329,14 @@
         <DataTemplate x:Key="InterfaceTemplate">
             <Grid Height="25">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="50"/> <!-- Numero -->
+                    <ColumnDefinition Width="50"/>
                     <ColumnDefinition Width="85"/>
                     <ColumnDefinition Width="100"/>
                     <ColumnDefinition Width="140"/>
                     <ColumnDefinition Width="70"/>
                     <ColumnDefinition Width="80"/>
                     <ColumnDefinition Width="55"/>
+                    <ColumnDefinition Width="70"/>
                     <ColumnDefinition Width="70"/>
                     <ColumnDefinition Width="70"/>
                     <ColumnDefinition Width="70"/>
@@ -356,13 +424,14 @@
                         <Border Background="#E9ECEF" CornerRadius="6,6,0,0" Padding="5" Margin="0,10,0,0">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="50"/> <!-- Numero -->
+                                    <ColumnDefinition Width="50"/>
                                     <ColumnDefinition Width="85"/>
                                     <ColumnDefinition Width="100"/>
                                     <ColumnDefinition Width="140"/>
                                     <ColumnDefinition Width="70"/>
                                     <ColumnDefinition Width="80"/>
                                     <ColumnDefinition Width="55"/>
+                                    <ColumnDefinition Width="70"/><!-- Critere -->
                                     <ColumnDefinition Width="70"/>
                                     <ColumnDefinition Width="70"/>
                                     <ColumnDefinition Width="70"/>
@@ -379,13 +448,14 @@
                                 <TextBlock Grid.Column="4" Text="Niveau (cm)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
                                 <TextBlock Grid.Column="5" Text="Module (MPa)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
                                 <TextBlock Grid.Column="6" Text="nu" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="7" Text="sigT (MPa)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="8" Text="epsT (udef)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="9" Text="sigZ (MPa)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="10" Text="epsZ (udef)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="11" Text="w (mm/100)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="12" Text="Val. Adm." Style="{StaticResource CellStyle}" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="13" Text="OK" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="7" Text="Critere" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="8" Text="sigT (MPa)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="9" Text="epsT (udef)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="10" Text="sigZ (MPa)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="11" Text="epsZ (udef)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="12" Text="w (mm/100)" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="13" Text="Val. Adm." Style="{StaticResource CellStyle}" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="14" Text="OK" Style="{StaticResource CellStyle}" FontWeight="Bold"/>
                             </Grid>
                         </Border>
 

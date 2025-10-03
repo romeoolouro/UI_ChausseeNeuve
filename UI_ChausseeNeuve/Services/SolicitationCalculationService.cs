@@ -883,7 +883,7 @@ namespace UI_ChausseeNeuve.Services
             _ => "Inconnue"
         };
 
-        public double Module => Layer.Modulus_MPa;
+        public double Module => Math.Round(Layer.Modulus_MPa);
         public double CoefficientPoisson => Layer.Poisson;
         
         // Valeurs critiques (les plus défavorables)

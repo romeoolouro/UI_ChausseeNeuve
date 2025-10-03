@@ -156,6 +156,7 @@ namespace UI_ChausseeNeuve.ViewModels
         /// - Sinon utiliser Modulus_MPa comme valeur de référence.
         /// - Si no 2D table, ajuster la fréquence par la loi E = E_ref * (f/f_ref)^m où m = FrequencyExponent.
         /// - Clamping: si temperature ou frequency demandées en dehors des bornes de la table, la valeur est clampée aux bornes (pas d'extrapolation agressive).
+        /// - Tous les résultats sont arrondis à l'entier le plus proche pour l'affichage.
         /// </summary>
         public double GetModulusAt(int temperatureC, int frequencyHz)
         {
@@ -164,6 +165,7 @@ namespace UI_ChausseeNeuve.ViewModels
             if (normative.HasValue)
             {
                 // CalibrationFactor neutralisé (doit être 1.0 pour MB, enforcement défensif)
+                // Le modèle normatif retourne déjà des valeurs arrondies
                 return normative.Value;
             }
 
@@ -179,9 +181,9 @@ namespace UI_ChausseeNeuve.ViewModels
                 int t1 = temps.Where(t => t >= temperatureC).Min();
                 double e_t0 = InterpolateInFrequencyRow(EvsTempFreq[t0], frequencyHz);
                 double e_t1 = InterpolateInFrequencyRow(EvsTempFreq[t1], frequencyHz);
-                if (t0 == t1) return e_t0 * CalibrationFactor;
+                if (t0 == t1) return Math.Round(e_t0 * CalibrationFactor);
                 double e = e_t0 + (e_t1 - e_t0) * (temperatureC - t0) / (double)(t1 - t0);
-                return e * CalibrationFactor;
+                return Math.Round(e * CalibrationFactor);
             }
             double baseE;
             if (EvsTemperature != null && EvsTemperature.Count > 0)
@@ -211,18 +213,18 @@ namespace UI_ChausseeNeuve.ViewModels
             {
                 baseE = Modulus_MPa;
             }
-            if (frequencyHz <= 0) return baseE * CalibrationFactor;
+            if (frequencyHz <= 0) return Math.Round(baseE * CalibrationFactor);
             int fRef = ReferenceFrequency > 0 ? ReferenceFrequency : 10;
             double m = FrequencyExponent ?? 0.25;
             try
             {
-                if (frequencyHz == fRef) return baseE * CalibrationFactor;
+                if (frequencyHz == fRef) return Math.Round(baseE * CalibrationFactor);
                 double factor = Math.Pow((double)frequencyHz / (double)fRef, m);
-                return baseE * factor * CalibrationFactor;
+                return Math.Round(baseE * factor * CalibrationFactor);
             }
             catch
             {
-                return baseE * CalibrationFactor;
+                return Math.Round(baseE * CalibrationFactor);
             }
         }
         // Helper: interpolate in a frequency row (dictionary freq -> E), clamped to bounds, linear interpolation

@@ -79,6 +79,7 @@ namespace ChausseeNeuve.Domain.Models
                 {
                     _distanceRouesMetres = Math.Max(0, value); // Valeur positive uniquement
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(PositionYDisplay)); // Mettre à jour l'affichage Y qui dépend de la distance
                 }
             }
         }
@@ -92,6 +93,7 @@ namespace ChausseeNeuve.Domain.Models
                 {
                     _positionX = value;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(PositionXDisplay));
                 }
             }
         }
@@ -105,7 +107,24 @@ namespace ChausseeNeuve.Domain.Models
                 {
                     _positionY = value;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(PositionYDisplay));
                 }
+            }
+        }
+
+        // Propriétés d'affichage pour X et Y
+        public string PositionXDisplay => _positionX == 0 ? "0" : _positionX.ToString("F3");
+
+        public string PositionYDisplay
+        {
+            get
+            {
+                if (Type == ChargeType.RoueIsolee)
+                {
+                    return _positionY == 0 ? "0" : _positionY.ToString("F3");
+                }
+                // Pour les jumelages, afficher "0 et d/2"
+                return "0 et d/2";
             }
         }
 
@@ -143,6 +162,9 @@ namespace ChausseeNeuve.Domain.Models
                     PositionY = 0;
                     break;
             }
+            // Notifier les changements d'affichage
+            OnPropertyChanged(nameof(PositionXDisplay));
+            OnPropertyChanged(nameof(PositionYDisplay));
         }
 
         /// <summary>

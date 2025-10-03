@@ -90,7 +90,40 @@
             <m:MaterialFamily>Bibliotheque</m:MaterialFamily>
         </x:Array>
 
-        <!-- Layer row -->
+        <!-- Style d'avertissement norme (nettoyé) -->
+        <Style x:Key="NormWarningTextBox" TargetType="TextBox">
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Layer.IsThicknessOutOfNorm}" Value="True">
+                    <Setter Property="BorderBrush" Value="#F59E0B"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                    <Setter Property="ToolTip" Value="{Binding Layer.ThicknessWarningText}"/>
+                    <Setter Property="Background" Value="#FFFDEBD3"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Layer.IsModulusOutOfNorm}" Value="True">
+                    <Setter Property="BorderBrush" Value="#F59E0B"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                    <Setter Property="ToolTip" Value="{Binding Layer.ModulusWarningText}"/>
+                    <Setter Property="Background" Value="#FFFDEBD3"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Layer.IsPoissonOutOfNorm}" Value="True">
+                    <Setter Property="BorderBrush" Value="#F59E0B"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                    <Setter Property="ToolTip" Value="{Binding Layer.PoissonWarningText}"/>
+                    <Setter Property="Background" Value="#FFFDEBD3"/>
+                </DataTrigger>
+                <!-- Mode Automatique : plus de cadre vert, uniquement tooltip de correction -->
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Layer.Mode}" Value="Automatique"/>
+                        <Condition Binding="{Binding Layer.HasAutoCorrection}" Value="True"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="ToolTip" Value="{Binding Layer.AutoCorrectionNote}"/>
+                </MultiDataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Template ligne (simplifié: suppression des doublons TextBox & boutons) -->
         <DataTemplate x:Key="LayerRowTemplate" DataType="{x:Type vm:LayerRowVM}">
             <Grid Margin="0,6">
                 <Grid.ColumnDefinitions>
@@ -104,18 +137,13 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="{Binding Layer.Order}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 <ComboBox Grid.Column="1" ItemsSource="{StaticResource Roles}" SelectedItem="{Binding Layer.Role, Mode=TwoWay}"/>
-                <!-- Matériau (Famille) -->
+                <!-- Matériau -->
                 <Grid Grid.Column="2">
-                    <!-- Combo famille toujours présent -->
-                    <ComboBox x:Name="FamilyCombo2" ItemsSource="{Binding AvailableMaterials}" SelectedItem="{Binding Layer.Family, Mode=TwoWay}" HorizontalAlignment="Stretch">
+                    <ComboBox ItemsSource="{Binding AvailableMaterials}" SelectedItem="{Binding Layer.Family, Mode=TwoWay}" HorizontalAlignment="Stretch">
                         <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Converter={StaticResource EnumDesc}}"/>
-                            </DataTemplate>
+                            <DataTemplate><TextBlock Text="{Binding Converter={StaticResource EnumDesc}}"/></DataTemplate>
                         </ComboBox.ItemTemplate>
                     </ComboBox>
-
-                    <!-- Overlay: nom du matériau choisi dans Bibliothèque, dans la même case -->
                     <Border Background="#80F3F4F6" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="4,0,4,0" HorizontalAlignment="Right" VerticalAlignment="Center" Panel.ZIndex="10" IsHitTestVisible="False">
                         <Border.Style>
                             <Style TargetType="Border">
@@ -141,15 +169,28 @@
                             </Style.Triggers>
                         </Style>
                     </Grid.Style>
-                    <TextBox Text="{Binding Layer.Thickness_m, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F3, ConverterCulture=fr-FR, ValidatesOnExceptions=True, ValidatesOnDataErrors=True, NotifyOnValidationError=True}"
-                             PreviewTextInput="Numeric_PreviewTextInput"
-                             DataObject.Pasting="Numeric_Pasting"
-                             PreviewKeyDown="Numeric_PreviewKeyDown"
-                             LostFocus="Numeric_LostFocus"
-                             HorizontalAlignment="Stretch"
-                             HorizontalContentAlignment="Right"/>
+                    <TextBox Style="{StaticResource NormWarningTextBox}" Text="{Binding Layer.Thickness_m, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F3, ConverterCulture=fr-FR, ValidatesOnDataErrors=True}" PreviewTextInput="Numeric_PreviewTextInput" DataObject.Pasting="Numeric_Pasting" PreviewKeyDown="Numeric_PreviewKeyDown" LostFocus="Numeric_LostFocus" HorizontalAlignment="Stretch" HorizontalContentAlignment="Right"/>
+                    <TextBlock Text="⚠" Foreground="#F59E0B" FontSize="14" FontWeight="Bold" Margin="4,0" HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Layer.IsThicknessOutOfNorm}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Layer.Mode}" Value="Automatique"/>
+                                            <Condition Binding="{Binding Layer.HasAutoCorrection}" Value="True"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </Grid>
-                <!-- Plateforme Infini -->
+                <!-- Plateforme (épaisseur infinie) -->
                 <Grid Grid.Column="3">
                     <Grid.Style>
                         <Style TargetType="Grid">
@@ -163,107 +204,115 @@
                     </Grid.Style>
                     <TextBlock Text="Infini" Foreground="#6B7280" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 </Grid>
-                <TextBox Grid.Column="4" Text="{Binding Layer.Modulus_MPa, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=0.##, ConverterCulture=fr-FR, ValidatesOnDataErrors=True}"
-                         PreviewTextInput="Numeric_PreviewTextInput" DataObject.Pasting="Numeric_Pasting" PreviewKeyDown="Numeric_PreviewKeyDown" LostFocus="Numeric_LostFocus" HorizontalContentAlignment="Right"/>
-                <TextBox Grid.Column="5" Text="{Binding Layer.Poisson, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=0.00, ConverterCulture=fr-FR, ValidatesOnDataErrors=True}"
-                         PreviewTextInput="Numeric_PreviewTextInput" DataObject.Pasting="Numeric_Pasting" PreviewKeyDown="Numeric_PreviewKeyDown" LostFocus="Numeric_LostFocus" HorizontalContentAlignment="Right"/>
-
-                <!-- Actions -->
-                <StackPanel Grid.Column="6" Orientation="Horizontal" HorizontalAlignment="Center">
-                    <Button Content="▲" ToolTip="Monter" Width="24" Height="24" Margin="0,0,4,0"
-                            Command="{Binding DataContext.MoveLayerUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            CommandParameter="{Binding Layer}"/>
-                    <Button ToolTip="Supprimer" Width="30" Height="24" Margin="0,0,4,0"
-                            Command="{Binding DataContext.DeleteLayerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            CommandParameter="{Binding Layer}">
-                        <Button.Content>
-                            <TextBlock Text="&#xE107;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
-                        </Button.Content>
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource DangerButtonRed}">
-                                <Setter Property="Visibility" Value="Visible"/>
+                <!-- Module -->
+                <Grid Grid.Column="4">
+                    <TextBox Style="{StaticResource NormWarningTextBox}" Text="{Binding Layer.Modulus_MPa, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=0.##, ConverterCulture=fr-FR, ValidatesOnDataErrors=True}" PreviewTextInput="Numeric_PreviewTextInput" DataObject.Pasting="Numeric_Pasting" PreviewKeyDown="Numeric_PreviewKeyDown" LostFocus="Numeric_LostFocus" HorizontalAlignment="Stretch" HorizontalContentAlignment="Right"/>
+                    <TextBlock Text="⚠" Foreground="#F59E0B" FontSize="14" FontWeight="Bold" Margin="4,0" HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Layer.Role}" Value="Plateforme">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    <DataTrigger Binding="{Binding Layer.IsModulusOutOfNorm}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
                                     </DataTrigger>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Layer.Mode}" Value="Automatique"/>
+                                            <Condition Binding="{Binding Layer.HasAutoCorrection}" Value="True"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </MultiDataTrigger>
                                 </Style.Triggers>
                             </Style>
-                        </Button.Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+                <!-- Poisson -->
+                <Grid Grid.Column="5">
+                    <TextBox Style="{StaticResource NormWarningTextBox}" Text="{Binding Layer.Poisson, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=0.00, ConverterCulture=fr-FR, ValidatesOnDataErrors=True}" PreviewTextInput="Numeric_PreviewTextInput" DataObject.Pasting="Numeric_Pasting" PreviewKeyDown="Numeric_PreviewKeyDown" LostFocus="Numeric_LostFocus" HorizontalAlignment="Stretch" HorizontalContentAlignment="Right"/>
+                    <TextBlock Text="⚠" Foreground="#F59E0B" FontSize="14" FontWeight="Bold" Margin="4,0" HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Layer.IsPoissonOutOfNorm}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Layer.Mode}" Value="Automatique"/>
+                                            <Condition Binding="{Binding Layer.HasAutoCorrection}" Value="True"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+                <!-- Actions (doublons retirés) -->
+                <StackPanel Grid.Column="6" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button Content="▲" ToolTip="Monter" Width="24" Height="24" Margin="0,0,4,0" Command="{Binding DataContext.MoveLayerUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding Layer}"/>
+                    <Button ToolTip="Supprimer" Width="30" Height="24" Margin="0,0,4,0" Command="{Binding DataContext.DeleteLayerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding Layer}" Style="{StaticResource DangerButtonRed}">
+                        <TextBlock Text="&#xE107;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
                     </Button>
-                    <Button Content="▼" ToolTip="Descendre" Width="24" Height="24"
-                            Command="{Binding DataContext.MoveLayerDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            CommandParameter="{Binding Layer}"/>
+                    <Button Content="▼" ToolTip="Descendre" Width="24" Height="24" Command="{Binding DataContext.MoveLayerDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding Layer}"/>
                 </StackPanel>
             </Grid>
         </DataTemplate>
 
-        <!-- Interface row (bande plus fine et différenciée) -->
         <DataTemplate x:Key="InterfaceRowTemplate" DataType="{x:Type vm:InterfaceRowVM}">
             <Border Background="#F1F5F9" CornerRadius="8" Padding="2" MinHeight="18" BorderBrush="#D1D5DB" BorderThickness="1">
-                <DockPanel>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="Interface" Width="72" Foreground="{StaticResource MutedText}" VerticalAlignment="Center"/>
-                    <StackPanel Orientation="Horizontal">
-                        <!-- Collée -->
-                        <RadioButton Content="Collée" IsChecked="{Binding UpperLayer.InterfaceWithBelow, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource Eq}, ConverterParameter={x:Static m:InterfaceType.Collee}}">
-                            <RadioButton.Style>
-                                <Style BasedOn="{StaticResource Chip}" TargetType="RadioButton">
-                                    <Setter Property="Padding" Value="8,2"/>
-                                    <Setter Property="MinWidth" Value="90"/>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsChecked" Value="True">
-                                            <Setter Property="Background" Value="#22C55E"/>
-                                            <Setter Property="BorderBrush" Value="#22C55E"/>
-                                            <Setter Property="Foreground" Value="White"/>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </RadioButton.Style>
-                        </RadioButton>
-                        <!-- Semi-collée -->
-                        <RadioButton Content="Semi-collée" IsChecked="{Binding UpperLayer.InterfaceWithBelow, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource Eq}, ConverterParameter={x:Static m:InterfaceType.SemiCollee}}">
-                            <RadioButton.Style>
-                                <Style BasedOn="{StaticResource Chip}" TargetType="RadioButton">
-                                    <Setter Property="Padding" Value="8,2"/>
-                                    <Setter Property="MinWidth" Value="100"/>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsChecked" Value="True">
-                                            <Setter Property="Background" Value="#F59E0B"/>
-                                            <Setter Property="BorderBrush" Value="#F59E0B"/>
-                                            <Setter Property="Foreground" Value="White"/>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </RadioButton.Style>
-                        </RadioButton>
-                        <!-- Décollée -->
-                        <RadioButton Content="Décollée" IsChecked="{Binding UpperLayer.InterfaceWithBelow, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource Eq}, ConverterParameter={x:Static m:InterfaceType.Decollee}}">
-                            <RadioButton.Style>
-                                <Style BasedOn="{StaticResource Chip}" TargetType="RadioButton">
-                                    <Setter Property="Padding" Value="8,2"/>
-                                    <Setter Property="MinWidth" Value="90"/>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsChecked" Value="True">
-                                            <Setter Property="Background" Value="#EF4444"/>
-                                            <Setter Property="BorderBrush" Value="#EF4444"/>
-                                            <Setter Property="Foreground" Value="White"/>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </RadioButton.Style>
-                        </RadioButton>
-                    </StackPanel>
-                </DockPanel>
+                    <RadioButton Content="Collée" IsChecked="{Binding UpperLayer.InterfaceWithBelow, Mode=TwoWay, Converter={StaticResource Eq}, ConverterParameter={x:Static m:InterfaceType.Collee}}">
+                        <RadioButton.Style>
+                            <Style TargetType="RadioButton" BasedOn="{StaticResource Chip}">
+                                <Style.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter Property="Background" Value="#22C55E"/>
+                                        <Setter Property="BorderBrush" Value="#22C55E"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </RadioButton.Style>
+                    </RadioButton>
+                    <RadioButton Content="Semi-collée" IsChecked="{Binding UpperLayer.InterfaceWithBelow, Mode=TwoWay, Converter={StaticResource Eq}, ConverterParameter={x:Static m:InterfaceType.SemiCollee}}">
+                        <RadioButton.Style>
+                            <Style TargetType="RadioButton" BasedOn="{StaticResource Chip}">
+                                <Style.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter Property="Background" Value="#F59E0B"/>
+                                        <Setter Property="BorderBrush" Value="#F59E0B"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </RadioButton.Style>
+                    </RadioButton>
+                    <RadioButton Content="Décollée" IsChecked="{Binding UpperLayer.InterfaceWithBelow, Mode=TwoWay, Converter={StaticResource Eq}, ConverterParameter={x:Static m:InterfaceType.Decollee}}">
+                        <RadioButton.Style>
+                            <Style TargetType="RadioButton" BasedOn="{StaticResource Chip}">
+                                <Style.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter Property="Background" Value="#EF4444"/>
+                                        <Setter Property="BorderBrush" Value="#EF4444"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </RadioButton.Style>
+                    </RadioButton>
+                </StackPanel>
             </Border>
         </DataTemplate>
 
-        <!-- Template selector for Rows -->
         <local:RowTemplateSelector x:Key="RowSelector" LayerTemplate="{StaticResource LayerRowTemplate}" InterfaceTemplate="{StaticResource InterfaceRowTemplate}"/>
     </UserControl.Resources>
 
     <Grid Background="{StaticResource GrayBgBrush}" Margin="8">
-        <!-- Contenu principal -->
         <DockPanel>
-            <!-- Bande supérieure (3 zones égales: Types / Couches +/- / NE) -->
             <Border DockPanel.Dock="Top" Margin="12" Padding="10" CornerRadius="12" Background="White" BorderBrush="{StaticResource CardBorder}" BorderThickness="1">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -271,43 +320,32 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-
-                    <!-- Types de structure -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <TextBlock Text="Types de structure" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="White" Background="#FF404040" Height="24" FontSize="14"/>
                         <ComboBox Width="240" ItemsSource="{Binding StructureTypes}" SelectedItem="{Binding SelectedStructureType}"/>
                     </StackPanel>
-
-                    <!-- Couches +/- -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <TextBlock Text="Couches" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="Bold" FontSize="14" Background="#FF404040" Foreground="White" Width="63"/>
                         <Button Content="—" Width="36" Command="{Binding RemoveTopLayerCommand}" Style="{StaticResource DangerButtonRed}" Margin="0,0,6,0"/>
                         <Button Content="+" Width="36" Command="{Binding AddLayerCommand}" Style="{StaticResource PrimaryButtonGreen}"/>
                     </StackPanel>
-
                     <!-- NE -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <TextBlock Text="NE" VerticalAlignment="Center" Margin="0,0,6,0" Width="21" Foreground="White" Background="#FF1F1F1F" Height="18" FontWeight="Bold" FontSize="14"/>
-                        <TextBox Width="140" Text="{Binding NE, UpdateSourceTrigger=PropertyChanged, ConverterCulture=fr-FR}" HorizontalContentAlignment="Right"
-                                 PreviewTextInput="Numeric_PreviewTextInput" DataObject.Pasting="Numeric_Pasting" PreviewKeyDown="Numeric_PreviewKeyDown" LostFocus="Numeric_LostFocus"/>
+                        <TextBox Width="140" Text="{Binding NE, UpdateSourceTrigger=PropertyChanged, ConverterCulture=fr-FR}" HorizontalContentAlignment="Right" PreviewTextInput="Numeric_PreviewTextInput" DataObject.Pasting="Numeric_Pasting" PreviewKeyDown="Numeric_PreviewKeyDown" LostFocus="Numeric_LostFocus"/>
                     </StackPanel>
                 </Grid>
             </Border>
-
             <Grid Margin="12">
                 <Grid.ColumnDefinitions>
-                    <!-- Let left column size to content, right column takes remaining space -->
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-
-                <!-- Tableau de modélisation -->
                 <Border Grid.Column="0" Style="{StaticResource CardShadow}">
                     <DockPanel>
                         <Border DockPanel.Dock="Top" Background="{DynamicResource BorderColor}" CornerRadius="12,12,0,0">
                             <TextBlock Text="Modéliser la structure" Foreground="White" Padding="14" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                         </Border>
-
                         <Grid DockPanel.Dock="Top" Margin="12,12,12,6">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="46"/>
@@ -326,7 +364,6 @@
                             <TextBlock Text="Coef. de Poisson" Grid.Column="5" FontWeight="Bold"/>
                             <TextBlock Text="Actions" Grid.Column="6" FontWeight="Bold"/>
                         </Grid>
-
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="12,0,12,12">
                             <ItemsControl ItemsSource="{Binding Rows}" ItemTemplateSelector="{StaticResource RowSelector}">
                                 <ItemsControl.ItemsPanel>
@@ -338,24 +375,18 @@
                         </ScrollViewer>
                     </DockPanel>
                 </Border>
-
-                <!-- Coupe -->
                 <Border Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource CardShadow}" ClipToBounds="False">
                     <DockPanel>
                         <TextBlock DockPanel.Dock="Top" Text="Vue en coupe (graduation cumulative)" FontWeight="SemiBold" Margin="12" Height="25" Background="#FF404040" Foreground="White" FontSize="14"/>
                         <Border DockPanel.Dock="Bottom" Padding="10" BorderThickness="0" Margin="0,6,0,6">
                             <Button Content="Valider la structure" Padding="16,8" HorizontalAlignment="Stretch" Command="{Binding ValidateStructureCommand}" Background="#FF404040" Foreground="White" FontSize="16" FontWeight="Bold"/>
                         </Border>
-                        <!-- Single parent ScrollViewer so layers and graduations scroll together -->
                         <ScrollViewer x:Name="CoupeScroll" VerticalScrollBarVisibility="Auto" Loaded="CoupeScroll_Loaded" SizeChanged="CoupeScroll_SizeChanged" ClipToBounds="False">
                             <Grid Margin="8" ClipToBounds="False" HorizontalAlignment="Left">
-                                <!-- Deux colonnes: couches + graduations, pas d'espace inutile à droite -->
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="250"/>
                                     <ColumnDefinition Width="110"/>
                                 </Grid.ColumnDefinitions>
-
-                                <!-- Layers list (no internal ScrollViewer) -->
                                 <ItemsControl Grid.Column="0" ItemsSource="{Binding Layers}" ClipToBounds="False">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
@@ -399,38 +430,20 @@
                                                     </Grid>
                                                 </Border>
                                             </Grid>
-                                        </DataTemplate>
+                                       </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-
-                                <!-- Thickness labels overlay to avoid being hidden by next layers -->
-                                <ItemsControl Grid.Column="0"
-                                              ItemsSource="{Binding GradItems}"
-                                              IsHitTestVisible="False"
-                                              Panel.ZIndex="300"
-                                              Margin="0,0,12,0">
+                                <ItemsControl Grid.Column="0" ItemsSource="{Binding GradItems}" IsHitTestVisible="False" Panel.ZIndex="300" Margin="0,0,12,0">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <!-- Hauteur égale à la hauteur de la couche, libellé cumulatif en bas -->
                                             <Grid Height="{Binding Pixel}">
-                                                <Border HorizontalAlignment="Center"
-                                                        VerticalAlignment="Bottom"
-                                                        Background="White"
-                                                        CornerRadius="6"
-                                                        Padding="6,2"
-                                                        Margin="0,0,0,-12">
-                                                    <TextBlock Text="{Binding Label}"
-                                                               Foreground="#111827"
-                                                               FontWeight="SemiBold"
-                                                               HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"/>
+                                                <Border HorizontalAlignment="Center" VerticalAlignment="Bottom" Background="White" CornerRadius="6" Padding="6,2" Margin="0,0,0,-12">
+                                                    <TextBlock Text="{Binding Label}" Foreground="#111827" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
                                             </Grid>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-
-                                <!-- Graduations list -->
                                 <ItemsControl Grid.Column="1" ItemsSource="{Binding GradItems}" Margin="6,0,14,0" Panel.ZIndex="200">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>

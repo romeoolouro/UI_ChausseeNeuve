@@ -23,6 +23,12 @@ namespace UI_ChausseeNeuve
         /// Événement déclenché quand la structure change
         /// </summary>
         public static event Action? StructureChanged;
+
+        /// <summary>
+        /// Nouvel évènement déclenché quand les valeurs admissibles sont recalculées/mises à jour
+        /// (évite de reconstruire toute la structure côté résultats)
+        /// </summary>
+        public static event Action? ValeursAdmissiblesUpdated;
         
         /// <summary>
         /// Méthode pour déclencher manuellement la notification de changement de structure
@@ -38,6 +44,14 @@ namespace UI_ChausseeNeuve
         public static void OnStructureChanged()
         {
             StructureChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Déclenche l'événement ValeursAdmissiblesUpdated (rafraîchissement ciblé des colonnes Val. Adm.)
+        /// </summary>
+        public static void RaiseValeursAdmissiblesUpdated()
+        {
+            ValeursAdmissiblesUpdated?.Invoke();
         }
     } 
 }

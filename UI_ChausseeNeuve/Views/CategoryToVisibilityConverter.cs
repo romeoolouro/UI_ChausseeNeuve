@@ -6,7 +6,8 @@ using System.Windows.Data;
 namespace UI_ChausseeNeuve.Views
 {
     /// <summary>
-    /// Permet d'afficher un contrôle uniquement si la catégorie courante correspond au paramètre.
+    /// Permet d'afficher un controle uniquement si la categorie courante correspond au parametre.
+    /// (Commentaires sans accents pour eviter tout probleme d'encodage dans certains parseurs.)
     /// </summary>
     public class CategoryToVisibilityConverter : IValueConverter
     {

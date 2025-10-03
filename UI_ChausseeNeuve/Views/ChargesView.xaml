@@ -22,7 +22,7 @@
             <Border Style="{StaticResource SectionCardStyle}">
                 <StackPanel>
                     <TextBlock Text="Charge de référence"
-                               Style="{StaticResource SectionTitleStyle}"/>
+                               Style="{StaticResource SectionTitleStyle}" FontWeight="Bold"/>
 
                     <StackPanel Orientation="Horizontal"
                                 HorizontalAlignment="Center">
@@ -52,7 +52,7 @@
                 <StackPanel>
                     <StackPanel>
                         <TextBlock Text="Paramètres associés"
-                                   Style="{StaticResource SectionTitleStyle}"/>
+                                   Style="{StaticResource SectionTitleStyle}" FontWeight="Bold"/>
                         <Separator Background="{StaticResource CardBorder}"
                                 Margin="0,-10,0,15"/>
                     </StackPanel>
@@ -124,7 +124,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Type (lecture seule) - FIXÉ : suppression du converter problématique -->
+                            <!-- Type (lecture seule) -->
                             <TextBox Grid.Column="0"
                                      Text="{Binding SelectedChargeType}"
                                      IsReadOnly="True"
@@ -162,18 +162,36 @@
                             <!-- Separator column left intentionally empty -->
 
                             <!-- Position X -->
-                            <TextBox Grid.Column="6"
-                                     Text="{Binding ChargeReference.PositionX, StringFormat=F3}"
-                                     IsEnabled="{Binding IsPositionXEnabled}"
-                                     Style="{StaticResource ModernTextBoxStyle}"
-                                     Height="28"/>
+                            <Border Grid.Column="6" 
+                                    Background="#FFFFFF"
+                                    BorderBrush="#E5E7EB"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    Margin="2"
+                                    Height="28">
+                                <TextBlock Text="{Binding ChargeReference.PositionXDisplay}"
+                                         VerticalAlignment="Center"
+                                         HorizontalAlignment="Center"
+                                         Foreground="#111827"
+                                         FontFamily="Segoe UI"
+                                         FontSize="14"/>
+                            </Border>
 
                             <!-- Position Y -->
-                            <TextBox Grid.Column="7"
-                                     Text="{Binding ChargeReference.PositionY, StringFormat=F3}"
-                                     IsEnabled="{Binding IsPositionYEnabled}"
-                                     Style="{StaticResource ModernTextBoxStyle}"
-                                     Height="28"/>
+                            <Border Grid.Column="7"
+                                    Background="#FFFFFF"
+                                    BorderBrush="#E5E7EB"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    Margin="2"
+                                    Height="28">
+                                <TextBlock Text="{Binding ChargeReference.PositionYDisplay}"
+                                         VerticalAlignment="Center"
+                                         HorizontalAlignment="Center"
+                                         Foreground="#111827"
+                                         FontFamily="Segoe UI"
+                                         FontSize="14"/>
+                            </Border>
                         </Grid>
                     </Grid>
                 </StackPanel>
@@ -183,9 +201,9 @@
             <Border Style="{StaticResource SectionCardStyle}">
                 <StackPanel>
                     <TextBlock Text="Schéma explicatif"
-                               Style="{StaticResource SectionTitleStyle}"/>
+                               Style="{StaticResource SectionTitleStyle}" FontWeight="Bold"/>
 
-                    <Border Background="{StaticResource HeaderBg}"
+                    <Border Background="#FF3C3C3C"
                             CornerRadius="5"
                             Padding="20"
                             HorizontalAlignment="Center">
@@ -195,7 +213,7 @@
                             <Image x:Name="JumelageImage"
                                    Source="pack://application:,,,/UI_ChausseeNeuve;component/Resources/Icons/charge.png"
                                    Stretch="Uniform"
-                                   Visibility="{Binding IsJumelageFrancaisSelected, Converter={StaticResource BoolToVisibility}, FallbackValue=Visible}"/>
+                                   Visibility="{Binding IsJumelageFrancaisSelected, Converter={StaticResource BoolToVisibility}, FallbackValue=Visible}" OpacityMask="#FF3C3C3C"/>
 
                             <!-- Image pour autre jumelage -->
                             <Image x:Name="AutreJumelageImage"
@@ -232,6 +250,7 @@
                         BorderBrush="{StaticResource CardBorder}"
                         Foreground="{StaticResource TextWhite}"
                         Padding="20,8"
+                        Command="{Binding NavigateToValeursAdmissiblesCommand}"
                         HorizontalAlignment="Center">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
