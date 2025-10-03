@@ -41,7 +41,7 @@ namespace UI_ChausseeNeuve.ViewModels
             try
             {
                 System.Diagnostics.Debug.WriteLine("ValeursAdmissiblesViewModel: Début initialisation SÉCURISÉE");
-                
+
                 // Initialisation sécurisée de la collection
                 _valeursAdmissibles = new ObservableCollection<ValeurAdmissibleCouche>();
 
@@ -66,7 +66,7 @@ namespace UI_ChausseeNeuve.ViewModels
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"ValeursAdmissiblesViewModel: ERREUR CRITIQUE: {ex}");
-                
+
                 // Fallback ultra-sécurisé
                 InitializeMinimal();
             }
@@ -100,7 +100,7 @@ namespace UI_ChausseeNeuve.ViewModels
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"ValeursAdmissiblesViewModel: Erreur initialisation commandes: {ex.Message}");
-                
+
                 // Commandes de fallback
                 CalculerTraficCumuleCommand = new RelayCommand(() => { }, () => false);
                 CalculerValeursAdmissiblesCommand = new RelayCommand(() => { }, () => false);
@@ -119,7 +119,7 @@ namespace UI_ChausseeNeuve.ViewModels
                 AjouterCoucheCommand = new RelayCommand(() => { });
                 SupprimerCoucheCommand = new RelayCommand<ValeurAdmissibleCouche>(_ => { });
                 _isInitialized = true;
-                
+
                 System.Diagnostics.Debug.WriteLine("ValeursAdmissiblesViewModel: Initialisation minimale terminée");
             }
             catch (Exception ex)
@@ -252,7 +252,7 @@ namespace UI_ChausseeNeuve.ViewModels
             }
         }
 
-        public string TraficCumuleFormatted 
+        public string TraficCumuleFormatted
         {
             get
             {
@@ -463,7 +463,7 @@ namespace UI_ChausseeNeuve.ViewModels
                                 EnsureDefaultsForEpsiZ(couche);
                                 couche.Epsilon6 = ComputeEpsiZ(couche.AmplitudeValue, couche.Ne, couche.B);
                             }
-                            
+
                             couche.ValeurAdmissible = CalculerValeurAdmissibleSimple(couche);
                         }
                         catch (Exception ex)
@@ -760,17 +760,17 @@ namespace UI_ChausseeNeuve.ViewModels
             }
         }
 
-         private void Couche_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-         {
-             try
-             {
-                 if (sender is ValeurAdmissibleCouche couche)
-                 {
-                     if (e.PropertyName == nameof(ValeurAdmissibleCouche.Cam))
-                     {
-                         // NE = TraficCumule (NPL) * CAM
-                         couche.Ne = Math.Round(TraficCumule * couche.Cam, 0);
-                     
+        private void Couche_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            try
+            {
+                if (sender is ValeurAdmissibleCouche couche)
+                {
+                    if (e.PropertyName == nameof(ValeurAdmissibleCouche.Cam))
+                    {
+                        // NE = TraficCumule (NPL) * CAM
+                        couche.Ne = Math.Round(TraficCumule * couche.Cam, 0);
+
                     }
 
                     // Marqueur interne: A saisi par l’utilisateur (pour EpsiZ)
@@ -816,440 +816,440 @@ namespace UI_ChausseeNeuve.ViewModels
                         e.PropertyName == nameof(ValeurAdmissibleCouche.Sh) ||
                         e.PropertyName == nameof(ValeurAdmissibleCouche.Sigma6) ||
                         e.PropertyName == nameof(ValeurAdmissibleCouche.Epsilon6))
-                     {
-                         couche.ValeurAdmissible = CalculerValeurAdmissibleSimple(couche);
-                     }
-                 }
-             }
-             catch (Exception ex)
-             {
-                 System.Diagnostics.Debug.WriteLine($"Erreur Couche_PropertyChanged: {ex.Message}");
-             }
-         }
+                    {
+                        couche.ValeurAdmissible = CalculerValeurAdmissibleSimple(couche);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur Couche_PropertyChanged: {ex.Message}");
+            }
+        }
 
-         private void UpdateNeForAllCouches()
-         {
-             try
-             {
-                 if (ValeursAdmissibles == null) return;
-                 foreach (var c in ValeursAdmissibles)
-                 {
-                     c.Ne = Math.Round(TraficCumule * c.Cam, 0);
-                     // maj kr
-                     UpdateKr(c);
-                     if (string.Equals(c.Critere, "EpsiZ", StringComparison.OrdinalIgnoreCase))
-                     {
-                         EnsureDefaultsForEpsiZ(c);
-                         c.Epsilon6 = ComputeEpsiZ(c.AmplitudeValue, c.Ne, c.B);
-                     }
-                 }
-             }
-             catch (Exception ex)
-             {
-                 System.Diagnostics.Debug.WriteLine($"Erreur UpdateNeForAllCouches: {ex.Message}");
-             }
-         }
+        private void UpdateNeForAllCouches()
+        {
+            try
+            {
+                if (ValeursAdmissibles == null) return;
+                foreach (var c in ValeursAdmissibles)
+                {
+                    c.Ne = Math.Round(TraficCumule * c.Cam, 0);
+                    // maj kr
+                    UpdateKr(c);
+                    if (string.Equals(c.Critere, "EpsiZ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        EnsureDefaultsForEpsiZ(c);
+                        c.Epsilon6 = ComputeEpsiZ(c.AmplitudeValue, c.Ne, c.B);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur UpdateNeForAllCouches: {ex.Message}");
+            }
+        }
 
-         private string GetDefaultCritereFor(Layer layer)
-         {
-             if (layer.Role == LayerRole.Plateforme || layer.Family == MaterialFamily.GNT)
-                 return "EpsiZ"; // Déformation verticale
-             if (layer.Family == MaterialFamily.MTLH || layer.Family == MaterialFamily.BetonCiment)
-                 return "SigmaT"; // Contrainte traction
-             return "EpsiT"; // Déformation traction (BB)
-         }
+        private string GetDefaultCritereFor(Layer layer)
+        {
+            if (layer.Role == LayerRole.Plateforme || layer.Family == MaterialFamily.GNT)
+                return "EpsiZ"; // Déformation verticale
+            if (layer.Family == MaterialFamily.MTLH || layer.Family == MaterialFamily.BetonCiment)
+                return "SigmaT"; // Contrainte traction
+            return "EpsiT"; // Déformation traction (BB)
+        }
 
-         private void LoadSampleDataSafe()
-         {
-             // Désormais, synchronisation automatique avec la structure
-             SyncFromStructure();
-         }
+        private void LoadSampleDataSafe()
+        {
+            // Désormais, synchronisation automatique avec la structure
+            SyncFromStructure();
+        }
 
-         private void SafePropertyChanged([CallerMemberName] string? propertyName = null)
-         {
-             try
-             {
-                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-             }
-             catch (Exception ex)
-             {
-                 System.Diagnostics.Debug.WriteLine($"Erreur PropertyChanged pour {propertyName}: {ex.Message}");
-             }
-         }
+        private void SafePropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            try
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur PropertyChanged pour {propertyName}: {ex.Message}");
+            }
+        }
 
-         // Helpers εz adm
-         private static double ComputeEpsiZ(double A, double NE, double exponentB)
-         {
-             if (NE <= 0) return 0;
-             try
-             {
-                 return A * Math.Pow(NE, exponentB);
-             }
-             catch { return 0; }
-         }
+        // Helpers εz adm
+        private static double ComputeEpsiZ(double A, double NE, double exponentB)
+        {
+            if (NE <= 0) return 0;
+            try
+            {
+                return A * Math.Pow(NE, exponentB);
+            }
+            catch { return 0; }
+        }
 
-         // Calcul kr: 10^(-b * u0 * delta) avec b = -1/B et delta = sqrt(SN^2 + (c * Sh / b)^2)
-         private void UpdateKr(ValeurAdmissibleCouche c)
-         {
-             try
-             {
-                 double B = c.B; // B est la valeur affichée dans la colonne -1/b
-                 if (Math.Abs(B) < 1e-9)
-                 {
-                     B = B < 0 ? -1e-9 : 1e-9;
-                 }
-                 // Correction : b = -1/B
-                 double b = -1.0 / B;
-                 double p = Math.Clamp(c.Risque / 100.0, 0.0001, 0.9999);
-                 double u0 = NormalQuantile(p); // Valeur de la loi normale centrée réduite
-                 double sn = c.Sn;
-                 double sh = c.Sh;
-                 double delta = Math.Sqrt(sn * sn + Math.Pow((CThicknessSensitivity * sh) / b, 2));
-                 c.Kr = Math.Pow(10.0, -b * u0 * delta);
-             }
-             catch (Exception ex)
-             {
-                 System.Diagnostics.Debug.WriteLine($"Erreur UpdateKr: {ex.Message}");
-             }
-         }
+        // Calcul kr: 10^(-b * u0 * delta) avec b = -1/B et delta = sqrt(SN^2 + (c * Sh / b)^2)
+        private void UpdateKr(ValeurAdmissibleCouche c)
+        {
+            try
+            {
+                double B = c.B; // B est la valeur affichée dans la colonne -1/b
+                if (Math.Abs(B) < 1e-9)
+                {
+                    B = B < 0 ? -1e-9 : 1e-9;
+                }
+                // Correction : b = -1/B
+                double b = -1.0 / B;
+                double p = Math.Clamp(c.Risque / 100.0, 0.0001, 0.9999);
+                double u0 = NormalQuantile(p); // Valeur de la loi normale centrée réduite
+                double sn = c.Sn;
+                double sh = c.Sh;
+                double delta = Math.Sqrt(sn * sn + Math.Pow((CThicknessSensitivity * sh) / b, 2));
+                c.Kr = Math.Pow(10.0, -b * u0 * delta);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur UpdateKr: {ex.Message}");
+            }
+        }
 
-         // Approximation du quantile de la loi normale centrée réduite (Acklam-like)
-         private static double NormalQuantile(double p)
-         {
-             // Coefficients pour l’approximation rationnelle
-             // Source: coefficients génériques reconnus pour approximation de Phi^-1
-             const double a1 = -39.6968302866538;
-             const double a2 = 220.946098424521;
-             const double a3 = -275.928510446969;
-             const double a4 = 138.357751867269;
-             const double a5 = -30.6647980661472;
-             const double a6 = 2.50662827745924;
+        // Approximation du quantile de la loi normale centrée réduite (Acklam-like)
+        private static double NormalQuantile(double p)
+        {
+            // Coefficients pour l’approximation rationnelle
+            // Source: coefficients génériques reconnus pour approximation de Phi^-1
+            const double a1 = -39.6968302866538;
+            const double a2 = 220.946098424521;
+            const double a3 = -275.928510446969;
+            const double a4 = 138.357751867269;
+            const double a5 = -30.6647980661472;
+            const double a6 = 2.50662827745924;
 
-             const double b1 = -54.4760987982241;
-             const double b2 = 161.585836858041;
-             const double b3 = -155.698979859887;
-             const double b4 = 66.8013118877197;
-             const double b5 = -13.2806815528857;
+            const double b1 = -54.4760987982241;
+            const double b2 = 161.585836858041;
+            const double b3 = -155.698979859887;
+            const double b4 = 66.8013118877197;
+            const double b5 = -13.2806815528857;
 
-             const double c1 = -0.00778489400243029;
-             const double c2 = -0.322396458041136;
-             const double c3 = -2.40075827716184;
-             const double c4 = -2.54973253934373;
-             const double c5 = 4.37466414146497;
-             const double c6 = 2.93816398269878;
+            const double c1 = -0.00778489400243029;
+            const double c2 = -0.322396458041136;
+            const double c3 = -2.40075827716184;
+            const double c4 = -2.54973253934373;
+            const double c5 = 4.37466414146497;
+            const double c6 = 2.93816398269878;
 
-             const double d1 = 0.00778469570904146;
-             const double d2 = 0.32246712907004;
-             const double d3 = 2.445134137143;
-             const double d4 = 3.75440866190742;
+            const double d1 = 0.00778469570904146;
+            const double d2 = 0.32246712907004;
+            const double d3 = 2.445134137143;
+            const double d4 = 3.75440866190742;
 
-             // Points de coupure
-             const double plow = 0.02425;
-             const double phigh = 1 - plow;
+            // Points de coupure
+            const double plow = 0.02425;
+            const double phigh = 1 - plow;
 
-             if (p <= 0) return double.NegativeInfinity;
-             if (p >= 1) return double.PositiveInfinity;
+            if (p <= 0) return double.NegativeInfinity;
+            if (p >= 1) return double.PositiveInfinity;
 
-             if (p < plow)
-             {
-                 double q = Math.Sqrt(-2 * Math.Log(p));
-                 return (((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) /
+            if (p < plow)
+            {
+                double q = Math.Sqrt(-2 * Math.Log(p));
+                return (((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) /
+                       ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
+            }
+            else if (p > phigh)
+            {
+                double q = Math.Sqrt(-2 * Math.Log(1 - p));
+                return -(((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) /
                         ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
-             }
-             else if (p > phigh)
-             {
-                 double q = Math.Sqrt(-2 * Math.Log(1 - p));
-                 return -(((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) /
-                         ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
-             }
-             else
-             {
-                 double q = p - 0.5;
-                 double r = q * q;
-                 return (((((a1 * r + a2) * r + a3) * r + a4) * r + a5) * r + a6) * q /
-                        (((((b1 * r + b2) * r + b3) * r + b4) * r + b5) * r + 1);
-             }
-         }
+            }
+            else
+            {
+                double q = p - 0.5;
+                double r = q * q;
+                return (((((a1 * r + a2) * r + a3) * r + a4) * r + a5) * r + a6) * q /
+                       (((((b1 * r + b2) * r + b3) * r + b4) * r + b5) * r + 1);
+            }
+        }
 
-         private void EnsureDefaultsForEpsiZ(ValeurAdmissibleCouche c)
-         {
-             // forcer -1/b par défaut si non défini (proche de 0)
-             if (Math.Abs(c.B) < 0.001) c.B = DefaultExponentEpsiZ;
+        private void EnsureDefaultsForEpsiZ(ValeurAdmissibleCouche c)
+        {
+            // forcer -1/b par défaut si non défini (proche de 0)
+            if (Math.Abs(c.B) < 0.001) c.B = DefaultExponentEpsiZ;
 
-             // si A n’a pas été saisi par l’utilisateur, l’ajuster selon NE
-             if (!c.AUserDefined)
-             {
-                 if (c.Ne > ThresholdNE) c.AmplitudeValue = DefaultA_HighNE; else c.AmplitudeValue = DefaultA_LowNE;
-             }
-         }
+            // si A n’a pas été saisi par l’utilisateur, l’ajuster selon NE
+            if (!c.AUserDefined)
+            {
+                if (c.Ne > ThresholdNE) c.AmplitudeValue = DefaultA_HighNE; else c.AmplitudeValue = DefaultA_LowNE;
+            }
+        }
 
-         #endregion
+        #endregion
 
-         #region IDisposable
-         
-         public void Dispose()
-         {
-             try
-             {
-                 AppState.StructureChanged -= OnStructureChanged;
-                 // désabonner
-                 foreach (var c in ValeursAdmissibles)
-                 {
-                     c.PropertyChanged -= Couche_PropertyChanged;
-                     try
-                     {
-                         if (c.SourceLayer != null && c.SourceLayerHandler != null)
-                             c.SourceLayer.PropertyChanged -= c.SourceLayerHandler;
-                     }
-                     catch { }
-                 }
-                 _isInitialized = false;
-             }
-             catch (Exception ex)
-             {
-                 System.Diagnostics.Debug.WriteLine($"Erreur Dispose: {ex.Message}");
-             }
-         }
-         
-         #endregion
+        #region IDisposable
 
-         #region INotifyPropertyChanged
-         public event PropertyChangedEventHandler? PropertyChanged;
-         #endregion
+        public void Dispose()
+        {
+            try
+            {
+                AppState.StructureChanged -= OnStructureChanged;
+                // désabonner
+                foreach (var c in ValeursAdmissibles)
+                {
+                    c.PropertyChanged -= Couche_PropertyChanged;
+                    try
+                    {
+                        if (c.SourceLayer != null && c.SourceLayerHandler != null)
+                            c.SourceLayer.PropertyChanged -= c.SourceLayerHandler;
+                    }
+                    catch { }
+                }
+                _isInitialized = false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur Dispose: {ex.Message}");
+            }
+        }
 
-         public void EnsureSyncedWithStructure()
-         {
-             if (ValeursAdmissibles == null || ValeursAdmissibles.Count == 0)
-                 SyncFromStructure();
-         }
-     }
+        #endregion
 
-     /// <summary>
-     /// Modèle de données pour une valeur admissible par couche
-     /// VERSION ULTRA-SÉCURISÉE
-     /// </summary>
-     public class ValeurAdmissibleCouche : INotifyPropertyChanged
-     {
-         private string _materiau = "";
-         private int _niveau;
-         private string _critere = "EpsiT";
-         private double _sn = 100;
-         private double _sh = 120;
-         private double _b = -0.20;
-         private double _kc = 1.0;
-         private double _kr = 1.0;
-         private double _ks = 1.0;
-         private double _ktheta = 1.0;
-         private double _kd = 1.0;
-         private double _risque = 10;
-         private double _ne = 0.0;
-         private double _epsilon6 = 0.0;
-         private double _valeurAdmissible;
-         private double _amplitudeValue = 100;
-         private double _sigma6 = 1.0; // nouvelle colonne σ6
-         private double _cam;
-         private double _e10C10Hz = 0.0;
-         private double _eteq10Hz = 0.0;
-         private bool _kthetaAuto = false;
+        #region INotifyPropertyChanged
+        public event PropertyChangedEventHandler? PropertyChanged;
+        #endregion
 
-         // Marqueur interne: A saisi par l’utilisateur (pour EpsiZ)
-         internal bool AUserDefined { get; set; } = false;
+        public void EnsureSyncedWithStructure()
+        {
+            if (ValeursAdmissibles == null || ValeursAdmissibles.Count == 0)
+                SyncFromStructure();
+        }
+    }
+
+    /// <summary>
+    /// Modèle de données pour une valeur admissible par couche
+    /// VERSION ULTRA-SÉCURISÉE
+    /// </summary>
+    public class ValeurAdmissibleCouche : INotifyPropertyChanged
+    {
+        private string _materiau = "";
+        private int _niveau;
+        private string _critere = "EpsiT";
+        private double _sn = 100;
+        private double _sh = 120;
+        private double _b = -0.20;
+        private double _kc = 1.0;
+        private double _kr = 1.0;
+        private double _ks = 1.0;
+        private double _ktheta = 1.0;
+        private double _kd = 1.0;
+        private double _risque = 10;
+        private double _ne = 0.0;
+        private double _epsilon6 = 0.0;
+        private double _valeurAdmissible;
+        private double _amplitudeValue = 100;
+        private double _sigma6 = 1.0; // nouvelle colonne σ6
+        private double _cam;
+        private double _e10C10Hz = 0.0;
+        private double _eteq10Hz = 0.0;
+        private bool _kthetaAuto = false;
+
+        // Marqueur interne: A saisi par l’utilisateur (pour EpsiZ)
+        internal bool AUserDefined { get; set; } = false;
 
         // Référence à la Layer source pour synchronisation dynamique
         internal Layer? SourceLayer { get; set; }
         internal PropertyChangedEventHandler? SourceLayerHandler { get; set; }
 
-         public string Materiau
-         {
-             get => _materiau;
-             set { _materiau = value ?? ""; SafePropertyChanged(); }
-         }
+        public string Materiau
+        {
+            get => _materiau;
+            set { _materiau = value ?? ""; SafePropertyChanged(); }
+        }
 
-         public int Niveau
-         {
-             get => _niveau;
-             set { _niveau = value; SafePropertyChanged(); }
-         }
+        public int Niveau
+        {
+            get => _niveau;
+            set { _niveau = value; SafePropertyChanged(); }
+        }
 
-         public string Critere
-         {
-             get => _critere;
-             set
-             {
-                 _critere = value ?? "EpsiT";
-                 SafePropertyChanged();
-                 SafePropertyChanged(nameof(AmplitudeLabel));
-                 // Notifier états d’édition dépendants
-                 SafePropertyChanged(nameof(IsEpsiZ));
-                 SafePropertyChanged(nameof(IsEpsiT));
-                 SafePropertyChanged(nameof(IsSigmaT));
-                 SafePropertyChanged(nameof(CanEditEpsilon6));
-                 SafePropertyChanged(nameof(CanEditSn));
-                 SafePropertyChanged(nameof(CanEditSh));
-                 SafePropertyChanged(nameof(CanEditKc));
-                 SafePropertyChanged(nameof(CanEditKr));
-                 SafePropertyChanged(nameof(CanEditKs));
-                 SafePropertyChanged(nameof(CanEditKtheta));
-                 SafePropertyChanged(nameof(CanEditKd));
-             }
-         }
+        public string Critere
+        {
+            get => _critere;
+            set
+            {
+                _critere = value ?? "EpsiT";
+                SafePropertyChanged();
+                SafePropertyChanged(nameof(AmplitudeLabel));
+                // Notifier états d’édition dépendants
+                SafePropertyChanged(nameof(IsEpsiZ));
+                SafePropertyChanged(nameof(IsEpsiT));
+                SafePropertyChanged(nameof(IsSigmaT));
+                SafePropertyChanged(nameof(CanEditEpsilon6));
+                SafePropertyChanged(nameof(CanEditSn));
+                SafePropertyChanged(nameof(CanEditSh));
+                SafePropertyChanged(nameof(CanEditKc));
+                SafePropertyChanged(nameof(CanEditKr));
+                SafePropertyChanged(nameof(CanEditKs));
+                SafePropertyChanged(nameof(CanEditKtheta));
+                SafePropertyChanged(nameof(CanEditKd));
+            }
+        }
 
-         // Etats d’édition/visibilité selon le critère
-         public bool IsEpsiZ => string.Equals(_critere, "EpsiZ", StringComparison.OrdinalIgnoreCase);
-         public bool IsEpsiT => string.Equals(_critere, "EpsiT", StringComparison.OrdinalIgnoreCase);
-         public bool IsSigmaT => string.Equals(_critere, "SigmaT", StringComparison.OrdinalIgnoreCase);
+        // Etats d’édition/visibilité selon le critère
+        public bool IsEpsiZ => string.Equals(_critere, "EpsiZ", StringComparison.OrdinalIgnoreCase);
+        public bool IsEpsiT => string.Equals(_critere, "EpsiT", StringComparison.OrdinalIgnoreCase);
+        public bool IsSigmaT => string.Equals(_critere, "SigmaT", StringComparison.OrdinalIgnoreCase);
 
-         // ε6 (colonne dédiée): éditable uniquement pour EpsiT; auto pour EpsiZ; inutilisé pour SigmaT
-         public bool CanEditEpsilon6 => IsEpsiT;
-         // Sn/Sh désactivés quand Kr n'est pas éditable
-         public bool CanEditSn => CanEditKr;
-         public bool CanEditSh => CanEditKr;
-         // Coefficients par critère
-         public bool CanEditKc => IsEpsiT || IsSigmaT;
-         public bool CanEditKr => IsEpsiT || IsSigmaT;
-         public bool CanEditKs => IsEpsiT || IsSigmaT;
-         public bool CanEditKtheta => IsEpsiT; // kθ éditable uniquement pour EpsiT
-         public bool CanEditKd => IsSigmaT;    // seulement pour σt
+        // ε6 (colonne dédiée): éditable uniquement pour EpsiT; auto pour EpsiZ; inutilisé pour SigmaT
+        public bool CanEditEpsilon6 => IsEpsiT;
+        // Sn/Sh désactivés quand Kr n'est pas éditable
+        public bool CanEditSn => CanEditKr;
+        public bool CanEditSh => CanEditKr;
+        // Coefficients par critère
+        public bool CanEditKc => IsEpsiT || IsSigmaT;
+        public bool CanEditKr => IsEpsiT || IsSigmaT;
+        public bool CanEditKs => IsEpsiT || IsSigmaT;
+        public bool CanEditKtheta => IsEpsiT; // kθ éditable uniquement pour EpsiT
+        public bool CanEditKd => IsSigmaT;    // seulement pour σt
 
-         public double Sn
-         {
-             get => _sn;
-             set { _sn = value; SafePropertyChanged(); }
-         }
+        public double Sn
+        {
+            get => _sn;
+            set { _sn = value; SafePropertyChanged(); }
+        }
 
-         public double Sh
-         {
-             get => _sh;
-             set { _sh = value; SafePropertyChanged(); }
-         }
+        public double Sh
+        {
+            get => _sh;
+            set { _sh = value; SafePropertyChanged(); }
+        }
 
-         public double B
-         {
-             get => _b;
-             set { _b = value; SafePropertyChanged(); }
-         }
+        public double B
+        {
+            get => _b;
+            set { _b = value; SafePropertyChanged(); }
+        }
 
-         public double Kc
-         {
-             get => _kc;
-             set { _kc = value; SafePropertyChanged(); }
-         }
+        public double Kc
+        {
+            get => _kc;
+            set { _kc = value; SafePropertyChanged(); }
+        }
 
-         public double Kr
-         {
-             get => _kr;
-             set { _kr = value; SafePropertyChanged(); }
-         }
+        public double Kr
+        {
+            get => _kr;
+            set { _kr = value; SafePropertyChanged(); }
+        }
 
-         public double Ks
-         {
-             get => _ks;
-             set { _ks = value; SafePropertyChanged(); }
-         }
+        public double Ks
+        {
+            get => _ks;
+            set { _ks = value; SafePropertyChanged(); }
+        }
 
-         public double Ktheta
-         {
-             get => _kthetaAuto && E10C10Hz > 0 && Eteq10Hz > 0 ? Math.Sqrt(E10C10Hz / Eteq10Hz) : _ktheta;
-             set { _ktheta = value; SafePropertyChanged(); }
-         }
+        public double Ktheta
+        {
+            get => _kthetaAuto && E10C10Hz > 0 && Eteq10Hz > 0 ? Math.Sqrt(E10C10Hz / Eteq10Hz) : _ktheta;
+            set { _ktheta = value; SafePropertyChanged(); }
+        }
 
-         public double Kd
-         {
-             get => _kd;
-             set { _kd = value; SafePropertyChanged(); }
-         }
+        public double Kd
+        {
+            get => _kd;
+            set { _kd = value; SafePropertyChanged(); }
+        }
 
-         public double Risque
-         {
-             get => _risque;
-             set { _risque = value; SafePropertyChanged(); }
-         }
+        public double Risque
+        {
+            get => _risque;
+            set { _risque = value; SafePropertyChanged(); }
+        }
 
-         // Nouvelle colonne: NE (nombre d'essieux équivalents ou autre indicateur)
-         public double Ne
-         {
-             get => _ne;
-             set { _ne = value; SafePropertyChanged(); }
-         }
+        // Nouvelle colonne: NE (nombre d'essieux équivalents ou autre indicateur)
+        public double Ne
+        {
+            get => _ne;
+            set { _ne = value; SafePropertyChanged(); }
+        }
 
-         // Nouvelle colonne: Epsilon 6 (ε6)
-         public double Epsilon6
-         {
-             get => _epsilon6;
-             set { _epsilon6 = value; SafePropertyChanged(); }
-         }
+        // Nouvelle colonne: Epsilon 6 (ε6)
+        public double Epsilon6
+        {
+            get => _epsilon6;
+            set { _epsilon6 = value; SafePropertyChanged(); }
+        }
 
-         public double ValeurAdmissible
-         {
-             get => _valeurAdmissible;
-             set { _valeurAdmissible = value; SafePropertyChanged(); }
-         }
+        public double ValeurAdmissible
+        {
+            get => _valeurAdmissible;
+            set { _valeurAdmissible = value; SafePropertyChanged(); }
+        }
 
-         public double AmplitudeValue
-         {
-             get => _amplitudeValue;
-             set { _amplitudeValue = value; SafePropertyChanged(); }
-         }
+        public double AmplitudeValue
+        {
+            get => _amplitudeValue;
+            set { _amplitudeValue = value; SafePropertyChanged(); }
+        }
 
-         public double Sigma6
-         {
-             get => _sigma6;
-             set { _sigma6 = value; SafePropertyChanged(); }
-         }
+        public double Sigma6
+        {
+            get => _sigma6;
+            set { _sigma6 = value; SafePropertyChanged(); }
+        }
 
-         public string AmplitudeLabel => _critere switch
-         {
-             "EpsiZ" => "A",
-             "SigmaT" => "ε6",
-             _ => "ε6"
-         };
+        public string AmplitudeLabel => _critere switch
+        {
+            "EpsiZ" => "A",
+            "SigmaT" => "ε6",
+            _ => "ε6"
+        };
 
-         public double Cam
-         {
-             get => _cam;
-             set { _cam = value; SafePropertyChanged(); }
-         }
+        public double Cam
+        {
+            get => _cam;
+            set { _cam = value; SafePropertyChanged(); }
+        }
 
-         public double E10C10Hz
-         {
-             get => _e10C10Hz;
-             set { _e10C10Hz = value; SafePropertyChanged(); if (KthetaAuto) UpdateKtheta(); }
-         }
-         public double Eteq10Hz
-         {
-             get => _eteq10Hz;
-             set { _eteq10Hz = value; SafePropertyChanged(); if (KthetaAuto) UpdateKtheta(); }
-         }
-         public bool KthetaAuto
-         {
-             get => _kthetaAuto;
-             set { _kthetaAuto = value; SafePropertyChanged(); UpdateKtheta(); }
-         }
+        public double E10C10Hz
+        {
+            get => _e10C10Hz;
+            set { _e10C10Hz = value; SafePropertyChanged(); if (KthetaAuto) UpdateKtheta(); }
+        }
+        public double Eteq10Hz
+        {
+            get => _eteq10Hz;
+            set { _eteq10Hz = value; SafePropertyChanged(); if (KthetaAuto) UpdateKtheta(); }
+        }
+        public bool KthetaAuto
+        {
+            get => _kthetaAuto;
+            set { _kthetaAuto = value; SafePropertyChanged(); UpdateKtheta(); }
+        }
 
-         private void UpdateKtheta()
-         {
-             if (KthetaAuto && E10C10Hz > 0 && Eteq10Hz > 0)
-                 Ktheta = Math.Sqrt(E10C10Hz / Eteq10Hz);
-             SafePropertyChanged(nameof(Ktheta));
-         }
+        private void UpdateKtheta()
+        {
+            if (KthetaAuto && E10C10Hz > 0 && Eteq10Hz > 0)
+                Ktheta = Math.Sqrt(E10C10Hz / Eteq10Hz);
+            SafePropertyChanged(nameof(Ktheta));
+        }
 
-         public ObservableCollection<string> CriteresDisponibles { get; } = new ObservableCollection<string>
+        public ObservableCollection<string> CriteresDisponibles { get; } = new ObservableCollection<string>
          {
              "EpsiT", "SigmaT", "EpsiZ"
          };
 
-         public event PropertyChangedEventHandler? PropertyChanged;
-         
-         private void SafePropertyChanged([CallerMemberName] string? propertyName = null)
-         {
-             try
-             {
-                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-             }
-             catch (Exception ex)
-             {
-                 System.Diagnostics.Debug.WriteLine($"Erreur PropertyChanged pour {propertyName}: {ex.Message}");
-             }
-         }
-     }
- }
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        private void SafePropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            try
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur PropertyChanged pour {propertyName}: {ex.Message}");
+            }
+        }
+    }
+}
