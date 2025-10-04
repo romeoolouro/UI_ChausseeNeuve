@@ -1,0 +1,42 @@
+# Standalone CMake for C API test
+# This allows testing the DLL without needing Google Test
+cmake_minimum_required(VERSION 3.15)
+project(CAPITest LANGUAGES C)
+
+# C11 standard
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
+# Find the DLL (should be in parent build-dll directory)
+set(DLL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../build-dll/bin/PavementCalculationEngine.dll")
+set(LIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../build-dll/lib/libPavementCalculationEngine.dll.a")
+
+# Check if DLL exists
+if(NOT EXISTS "${DLL_PATH}")
+    message(FATAL_ERROR "DLL not found at: ${DLL_PATH}\nPlease build the DLL first.")
+endif()
+
+# C API test executable
+add_executable(c_api_test c_api_test.c)
+
+# Include directory for API header
+target_include_directories(c_api_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+)
+
+# Link to import library
+target_link_libraries(c_api_test PRIVATE
+    "${LIB_PATH}"
+)
+
+# Copy DLL to test executable directory for runtime loading
+add_custom_command(TARGET c_api_test POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${DLL_PATH}"
+        "$<TARGET_FILE_DIR:c_api_test>"
+    COMMENT "Copying DLL to test directory"
+)
+
+message(STATUS "C API test configured")
+message(STATUS "DLL path: ${DLL_PATH}")
+message(STATUS "Import lib: ${LIB_PATH}")

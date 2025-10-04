@@ -5,6 +5,9 @@
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Force x64 architecture to match native DLL -->
+    <PlatformTarget>x64</PlatformTarget>
+    <Platforms>x64</Platforms>
   </PropertyGroup>
   <ItemGroup>
     <Resource Include="Resources\**\*.*" />
@@ -23,4 +26,25 @@
       <Generator>MSBuild:Compile</Generator>
     </Resource>
   </ItemGroup>
+  
+  <!-- Native DLL deployment configuration -->
+  <ItemGroup>
+    <None Include="..\PavementCalculationEngine\build-dll\bin\PavementCalculationEngine.dll">
+      <Link>PavementCalculationEngine.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  
+  <!-- Ensure native DLL is copied after build -->
+  <Target Name="CopyNativeDLL" AfterTargets="Build">
+    <Copy 
+      SourceFiles="..\PavementCalculationEngine\build-dll\bin\PavementCalculationEngine.dll"
+      DestinationFolder="$(OutDir)"
+      SkipUnchangedFiles="true"
+      Condition="Exists('..\PavementCalculationEngine\build-dll\bin\PavementCalculationEngine.dll')" />
+    <Message Text="Copied native DLL to $(OutDir)" Importance="high" 
+             Condition="Exists('..\PavementCalculationEngine\build-dll\bin\PavementCalculationEngine.dll')" />
+    <Warning Text="Native DLL not found at ..\PavementCalculationEngine\build-dll\bin\PavementCalculationEngine.dll" 
+             Condition="!Exists('..\PavementCalculationEngine\build-dll\bin\PavementCalculationEngine.dll')" />
+  </Target>
 </Project>

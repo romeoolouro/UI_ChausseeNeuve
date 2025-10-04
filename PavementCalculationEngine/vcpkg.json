@@ -1,0 +1,20 @@
+{
+    "name": "pavement-calculation-engine",
+    "version": "1.0.0",
+    "description": "Native C++ pavement calculation engine using layered elastic theory",
+    "dependencies": [
+        {
+            "name": "boost-math",
+            "version>=": "1.70.0"
+        },
+        {
+            "name": "eigen3",
+            "version>=": "3.4.0"
+        },
+        {
+            "name": "gtest",
+            "version>=": "1.11.0"
+        }
+    ],
+    "builtin-baseline": "2024-10-01"
+}

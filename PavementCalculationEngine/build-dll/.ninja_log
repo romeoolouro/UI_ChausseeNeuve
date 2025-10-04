@@ -1,0 +1,8 @@
+# ninja log v6
+4	2981	7812542654754760	CMakeFiles/PavementCalculationEngine.dir/src/PavementData.cpp.obj	261ad24211d99c67
+3422	3720	7812547778180819	bin/PavementCalculationEngine.dll	460691ba37ccb564
+3422	3720	7812547778180819	lib/libPavementCalculationEngine.dll.a	460691ba37ccb564
+57	3216	7812542655363962	CMakeFiles/PavementCalculationTest.dir/src/main.cpp.obj	a571de807f847b64
+26	4312	7812542654921080	CMakeFiles/PavementCalculationEngine.dir/src/PavementCalculator.cpp.obj	1ed3a44cca341963
+16	16466	7812542654921080	CMakeFiles/PavementCalculationEngine.dir/src/MatrixOperations.cpp.obj	e718b4fd146792ea
+14	3421	7812547741229521	CMakeFiles/PavementCalculationEngine.dir/src/PavementAPI.cpp.obj	af40bca08083e4a4
