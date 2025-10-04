@@ -158,7 +158,7 @@
                     </Grid.ColumnDefinitions>
 
                     <TextBlock Grid.Column="0" Text="{Binding NiveauDisplay}" Style="{StaticResource CellStyle}"/>
-                    <!-- Afficher le nom de l'interface uniquement si different de la nature -->
+                    <!-- Afficher le nom de l interface uniquement si different de la nature -->
                     <TextBlock Grid.Column="1" Text="{Binding InterfaceAffichee}" FontWeight="Medium" Style="{StaticResource CellStyle}"/>
                     <TextBlock Grid.Column="2" Text="{Binding Nature}" Style="{StaticResource CellStyle}"/>
                     <TextBlock Grid.Column="3" Text="{Binding Materiau}" Style="{StaticResource CellStyle}"/>
@@ -462,6 +462,100 @@
                         <ItemsControl ItemsSource="{Binding Resultats}" ItemTemplateSelector="{StaticResource ResultatTemplateSelector}"/>
 
                         <TextBlock Text="Aucun resultat disponible. Cliquez sur 'Recalculer' pour generer les resultats." Style="{StaticResource InfoStyle}" HorizontalAlignment="Center" Margin="20" Visibility="{Binding Resultats.Count, Converter={StaticResource CountToVisibilityConverter}}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Nouveau tableau calcul inverse -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="Calcul Inverse - Capacite Fatigue / Ornierage" Style="{StaticResource TitleStyle}"/>
+                        <TextBlock Text="Determination de NEmax a partir des sollicitations calculees et des parametres fatigue" Style="{StaticResource InfoStyle}"/>
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding ResultatsInverse}">
+                                <ItemsControl.Resources>
+                                    <!-- Style local avec police agrandie pour ce tableau -->
+                                    <Style TargetType="TextBlock" x:Key="InvCell" BasedOn="{StaticResource NumericCellStyle}">
+                                        <Setter Property="FontSize" Value="11"/>
+                                        <Setter Property="Padding" Value="2"/>
+                                    </Style>
+                                </ItemsControl.Resources>
+                                <ItemsControl.Template>
+                                    <ControlTemplate TargetType="ItemsControl">
+                                        <StackPanel>
+                                            <Border Background="#E9ECEF" Padding="4" Margin="0,0,0,4">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="40"/><!-- N -->
+                                                        <ColumnDefinition Width="90"/><!-- Nature -->
+                                                        <ColumnDefinition Width="140"/><!-- Materiau -->
+                                                        <ColumnDefinition Width="60"/><!-- Critere -->
+                                                        <ColumnDefinition Width="60"/><!-- sigT -->
+                                                        <ColumnDefinition Width="60"/><!-- epsT -->
+                                                        <ColumnDefinition Width="70"/><!-- sigZ -->
+                                                        <ColumnDefinition Width="70"/><!-- epsZ -->
+                                                        <ColumnDefinition Width="70"/><!-- CAM -->
+                                                        <ColumnDefinition Width="80"/><!-- NPL -->
+                                                        <ColumnDefinition Width="80"/><!-- Accr. -->
+                                                        <ColumnDefinition Width="80"/><!-- Risque -->
+                                                        <ColumnDefinition Width="70"/><!-- NE -->
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="N" Style="{StaticResource CellStyle}" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="1" Text="Nature" Style="{StaticResource CellStyle}" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="2" Text="Materiau" Style="{StaticResource CellStyle}" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="3" Text="Critere" Style="{StaticResource CellStyle}" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="4" Text="sigT" Style="{StaticResource CellStyle}" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="5" Text="epsT" Style="{StaticResource CellStyle}" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="6" Text="sigZ" Style="{StaticResource CellStyle}" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="7" Text="epsZ" Style="{StaticResource CellStyle}" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="8" Text="CAM" Style="{StaticResource CellStyle}" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="9" Text="NPL" Style="{StaticResource CellStyle}" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="10" Text="Accr." Style="{StaticResource CellStyle}" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="11" Text="Risque" Style="{StaticResource CellStyle}" FontWeight="Bold" FontSize="12"/>
+                                                    <TextBlock Grid.Column="12" Text="NE" Style="{StaticResource CellStyle}" FontWeight="Bold" FontSize="12"/>
+                                                </Grid>
+                                            </Border>
+                                            <ItemsPresenter/>
+                                        </StackPanel>
+                                    </ControlTemplate>
+                                </ItemsControl.Template>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,2" Background="#F8F9FA" Padding="3">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="40"/>
+                                                    <ColumnDefinition Width="90"/>
+                                                    <ColumnDefinition Width="140"/>
+                                                    <ColumnDefinition Width="60"/>
+                                                    <ColumnDefinition Width="60"/>
+                                                    <ColumnDefinition Width="60"/>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="80"/>
+                                                    <ColumnDefinition Width="80"/>
+                                                    <ColumnDefinition Width="80"/>
+                                                    <ColumnDefinition Width="70"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding Numero}" Style="{StaticResource InvCell}"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Nature}" Style="{StaticResource InvCell}"/>
+                                                <TextBlock Grid.Column="2" Text="{Binding Materiau}" Style="{StaticResource InvCell}" TextAlignment="Left"/>
+                                                <TextBlock Grid.Column="3" Text="{Binding Critere}" Style="{StaticResource InvCell}"/>
+                                                <TextBlock Grid.Column="4" Text="{Binding SigmaT, StringFormat='{}{0:F3}'}" Style="{StaticResource InvCell}"/>
+                                                <TextBlock Grid.Column="5" Text="{Binding EpsilonT, StringFormat='{}{0:F1}'}" Style="{StaticResource InvCell}"/>
+                                                <TextBlock Grid.Column="6" Text="{Binding SigmaZ, StringFormat='{}{0:F3}'}" Style="{StaticResource InvCell}"/>
+                                                <TextBlock Grid.Column="7" Text="{Binding EpsilonZ, StringFormat='{}{0:F1}'}" Style="{StaticResource InvCell}"/>
+                                                <TextBlock Grid.Column="8" Text="{Binding CAM, StringFormat='{}{0:F3}'}" Style="{StaticResource InvCell}"/>
+                                                <TextBlock Grid.Column="9" Text="{Binding TraficCumulePL, StringFormat='{}{0:N0}'}" Style="{StaticResource InvCell}"/>
+                                                <TextBlock Grid.Column="10" Text="{Binding TypeAccroissement}" Style="{StaticResource InvCell}"/>
+                                                <TextBlock Grid.Column="11" Text="{Binding Risque, StringFormat='{}{0:F1}'}" Style="{StaticResource InvCell}"/>
+                                                <TextBlock Grid.Column="12" Text="{Binding TraficCumuleNE, StringFormat='{}{0:N0}'}" Style="{StaticResource InvCell}"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
                     </StackPanel>
                 </Border>
 

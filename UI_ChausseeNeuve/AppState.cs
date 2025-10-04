@@ -19,39 +19,18 @@ namespace UI_ChausseeNeuve
         
         public static string? CurrentFilePath { get; set; } = null;
         
-        /// <summary>
-        /// Événement déclenché quand la structure change
-        /// </summary>
-        public static event Action? StructureChanged;
-
-        /// <summary>
-        /// Nouvel évènement déclenché quand les valeurs admissibles sont recalculées/mises à jour
-        /// (évite de reconstruire toute la structure côté résultats)
-        /// </summary>
-        public static event Action? ValeursAdmissiblesUpdated;
+        // Contexte trafic global (utiliser des champs pour éviter restrictions ENC)
+        public static double? TraficCumuleGlobal; 
+        public static string? TypeAccroissementGlobal; 
         
-        /// <summary>
-        /// Méthode pour déclencher manuellement la notification de changement de structure
-        /// À appeler depuis StructureEditorViewModel quand une couche est modifiée
-        /// </summary>
-        public static void NotifyStructureChanged()
-        {
-            StructureChanged?.Invoke();
-        }
-        /// <summary>
-        /// Méthode pour déclencher manuellement la notification de changement de structure
-        /// </summary>
-        public static void OnStructureChanged()
-        {
-            StructureChanged?.Invoke();
-        }
+        // Events
+        public static event Action? StructureChanged;
+        public static event Action? ValeursAdmissiblesUpdated;
+        public static event Action? SolicitationsUpdated; 
 
-        /// <summary>
-        /// Déclenche l'événement ValeursAdmissiblesUpdated (rafraîchissement ciblé des colonnes Val. Adm.)
-        /// </summary>
-        public static void RaiseValeursAdmissiblesUpdated()
-        {
-            ValeursAdmissiblesUpdated?.Invoke();
-        }
+        public static void NotifyStructureChanged() => StructureChanged?.Invoke();
+        public static void OnStructureChanged() => StructureChanged?.Invoke();
+        public static void RaiseValeursAdmissiblesUpdated() => ValeursAdmissiblesUpdated?.Invoke();
+        public static void RaiseSolicitationsUpdated() => SolicitationsUpdated?.Invoke();
     } 
 }

@@ -27,6 +27,7 @@ namespace UI_ChausseeNeuve.ViewModels
         private bool _showDetailedInfo = true; // NOUVEAU : contrôle l'affichage des détails
         private ObservableCollection<ChausseeNeuve.Domain.Models.ValeurAdmissibleCoucheDto>? _lastValeursAdmissibles;
         private ObservableCollection<ValeurAdmissibleCouche>? _lastValeursAdmissiblesViewModel;
+        private ObservableCollection<ResultatInverseItem> _resultatsInverse = new();
         #endregion
 
         #region Événements
@@ -190,6 +191,15 @@ namespace UI_ChausseeNeuve.ViewModels
             }
         }
 
+        /// <summary>
+        /// Collection des résultats inverses (pour le calcul des NEmax)
+        /// </summary>
+        public ObservableCollection<ResultatInverseItem> ResultatsInverse
+        {
+            get => _resultatsInverse;
+            set { _resultatsInverse = value; OnPropertyChanged(); }
+        }
+
         #endregion
 
         #region Commandes
@@ -346,6 +356,8 @@ namespace UI_ChausseeNeuve.ViewModels
 
             // Injection des valeurs admissibles calculées
             InjectValeursAdmissiblesDansResultats();
+            // Mise à jour du tableau inverse après chaque recalcul complet
+            PopulateInverseResults();
         }
 
         /// <summary>
@@ -700,12 +712,14 @@ namespace UI_ChausseeNeuve.ViewModels
                 {
                     LoadSampleData(); // Fallback sur les données d'exemple
                 }
+                // Toujours rafraîchir le tableau inverse pour refléter le nombre de couches
+                PopulateInverseResults();
             }
             catch (Exception ex)
             {
-                // En cas d'erreur, charger les données d'exemple
                 LoadSampleData();
                 System.Diagnostics.Debug.WriteLine($"Erreur lors du chargement de la structure: {ex.Message}");
+                PopulateInverseResults();
             }
         }
 
@@ -728,14 +742,11 @@ namespace UI_ChausseeNeuve.ViewModels
             Resultats.Clear();
             CalculationInfo = $"Structure synchronisee : {orderedLayers.Count + (platform != null ? 1 : 0)} couches - Calcul requis";
 
-            // Ajouter les couches normales avec interfaces
             for (int i = 0; i < orderedLayers.Count; i++)
             {
                 var layer = orderedLayers[i];
-                
-                // Ajouter la couche
                 var resultCouche = CreateResultCoucheFromLayer(layer, structure);
-                resultCouche.Numero = i + 1; // Synchronise le numéro avec l'ordre de la structure
+                resultCouche.Numero = i + 1;
                 resultCouche.PropertyChanged += (sender, e) =>
                 {
                     if (e.PropertyName == nameof(ResultatCouche.EstValide))
@@ -745,7 +756,6 @@ namespace UI_ChausseeNeuve.ViewModels
                 };
                 Resultats.Add(resultCouche);
 
-                // Ajouter l'interface si ce n'est pas la dernière couche
                 if (i < orderedLayers.Count - 1 || platform != null)
                 {
                     var nextLayer = i < orderedLayers.Count - 1 ? orderedLayers[i + 1] : platform;
@@ -757,11 +767,10 @@ namespace UI_ChausseeNeuve.ViewModels
                 }
             }
 
-            // Ajouter la plateforme si elle existe
             if (platform != null)
             {
                 var resultPlateforme = CreateResultCoucheFromLayer(platform, structure);
-                resultPlateforme.Numero = orderedLayers.Count + 1; // Numéro plateforme = dernier + 1
+                resultPlateforme.Numero = orderedLayers.Count + 1;
                 resultPlateforme.PropertyChanged += (sender, e) =>
                 {
                     if (e.PropertyName == nameof(ResultatCouche.EstValide))
@@ -772,8 +781,8 @@ namespace UI_ChausseeNeuve.ViewModels
                 Resultats.Add(resultPlateforme);
             }
 
-            // Injection des valeurs admissibles calculées
             InjectValeursAdmissiblesDansResultats();
+            PopulateInverseResults();
             UpdateValidationStatus();
         }
 
@@ -1004,6 +1013,7 @@ namespace UI_ChausseeNeuve.ViewModels
             System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
             {
                 InjectValeursAdmissiblesDansResultats();
+                PopulateInverseResults(); // rafraîchir aussi le tableau inverse
             }));
         }
 
@@ -1027,6 +1037,214 @@ namespace UI_ChausseeNeuve.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
         #endregion
+
+        private void PopulateInverseResults()
+        {
+            try
+            {
+                ResultatsInverse.Clear();
+                var project = AppState.CurrentProject;
+                var structure = project?.PavementStructure;
+                if (structure?.Layers == null || structure.Layers.Count == 0)
+                    return;
+
+                var valeursAdmissibles = project.ValeursAdmissibles?.ToList() ?? new System.Collections.Generic.List<ChausseeNeuve.Domain.Models.ValeurAdmissibleCoucheDto>();
+                var orderedLayers = structure.Layers.OrderBy(l => l.Order).ToList();
+                int numero = 1;
+                foreach (var layer in orderedLayers)
+                {
+                    var resCouche = Resultats.OfType<ResultatCouche>()
+                        .FirstOrDefault(r => string.Equals(r.Materiau?.Trim(), (layer.MaterialName ?? string.Empty).Trim(), StringComparison.InvariantCultureIgnoreCase));
+
+                    var va = valeursAdmissibles.FirstOrDefault(v => v.Niveau == numero)
+                             ?? valeursAdmissibles.FirstOrDefault(v => string.Equals(v.Materiau?.Trim(), (layer.MaterialName ?? string.Empty).Trim(), StringComparison.InvariantCultureIgnoreCase));
+
+                    var item = new ResultatInverseItem
+                    {
+                        Numero = numero,
+                        Nature = layer.Role.ToString(),
+                        Materiau = layer.MaterialName ?? string.Empty,
+                        Critere = va?.Critere ?? resCouche?.Critere ?? "EpsiT",
+                        Module = layer.Modulus_MPa,
+                        Poisson = layer.Poisson,
+                        EpsilonT = resCouche?.EpsilonTInf ?? 0,
+                        SigmaT = resCouche?.SigmaTInf ?? 0,
+                        EpsilonZ = resCouche?.EpsilonZSup ?? 0,
+                        SigmaZ = resCouche?.SigmaZSup ?? 0,
+                        CAM = va?.Cam ?? 0,
+                        TraficCumulePL = AppState.TraficCumuleGlobal ?? 0,
+                        TypeAccroissement = AppState.TypeAccroissementGlobal ?? string.Empty,
+                        Risque = va?.Risque ?? 0,
+                        B = va?.B ?? 0,
+                        Epsilon6 = va?.Epsilon6 ?? 0,
+                        Sigma6 = va?.Sigma6 ?? 0,
+                        AAmplitude = va?.AmplitudeValue ?? 0,
+                        Kc = va?.Kc ?? 0,
+                        Kr = va?.Kr ?? 0,
+                        Ks = va?.Ks ?? 0,
+                        Ktheta = va?.Ktheta ?? 0,
+                        Kd = va?.Kd ?? 0,
+                        ValeurAdmissible = va?.ValeurAdmissible ?? 0,
+                    };
+
+                    // Calcul NE inverse (NEcalc) à partir des sollicitations et constantes fatigue
+                    var neCalc = ComputeInverseNE(item);
+                    // Si les sollicitations utiles sont nulles => NE = 0 (pas de fallback valeurs admissibles)
+                    bool sollicitationsNulles = item.Critere switch
+                    {
+                        "SigmaT" => Math.Abs(item.SigmaT) < 1e-12,
+                        "EpsiT" => Math.Abs(item.EpsilonT) < 1e-12,
+                        "EpsiZ" => Math.Abs(item.EpsilonZ) < 1e-12,
+                        _ => true
+                    };
+                    if (!sollicitationsNulles && neCalc > 0 && double.IsFinite(neCalc))
+                        item.TraficCumuleNE = neCalc;
+                    else
+                        item.TraficCumuleNE = 0; // pas de NE tant que pas de sollicitations
+
+                    // Calculs complementaires (NEmax / reserve) pour information (optionnel)
+                    ComputeInverseFor(item);
+                    ResultatsInverse.Add(item);
+                    numero++;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PopulateInverseResults erreur: {ex.Message}");
+            }
+        }
+
+        private double ComputeInverseNE(ResultatInverseItem item)
+        {
+            try
+            {
+                if (Math.Abs(item.B) < 1e-9) return 0;
+                double bReel = -1.0 / item.B; // b réel (souvent négatif)
+                double kc = Math.Max(item.Kc, 1e-9);
+                double kr = Math.Max(item.Kr, 1e-9);
+                double ks = Math.Max(item.Ks, 1e-9);
+                double kt = Math.Max(item.Ktheta, 1e-9);
+                double kd = Math.Max(item.Kd, 1e-9);
+                switch (item.Critere)
+                {
+                    case "EpsiT":
+                        if (item.EpsilonT <= 0 || item.Epsilon6 <= 0) return 0;
+                        double ratioEpsiT = item.EpsilonT / (item.Epsilon6 * kc * kr * ks * kt);
+                        if (ratioEpsiT <= 0) return 0;
+                        return 1e6 * Math.Pow(ratioEpsiT, 1.0 / bReel);
+                    case "SigmaT":
+                        if (Math.Abs(item.SigmaT) <= 0 || item.Sigma6 <= 0) return 0;
+                        double ratioSigmaT = Math.Abs(item.SigmaT) / (item.Sigma6 * kc * kr * ks * kd);
+                        if (ratioSigmaT <= 0) return 0;
+                        return 1e6 * Math.Pow(ratioSigmaT, 1.0 / bReel);
+                    case "EpsiZ":
+                        if (Math.Abs(item.EpsilonZ) <= 0 || item.AAmplitude <= 0) return 0;
+                        double ratioEpsiZ = Math.Abs(item.EpsilonZ) / item.AAmplitude;
+                        if (ratioEpsiZ <= 0) return 0;
+                        return Math.Pow(ratioEpsiZ, 1.0 / bReel);
+                    default:
+                        return 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ComputeInverseNE erreur: {ex.Message}");
+                return 0;
+            }
+        }
+
+        private void ComputeInverseFor(ResultatInverseItem item)
+        {
+            try
+            {
+                item.NEmax = 0;
+                item.TauxUtilisation = 0;
+                item.NEReserve = 0;
+                if (Math.Abs(item.B) < 1e-9) return;
+                double bReel = -1.0 / item.B; // b réel
+                double kc = Math.Max(item.Kc, 1e-9);
+                double kr = Math.Max(item.Kr, 1e-9);
+                double ks = Math.Max(item.Ks, 1e-9);
+                double kt = Math.Max(item.Ktheta, 1e-9);
+                double kd = Math.Max(item.Kd, 1e-9);
+
+                double adm = item.ValeurAdmissible;
+                if (adm <= 0)
+                {
+                    // fallback: si pas de valeur admissible on s'arrête
+                    return;
+                }
+
+                switch (item.Critere)
+                {
+                    case "EpsiT":
+                        if (item.Epsilon6 <= 0) return;
+                        // adm = ?t_adm = ?6 * (NEmax/1e6)^{bReel} * kc*kr*ks*kt
+                        double ratioAdmEpsiT = adm / (item.Epsilon6 * kc * kr * ks * kt);
+                        if (ratioAdmEpsiT <= 0) return;
+                        item.NEmax = 1e6 * Math.Pow(ratioAdmEpsiT, 1.0 / bReel);
+                        break;
+                    case "SigmaT":
+                        if (item.Sigma6 <= 0) return;
+                        // adm = ?t_adm = ?6 * (NEmax/1e6)^{bReel} * kc*kr*ks*kd
+                        double ratioAdmSigmaT = adm / (item.Sigma6 * kc * kr * ks * kd);
+                        if (ratioAdmSigmaT <= 0) return;
+                        item.NEmax = 1e6 * Math.Pow(ratioAdmSigmaT, 1.0 / bReel);
+                        break;
+                    case "EpsiZ":
+                        if (item.AAmplitude <= 0) return;
+                        // adm = ?z_adm = A * NEmax^{bReel}
+                        double ratioAdmEpsiZ = adm / item.AAmplitude;
+                        if (ratioAdmEpsiZ <= 0) return;
+                        item.NEmax = Math.Pow(ratioAdmEpsiZ, 1.0 / bReel);
+                        break;
+                }
+
+                if (item.NEmax > 0 && item.TraficCumuleNE > 0)
+                {
+                    item.TauxUtilisation = (item.TraficCumuleNE / item.NEmax) * 100.0;
+                    item.NEReserve = item.NEmax - item.TraficCumuleNE;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ComputeInverseFor erreur: {ex.Message}");
+            }
+        }
+
+        public async Task ForceCalculationAsync()
+        {
+            // Force le calcul des sollicitations même si la structure est invalide (pour tests)
+            IsCalculationInProgress = true;
+            try
+            {
+                ToastRequested?.Invoke("Calcul forcé des sollicitations en cours...", ToastType.Info);
+                var calculationResult = await Task.Run(() => _calculationService.CalculateSolicitations(AppState.CurrentProject.PavementStructure));
+                if (calculationResult.IsSuccessful)
+                {
+                    CalculationInfo = "Calcul termine avec succes (force)";
+                    PopulateResultsWithCalculatedData(calculationResult);
+                    InjectValeursAdmissiblesDansResultats();
+                    foreach (var resultat in Resultats.OfType<ResultatCouche>())
+                    {
+                        resultat.EstValide = true;
+                    }
+                    UpdateValidationStatus();
+                }
+                else
+                {
+                    ToastRequested?.Invoke(calculationResult.Message, ToastType.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                ToastRequested?.Invoke($"Erreur inattendue : {ex.Message}", ToastType.Error);
+            }
+            finally
+            {
+                IsCalculationInProgress = false;
+            }
+        }
     }
 
     /// <summary>
@@ -1191,5 +1409,43 @@ namespace UI_ChausseeNeuve.ViewModels
             "Décollée" => "#dc3545",
             _ => "#6c757d"
         };
+    }
+
+    /// <summary>
+    /// Résultat pour le calcul inverse (NEmax)
+    /// </summary>
+    public class ResultatInverseItem : ResultatItem
+    {
+        public int Numero { get; set; }
+        public string Nature { get; set; } = string.Empty;
+        public string Materiau { get; set; } = string.Empty;
+        public string Critere { get; set; } = "EpsiT";
+        public double Module { get; set; }
+        public double Poisson { get; set; }
+        public double SigmaT { get; set; }
+        public double EpsilonT { get; set; }
+        public double SigmaZ { get; set; }
+        public double EpsilonZ { get; set; }
+        public double TraficCumuleNE { get; set; }
+        public double CAM { get; set; }
+        public double TraficCumulePL { get; set; }
+        public string TypeAccroissement { get; set; } = string.Empty;
+        public double Risque { get; set; }
+        public double B { get; set; }
+        public double Epsilon6 { get; set; }
+        public double Sigma6 { get; set; }
+        public double AAmplitude { get; set; }
+        public double Kc { get; set; } = 1;
+        public double Kr { get; set; } = 1;
+        public double Ks { get; set; } = 1;
+        public double Ktheta { get; set; } = 1;
+        public double Kd { get; set; } = 1;
+        public double ValeurAdmissible { get; set; }
+        private double _neMax;
+        public double NEmax { get => _neMax; set { _neMax = value; OnPropertyChanged(); } }
+        private double _taux;
+        public double TauxUtilisation { get => _taux; set { _taux = value; OnPropertyChanged(); } }
+        private double _reserve;
+        public double NEReserve { get => _reserve; set { _reserve = value; OnPropertyChanged(); } }
     }
 }
