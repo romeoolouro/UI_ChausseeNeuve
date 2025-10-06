@@ -126,6 +126,22 @@ namespace UI_ChausseeNeuve.ViewModels
         {
             _mode = AppState.CurrentProject.Mode;
 
+            // Delegate pour exemption epaisseur minimale de la plus petite sous-couche de fondation (mode Expert)
+            Layer.IsSmallestFoundationProvider = (layer) =>
+            {
+                if (_mode != DimensionnementMode.Expert) return false;
+                if (layer.Role != LayerRole.Fondation) return false;
+                if (string.IsNullOrEmpty(SelectedStructureType)) return false;
+                if (!SelectedStructureType.Equals("Souple", StringComparison.OrdinalIgnoreCase) &&
+                    !SelectedStructureType.Equals("Bitumineuse épaisse", StringComparison.OrdinalIgnoreCase)) return false;
+                // Trouver les couches de fondation courantes (hors plateforme) dans la structure
+                var fondations = Layers.Where(l => l.Role == LayerRole.Fondation).ToList();
+                if (fondations.Count == 0) return false;
+                var minThickness = fondations.Min(f => f.Thickness_m);
+                // On autorise une petite tolérance numérique
+                return Math.Abs(layer.Thickness_m - minThickness) < 1e-6;
+            };
+
             // Connecter les notifications de Layer aux toasts
             Layer.NotifyToast = (message, type) => ToastRequested?.Invoke(message, type);
 
