@@ -109,7 +109,8 @@ namespace ChausseeNeuve.Domain.Models
             get => _t;
             set
             {
-                var validatedValue = ValidateThickness(value);
+                var previous = _t;
+                var validatedValue = ValidateThickness(value, previous);
                 if (Math.Abs(_t - validatedValue) > 1e-9)
                 {
                     _t = validatedValue;
@@ -253,7 +254,11 @@ namespace ChausseeNeuve.Domain.Models
             return value;
         }
 
-        private double ValidateThickness(double value)
+        // Interaction utilisateur (fournie par la couche UI)
+        public enum ThicknessCorrectionChoice { Apply, Keep, Cancel }
+        public static Func<double, double, double, ThicknessCorrectionChoice>? AskThicknessCorrection; // (newValue, min, max)
+
+        private double ValidateThickness(double value, double previousValue)
         {
             ClearErrors(nameof(Thickness_m));
 
@@ -265,18 +270,45 @@ namespace ChausseeNeuve.Domain.Models
 
             var (min, max) = GetThicknessRange();
 
+            // Mode Expert interactif: proposer correction
             if (Mode == DimensionnementMode.Expert)
             {
                 bool outNorm = value < min || value > max;
                 IsThicknessOutOfNorm = outNorm;
                 if (outNorm)
                 {
+                    // Si un gestionnaire interactif est defini on l utilise
+                    if (AskThicknessCorrection != null)
+                    {
+                        var choice = AskThicknessCorrection(value, min, max);
+                        switch (choice)
+                        {
+                            case ThicknessCorrectionChoice.Apply:
+                                // Appliquer la correction vers borne la plus proche
+                                double corrected = value < min ? min : (value > max ? max : value);
+                                AppendCorrectionNote($"Épaisseur ajustée manuellement à {corrected:F3} m (plage [{min:F3};{max:F3}])");
+                                NotifyToast?.Invoke($"Épaisseur couche {Role} ajustée à {corrected:F3} m (norme)", ToastType.Success);
+                                IsThicknessOutOfNorm = false;
+                                return corrected;
+                            case ThicknessCorrectionChoice.Keep:
+                                // Conserver valeur hors norme
+                                AddError(nameof(Thickness_m), $"Avertissement: épaisseur {value:F3} m hors plage [{min:F3};{max:F3}] conservée (Expert)");
+                                WarnOnce(nameof(Thickness_m), $"Épaisseur hors norme conservée ({value:F3} m)");
+                                return value;
+                            case ThicknessCorrectionChoice.Cancel:
+                                // Revenir à l ancienne valeur
+                                NotifyToast?.Invoke($"Modification épaisseur annulée (retour {previousValue:F3} m)", ToastType.Info);
+                                return previousValue;
+                        }
+                    }
+                    // Pas de gestionnaire => comportement existant: conserver valeur hors norme avec warning
                     AddError(nameof(Thickness_m), $"Avertissement: épaisseur {value:F3} m hors plage [{min:F3};{max:F3}] (Expert—non corrigée)");
                     WarnOnce(nameof(Thickness_m), $"Épaisseur hors norme conservée ({value:F3} m). Mode Automatique l'ajusterait.");
                 }
                 return value;
             }
 
+            // Mode automatique (inchangé)
             if (value < min)
             {
                 IsThicknessOutOfNorm = false;
@@ -309,7 +341,8 @@ namespace ChausseeNeuve.Domain.Models
             }
             _E = ValidateModulus(_E);
             _nu = ValidatePoisson(_nu);
-            _t = ValidateThickness(_t);
+            // passer previousValue = _t pour réévaluer (pas de changement effectif ici)
+            _t = ValidateThickness(_t, _t);
             OnPropertyChanged(nameof(Modulus_MPa));
             OnPropertyChanged(nameof(Poisson));
             OnPropertyChanged(nameof(Thickness_m));
@@ -341,6 +374,11 @@ namespace ChausseeNeuve.Domain.Models
 
         private (double min, double max) GetThicknessRange()
         {
+            // Cas particulier : structure Bitumineuse épaisse -> couche de surface min 0.12 m, plus de plafond 0.08
+            if (string.Equals(CurrentStructureType, "Bitumineuse épaisse", StringComparison.OrdinalIgnoreCase) && Role == LayerRole.Roulement)
+            {
+                return (0.12, 0.35); // tolérance jusqu'à 35 cm (au besoin ajuster)
+            }
             // Si c'est une couche de fondation en GNT dans une structure souple en mode automatique,
             // on ne met pas de limite maximale d'épaisseur
             if (Mode == DimensionnementMode.Automatique && 
@@ -454,6 +492,13 @@ namespace ChausseeNeuve.Domain.Models
             };
 
             return Math.Round(baseKd * thicknessMultiplier, 2);
+        }
+
+        private string? _currentStructureType;
+        public string? CurrentStructureType
+        {
+            get => _currentStructureType;
+            set { if (_currentStructureType != value) { _currentStructureType = value; OnPropertyChanged(); ValidateAll(); } }
         }
     }
 

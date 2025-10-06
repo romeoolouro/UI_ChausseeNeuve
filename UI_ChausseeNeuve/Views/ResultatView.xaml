@@ -419,7 +419,7 @@
                 <!-- Tableau des resultats detailles -->
                 <Border Style="{StaticResource CardStyle}">
                     <StackPanel>
-                        <TextBlock Text="Resultats Detailles par Couche (Style Alize Compact)" Style="{StaticResource TitleStyle}"/>
+                        <TextBlock Text="Resultats Detailles par Couche" Style="{StaticResource TitleStyle}"/>
 
                         <Border Background="#E9ECEF" CornerRadius="6,6,0,0" Padding="5" Margin="0,10,0,0">
                             <Grid>
