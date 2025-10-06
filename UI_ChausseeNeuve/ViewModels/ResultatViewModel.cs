@@ -40,8 +40,10 @@ namespace UI_ChausseeNeuve.ViewModels
         #region Constructeur
         public ResultatViewModel()
         {
+            Console.WriteLine("=== RESULTAT VIEW MODEL: Constructeur appelé - Navigation vers section structures ===");
             _resultats = new ObservableCollection<ResultatItem>();
             _calculationService = new HybridPavementCalculationService();
+            Console.WriteLine($"=== RESULTAT VIEW MODEL: Service de calcul hybride initialisé - Mode: {_calculationService.CurrentMode} ===");
 
             // Initialiser les commandes
             CalculateStructureCommand = new RelayCommand(async () => await CalculateStructureAsync(), () => !IsCalculationInProgress);
@@ -248,6 +250,7 @@ namespace UI_ChausseeNeuve.ViewModels
         /// </summary>
         public async Task CalculateStructureAsync()
         {
+            Console.WriteLine($"\n=== RESULTAT VIEW MODEL: CalculateStructureAsync called ===");
             IsCalculationInProgress = true;
             
             try
@@ -257,15 +260,19 @@ namespace UI_ChausseeNeuve.ViewModels
                 // Validation préalable de la structure
                 if (!ValidateCurrentStructure())
                 {
+                    Console.WriteLine("Structure validation FAILED");
                     ToastRequested?.Invoke("Structure invalide - Veuillez vérifier la configuration", ToastType.Error);
                     return;
                 }
 
+                Console.WriteLine($"Structure validated: {AppState.CurrentProject.PavementStructure.Layers.Count} layers");
                 ToastRequested?.Invoke("Calcul des sollicitations en cours...", ToastType.Info);
 
                 // Calcul via le service hybride (Native ou Legacy avec fallback automatique)
                 var calculationResult = await Task.Run(() => 
                     _calculationService.CalculateSolicitations(AppState.CurrentProject.PavementStructure));
+                
+                Console.WriteLine($"Calculation complete: IsSuccessful={calculationResult.IsSuccessful}, Results={calculationResult.LayerResults?.Count ?? 0}");
                 
                 if (calculationResult.IsSuccessful)
                 {
@@ -273,6 +280,9 @@ namespace UI_ChausseeNeuve.ViewModels
                     var modeUsed = calculationResult.Message?.Contains("Native") == true ? "Natif (C++)" :
                                    calculationResult.Message?.Contains("Legacy") == true ? "Legacy (C#)" : "Hybride";
                     CalculationInfo = $"Calcul terminé avec succès - Mode: {modeUsed}";
+                    
+                    Console.WriteLine($"Mode used: {modeUsed}");
+                    Console.WriteLine($"Calling PopulateResultsWithCalculatedData with {calculationResult.LayerResults.Count} layer results");
                     
                     // Informations de performance
                     PerformanceInfo = $"Temps: {calculationResult.CalculationTimeMs:F2} ms";
@@ -310,6 +320,7 @@ namespace UI_ChausseeNeuve.ViewModels
         /// </summary>
         private void PopulateResultsWithCalculatedData(SolicitationCalculationResult calculationResult)
         {
+            Console.WriteLine($"\n=== PopulateResultsWithCalculatedData START ===");
             var structure = AppState.CurrentProject.PavementStructure;
             if (structure?.Layers == null) return;
 
@@ -321,12 +332,19 @@ namespace UI_ChausseeNeuve.ViewModels
             var platform = structure.Layers.FirstOrDefault(l => l.Role == LayerRole.Plateforme);
 
             Resultats.Clear();
+            Console.WriteLine($"Cleared Resultats collection");
 
             // Cr�er un dictionnaire pour retrouver facilement les r�sultats par couche
             var layerResultsDict = calculationResult.LayerResults.ToDictionary(
                 lr => lr.Layer.Order,
                 lr => lr
             );
+            
+            Console.WriteLine($"Created layer results dictionary with {layerResultsDict.Count} entries:");
+            foreach (var kvp in layerResultsDict)
+            {
+                Console.WriteLine($"  Order={kvp.Key}: σT_top={kvp.Value.SigmaTTop}, εT_top={kvp.Value.EpsilonTTop}");
+            }
 
             /// Ajouter les couches normales avec leurs interfaces
             for (int i = 0; i < orderedLayers.Count; i++)
@@ -380,11 +398,18 @@ namespace UI_ChausseeNeuve.ViewModels
         /// </summary>
         private ResultatCouche CreateResultCoucheWithCalculatedData(Layer layer, Dictionary<int, LayerSolicitationResult> layerResultsDict)
         {
+            Console.WriteLine($"\nCreateResultCouche for layer Order={layer.Order}, Material={layer.MaterialName}");
+            
             // R�cup�rer les donn�es calcul�es si disponibles
             if (layerResultsDict.TryGetValue(layer.Order, out var layerResult))
             {
+                Console.WriteLine($"  Found calculation results:");
+                Console.WriteLine($"    σT_top={layerResult.SigmaTTop}, σT_bottom={layerResult.SigmaTBottom}");
+                Console.WriteLine($"    εT_top={layerResult.EpsilonTTop}, εT_bottom={layerResult.EpsilonTBottom}");
+                Console.WriteLine($"    σZ_top={layerResult.SigmaZTop}, σZ_bottom={layerResult.SigmaZBottom}");
+                
                 // Couche avec donn�es calcul�es
-                return new ResultatCouche
+                var result = new ResultatCouche
                 {
                     Interface = layer.Role.ToString(),
                     Materiau = GetMaterialDisplayName(layer),
@@ -407,9 +432,13 @@ namespace UI_ChausseeNeuve.ViewModels
                     ValeurAdmissible = CalculateAdmissibleValue(layerResult),
                     EstValide = ValidateLayerResult(layerResult)
                 };
+                
+                Console.WriteLine($"  Created ResultatCouche: σT_sup={result.SigmaTSup}, εT_sup={result.EpsilonTSup}");
+                return result;
             }
             else
             {
+                Console.WriteLine($"  NO calculation results found for this layer!");
                 // Fallback : couche sans donn�es calcul�es (ne devrait pas arriver)
                 return CreateResultCoucheFromLayer(layer, AppState.CurrentProject.PavementStructure);
             }
@@ -705,6 +734,7 @@ namespace UI_ChausseeNeuve.ViewModels
         /// </summary>
         private void OnStructureChanged()
         {
+            Console.WriteLine("=== RESULTAT VIEW MODEL: Changement de structure détecté ===");
             // Ex�cuter sur le thread UI si n�cessaire
             System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
             {
@@ -717,19 +747,24 @@ namespace UI_ChausseeNeuve.ViewModels
         /// </summary>
         private void LoadCurrentStructure()
         {
+            Console.WriteLine("=== RESULTAT VIEW MODEL: LoadCurrentStructure - Chargement de la structure ===");
             try
             {
                 if (AppState.CurrentProject?.PavementStructure?.Layers?.Count > 0)
                 {
+                    var layerCount = AppState.CurrentProject.PavementStructure.Layers.Count;
+                    Console.WriteLine($"=== RESULTAT VIEW MODEL: Structure trouvée avec {layerCount} couches ===");
                     UpdateResultsFromCurrentStructure();
                 }
                 else
                 {
+                    Console.WriteLine("=== RESULTAT VIEW MODEL: Aucune structure trouvée, chargement des données d'exemple ===");
                     LoadSampleData(); // Fallback sur les donn�es d'exemple
                 }
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"=== RESULTAT VIEW MODEL: Erreur lors du chargement de la structure: {ex.Message} ===");
                 // En cas d'erreur, charger les donn�es d'exemple
                 LoadSampleData();
                 System.Diagnostics.Debug.WriteLine($"Erreur lors du chargement de la structure: {ex.Message}");
@@ -742,8 +777,13 @@ namespace UI_ChausseeNeuve.ViewModels
         /// </summary>
         private void UpdateResultsFromCurrentStructure()
         {
+            Console.WriteLine("=== RESULTAT VIEW MODEL: UpdateResultsFromCurrentStructure - Mise à jour des résultats ===");
             var structure = AppState.CurrentProject.PavementStructure;
-            if (structure?.Layers == null) return;
+            if (structure?.Layers == null) 
+            {
+                Console.WriteLine("=== RESULTAT VIEW MODEL: Aucune couche trouvée dans la structure ===");
+                return;
+            }
 
             var orderedLayers = structure.Layers
                 .Where(l => l.Role != LayerRole.Plateforme)

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file PavementAPI.h
  * @brief C API for Pavement Calculation Engine - P/Invoke Compatible Interface
  * 
@@ -57,8 +57,8 @@ typedef enum {
 typedef struct {
     // Layer configuration
     int nlayer;                    ///< Number of layers (1 to 20)
-    double* poisson_ratio;         ///< Poisson's ratios for each layer (nlayer elements)
-    double* young_modulus;         ///< Young's moduli in MPa (nlayer elements)
+    double* poisson_ratio;         ///< Poisson''s ratios for each layer (nlayer elements)
+    double* young_modulus;         ///< Young''s moduli in MPa (nlayer elements)
     double* thickness;             ///< Layer thicknesses in meters (nlayer elements)
     int* bonded_interface;         ///< Interface bonding flags (nlayer-1 elements): 1=bonded, 0=unbonded
     
@@ -91,10 +91,10 @@ typedef struct {
     
     // Results arrays (allocated by DLL, size = nz)
     double* deflection_mm;         ///< Vertical deflections in mm (positive downward)
-    double* vertical_stress_kpa;   ///< Vertical stresses σz in kPa (positive compression)
-    double* horizontal_strain;     ///< Horizontal strains εr in microstrain (με)
-    double* radial_strain;         ///< Radial strains εθ in microstrain (με)
-    double* shear_stress_kpa;      ///< Shear stresses τrz in kPa
+    double* vertical_stress_kpa;   ///< Vertical stresses in kPa (positive compression)
+    double* horizontal_strain;     ///< Horizontal strains in microstrain
+    double* radial_strain;         ///< Radial strains in microstrain
+    double* shear_stress_kpa;      ///< Shear stresses in kPa
 } PavementOutputC;
 
 /**
@@ -105,30 +105,28 @@ typedef struct {
  * @param input Pointer to input structure (must not be NULL)
  * @param output Pointer to output structure (must not be NULL, will be populated by DLL)
  * @return PAVEMENT_SUCCESS on success, error code otherwise
- * 
- * @note Output arrays are allocated by the DLL and must be freed with PavementFreeOutput
- * @note Input arrays must remain valid during the call but can be freed immediately after
- * 
- * @example
- * @code
- * PavementInputC input = {0};
- * input.nlayer = 2;
- * input.poisson_ratio = (double*)malloc(2 * sizeof(double));
- * // ... initialize other fields ...
- * 
- * PavementOutputC output = {0};
- * int result = PavementCalculate(&input, &output);
- * 
- * if (result == PAVEMENT_SUCCESS) {
- *     // Use output.deflection_mm, etc.
- *     PavementFreeOutput(&output);
- * }
- * 
- * free(input.poisson_ratio);
- * // ... free other input arrays ...
- * @endcode
  */
 PAVEMENT_API int PavementCalculate(
+    const PavementInputC* input,
+    PavementOutputC* output
+);
+
+/**
+ * @brief Numerically stable calculation using TRMM (Transmission and Reflection Matrix Method)
+ * 
+ * This function uses only negative exponentials exp(-m*h) to avoid overflow
+ * when m*h > 30, ensuring all matrix elements remain bounded (less than or equal to 1.0).
+ * 
+ * Based on academic research by Qiu et al. (2025), Dong et al. (2021), Fan et al. (2022).
+ * 
+ * @param input Pointer to input structure (must not be NULL)
+ * @param output Pointer to output structure (must not be NULL, will be populated by DLL)
+ * @return PAVEMENT_SUCCESS on success, error code otherwise
+ * 
+ * @note Use this function for cases with high m*h values (thick layers, high stiffness contrast)
+ * @note Output arrays are allocated by the DLL and must be freed with PavementFreeOutput
+ */
+PAVEMENT_API int PavementCalculateStable(
     const PavementInputC* input,
     PavementOutputC* output
 );
@@ -170,15 +168,6 @@ PAVEMENT_API const char* PavementGetLastError(void);
  * @param error_message Buffer to receive error message (can be NULL)
  * @param message_size Size of error_message buffer (ignored if error_message is NULL)
  * @return PAVEMENT_SUCCESS if input is valid, error code otherwise
- * 
- * @example
- * @code
- * char error_msg[256];
- * int result = PavementValidateInput(&input, error_msg, sizeof(error_msg));
- * if (result != PAVEMENT_SUCCESS) {
- *     printf("Input validation failed: %s\n", error_msg);
- * }
- * @endcode
  */
 PAVEMENT_API int PavementValidateInput(
     const PavementInputC* input,

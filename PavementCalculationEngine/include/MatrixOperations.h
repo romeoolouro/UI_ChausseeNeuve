@@ -104,10 +104,12 @@ private:
      * Assemble surface boundary conditions (zero shear stress, applied normal stress).
      * 
      * @param M System matrix
+     * @param m Hankel transform parameter
      * @param input Calculation input
      */
     static void AssembleSurfaceBoundary(
         Eigen::MatrixXd& M,
+        double m,
         const CalculationInput& input);
     
     /**

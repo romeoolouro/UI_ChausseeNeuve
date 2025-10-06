@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using UI_ChausseeNeuve.Services.PavementCalculation;
 
@@ -10,8 +11,23 @@ namespace UI_ChausseeNeuve
     /// </summary>
     public partial class App : Application
     {
+        [DllImport("kernel32.dll")]
+        private static extern bool AllocConsole();
+
+        [DllImport("kernel32.dll")]
+        private static extern bool AttachConsole(int dwProcessId);
+
         protected override void OnStartup(StartupEventArgs e)
         {
+            // Attacher une console pour voir les logs Console.WriteLine
+            if (!AttachConsole(-1)) // -1 = ATTACH_PARENT_PROCESS
+            {
+                AllocConsole(); // Créer une nouvelle console si échec
+            }
+            
+            Console.WriteLine("=== APPLICATION WPF DÉMARRÉE AVEC CONSOLE ===");
+            Console.WriteLine($"Heure de démarrage: {DateTime.Now:HH:mm:ss.fff}");
+            
             // Perform native library verification on startup
             VerifyNativeLibrary();
             

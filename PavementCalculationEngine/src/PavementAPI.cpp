@@ -16,11 +16,14 @@
 #include "PavementAPI.h"
 #include "PavementData.h"
 #include "PavementCalculator.h"
+#include "TRMMSolver.h"
 #include "Logger.h"
 #include <cstring>
 #include <cstdlib>
 #include <string>
 #include <chrono>
+#include <fstream>
+#include <iostream>
 
 // Alias for convenience
 using PavementData = Pavement::CalculationInput;
@@ -94,6 +97,41 @@ static bool ConvertInputToCpp(const PavementInputC* input, PavementData& data) {
     data.pressure = input->pressure_kpa / 1000.0;  // kPa -> MPa
     data.contactRadius = input->wheel_radius_m;
     data.wheelSpacing = input->wheel_spacing_m;
+    
+    // Debug print to both console and file
+    std::ofstream debugFile("C:\\Temp\\PavementDebug.txt", std::ios::app);
+    
+    auto logToAll = [&](const std::string& msg) {
+        std::cout << msg << std::endl;
+        if (debugFile.is_open()) {
+            debugFile << msg << std::endl;
+        }
+    };
+    
+    logToAll("=== API INPUT DEBUG ===");
+    logToAll("  Layer count: " + std::to_string(data.layerCount));
+    logToAll("  Pressure: " + std::to_string(input->pressure_kpa) + " kPa = " + std::to_string(data.pressure) + " MPa");
+    logToAll("  Contact radius: " + std::to_string(data.contactRadius) + " m");
+    
+    std::string moduliStr = "  Young's moduli: [";
+    for (int i = 0; i < data.layerCount; ++i) {
+        moduliStr += std::to_string(data.youngModuli[i]);
+        if (i < data.layerCount - 1) moduliStr += ", ";
+    }
+    moduliStr += "] MPa";
+    logToAll(moduliStr);
+    
+    std::string poissonStr = "  Poisson ratios: [";
+    for (int i = 0; i < data.layerCount; ++i) {
+        poissonStr += std::to_string(data.poissonRatios[i]);
+        if (i < data.layerCount - 1) poissonStr += ", ";
+    }
+    poissonStr += "]";
+    logToAll(poissonStr);
+    
+    if (debugFile.is_open()) {
+        debugFile.close();
+    }
     
     return true;
 }
@@ -268,6 +306,78 @@ PAVEMENT_API int PavementCalculate(
         strncpy(output->error_message, "Unknown exception occurred", sizeof(output->error_message) - 1);
         SetLastError("Unknown exception");
         LOG_CRITICAL("Unknown exception in PavementCalculate");
+        return PAVEMENT_ERROR_UNKNOWN;
+    }
+}
+
+PAVEMENT_API int PavementCalculateStable(
+    const PavementInputC* input,
+    PavementOutputC* output
+) {
+    g_last_error[0] = '\0';
+    
+    if (!input) {
+        SetLastError("Input pointer is NULL");
+        if (output) {
+            output->success = 0;
+            output->error_code = PAVEMENT_ERROR_NULL_POINTER;
+            strncpy(output->error_message, "Input pointer is NULL", sizeof(output->error_message) - 1);
+        }
+        return PAVEMENT_ERROR_NULL_POINTER;
+    }
+    
+    if (!output) {
+        SetLastError("Output pointer is NULL");
+        return PAVEMENT_ERROR_NULL_POINTER;
+    }
+    
+    memset(output, 0, sizeof(PavementOutputC));
+    
+    try {
+        auto start_time = std::chrono::high_resolution_clock::now();
+        
+        Pavement::Logger::GetInstance().Info("Starting TRMM calculation via C API", __FILE__, __LINE__);
+        
+        PavementCalculation::TRMMSolver solver;
+        bool success = solver.CalculateStable(*input, *output);
+        
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+        output->calculation_time_ms = duration.count() / 1000.0;
+        
+        if (success) {
+            std::string success_msg = "TRMM calculation completed successfully in " + std::to_string(output->calculation_time_ms) + " ms";
+            Pavement::Logger::GetInstance().Info(success_msg.c_str(), __FILE__, __LINE__);
+            return PAVEMENT_SUCCESS;
+        } else {
+            std::string error_msg = "TRMM calculation failed: " + std::string(output->error_message);
+            Pavement::Logger::GetInstance().Error(error_msg.c_str(), __FILE__, __LINE__);
+            return PAVEMENT_ERROR_CALCULATION;
+        }
+        
+    } catch (const std::bad_alloc& e) {
+        output->success = 0;
+        output->error_code = PAVEMENT_ERROR_ALLOCATION;
+        strncpy(output->error_message, "Memory allocation failed", sizeof(output->error_message) - 1);
+        SetLastError("Memory allocation failed");
+        Pavement::Logger::GetInstance().Critical("Bad alloc in PavementCalculateStable", __FILE__, __LINE__);
+        return PAVEMENT_ERROR_ALLOCATION;
+        
+    } catch (const std::exception& e) {
+        output->success = 0;
+        output->error_code = PAVEMENT_ERROR_UNKNOWN;
+        std::string error_msg = std::string("Exception: ") + e.what();
+        strncpy(output->error_message, error_msg.c_str(), sizeof(output->error_message) - 1);
+        SetLastError(error_msg.c_str());
+        Pavement::Logger::GetInstance().Critical(error_msg.c_str(), __FILE__, __LINE__);
+        return PAVEMENT_ERROR_UNKNOWN;
+        
+    } catch (...) {
+        output->success = 0;
+        output->error_code = PAVEMENT_ERROR_UNKNOWN;
+        strncpy(output->error_message, "Unknown exception occurred", sizeof(output->error_message) - 1);
+        SetLastError("Unknown exception");
+        Pavement::Logger::GetInstance().Critical("Unknown exception in PavementCalculateStable", __FILE__, __LINE__);
         return PAVEMENT_ERROR_UNKNOWN;
     }
 }

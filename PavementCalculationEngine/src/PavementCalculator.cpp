@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cmath>
 #include <stdexcept>
+#include <fstream>
 
 namespace Pavement {
 
@@ -29,6 +30,17 @@ CalculationOutput PavementCalculator::Calculate(const CalculationInput& input) {
     std::cout << "Starting pavement calculation with " << input.layerCount 
               << " layers using Eigen-based matrix operations..." << std::endl;
     
+    // File-based logging for debugging
+    std::ofstream debugFile("C:\\Temp\\PavementDebug.txt", std::ios::trunc); // Clear file at start
+    if (debugFile.is_open()) {
+        debugFile << "=== PAVEMENT CALCULATION START ===" << std::endl;
+        debugFile << "Layer count: " << input.layerCount << std::endl;
+        debugFile << "Pressure: " << input.pressure << " MPa" << std::endl;
+        debugFile << "Contact radius: " << input.contactRadius << " m" << std::endl;
+        debugFile << "Result size: " << resultSize << " positions" << std::endl;
+        debugFile.close();
+    }
+    
     // Gauss-Legendre quadrature for Hankel transform integration
     // Integration over [0, infinity] - use practical upper bound
     const double upperBound = Constants::HANKEL_INTEGRATION_BOUND / input.contactRadius;
@@ -39,9 +51,21 @@ CalculationOutput PavementCalculator::Calculate(const CalculationInput& input) {
         double m = (Constants::GAUSS_POINTS_4[i] + 1.0) * 0.5 * upperBound;
         double weight = Constants::GAUSS_WEIGHTS_4[i] * 0.5 * upperBound;
         
+        std::cout << "Hankel Integration: Point " << i << ", m = " << m << ", weight = " << weight << std::endl;
+        
+        // Log to file
+        std::ofstream debugFile("C:\\Temp\\PavementDebug.txt", std::ios::app);
+        if (debugFile.is_open()) {
+            debugFile << "\n=== Hankel Integration Point " << i << " ===" << std::endl;
+            debugFile << "m = " << m << ", weight = " << weight << std::endl;
+            debugFile.close();
+        }
+        
         if (m > Constants::MIN_HANKEL_PARAMETER) {  // Avoid singularity at m=0
             try {
+                std::cout << "Processing integration point m=" << m << std::endl;
                 CalculateForHankelParameter(m, input, output);
+                std::cout << "Successfully calculated for m=" << m << std::endl;
                 
             } catch (const std::exception& e) {
                 LOG_WARNING("Integration point m=" + std::to_string(m) + 
@@ -66,12 +90,35 @@ void PavementCalculator::CalculateForHankelParameter(double m,
                                                      CalculationOutput& output) {
     try {
         // Solve the linear system for this Hankel parameter
+        std::cout << "Solving coefficients for m=" << m << std::endl;
         Eigen::VectorXd coefficients = MatrixOperations::SolveCoefficients(m, input);
         
+        std::cout << "Coefficients for m=" << m << ": [";
+        for (int i = 0; i < std::min(8, (int)coefficients.size()); ++i) {
+            std::cout << coefficients(i);
+            if (i < std::min(8, (int)coefficients.size()) - 1) std::cout << ", ";
+        }
+        std::cout << (coefficients.size() > 8 ? ", ...]" : "]") << std::endl;
+        
+        // Log coefficients to file
+        std::ofstream debugFile("C:\\Temp\\PavementDebug.txt", std::ios::app);
+        if (debugFile.is_open()) {
+            debugFile << "Solved coefficients (size " << coefficients.size() << "): [";
+            for (int i = 0; i < coefficients.size(); ++i) {
+                debugFile << coefficients(i);
+                if (i < coefficients.size() - 1) debugFile << ", ";
+            }
+            debugFile << "]" << std::endl;
+            debugFile.close();
+        }
+        
         // Calculate solicitations from these coefficients
+        std::cout << "Calculating solicitations for m=" << m << std::endl;
         CalculateSolicitationsFromCoefficients(coefficients, m, input, output);
+        std::cout << "Completed solicitations for m=" << m << std::endl;
         
     } catch (const std::exception& e) {
+        std::cerr << "Exception in CalculateForHankelParameter: " << e.what() << std::endl;
         throw std::runtime_error(
             "Failed to calculate for m=" + std::to_string(m) + ": " + e.what());
     }

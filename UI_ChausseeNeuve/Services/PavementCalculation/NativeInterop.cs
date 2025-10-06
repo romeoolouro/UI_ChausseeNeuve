@@ -32,6 +32,29 @@ namespace UI_ChausseeNeuve.Services.PavementCalculation
         );
 
         /// <summary>
+        /// Stable calculation function using TRMM (Transmission and Reflection Matrix Method)
+        /// 
+        /// Performs pavement structure calculation using numerically stable TRMM algorithm.
+        /// This method avoids exponential overflow issues present in standard TMM for high m*h values.
+        /// Recommended for structures with stiff layers (E > 5000 MPa) or thick layers (h > 0.15 m).
+        /// </summary>
+        /// <param name="input">Pointer to input structure (must not be NULL)</param>
+        /// <param name="output">Pointer to output structure (must not be NULL, will be populated by DLL)</param>
+        /// <returns>PAVEMENT_SUCCESS on success, error code otherwise</returns>
+        /// <remarks>
+        /// Uses TRMM algorithm based on:
+        /// - Qiu et al. (2025) Transportation Geotechnics
+        /// - Dong et al. (2021) PolyU Thesis
+        /// - Fan et al. (2022) Soil Dynamics and Earthquake Engineering
+        /// Output arrays are allocated by the DLL and must be freed with PavementFreeOutput.
+        /// </remarks>
+        [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        internal static extern int PavementCalculateStable(
+            ref PavementInputC input,
+            ref PavementOutputC output
+        );
+
+        /// <summary>
         /// Free output structure memory
         /// 
         /// Releases all memory allocated by PavementCalculate in the output structure.

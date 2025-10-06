@@ -43,12 +43,13 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
-# Source files - Task 2.1/2.2: Added C API
+# Source files - Task 2.1/2.2: Added C API, Task 5.2: Added TRMM Solver
 set(LIBRARY_SOURCES
     src/PavementData.cpp
     src/MatrixOperations.cpp
     src/PavementCalculator.cpp
     src/PavementAPI.cpp
+    src/TRMMSolver.cpp
 )
 
 set(LIBRARY_HEADERS
@@ -58,6 +59,7 @@ set(LIBRARY_HEADERS
     include/Logger.h
     include/Constants.h
     include/PavementAPI.h
+    include/TRMMSolver.h
 )
 
 set(EXECUTABLE_SOURCES

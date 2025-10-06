@@ -234,8 +234,10 @@ namespace UI_ChausseeNeuve.Services
             
             try
             {
-                // Call native calculation
-                int result = NativeInterop.PavementCalculate(
+                // Call native TRMM calculation for numerical stability
+                // TRMM (Transmission and Reflection Matrix Method) avoids exponential overflow
+                // issues in standard TMM for high m*h values (stiff/thick layers)
+                int result = NativeInterop.PavementCalculateStable(
                     ref input.GetNativeStruct(), 
                     ref nativeOutput);
 
@@ -288,6 +290,14 @@ namespace UI_ChausseeNeuve.Services
             var radialStrains = nativeOutput.GetRadialStrains();
             var shearStresses = nativeOutput.GetShearStresses();
 
+            // DIAGNOSTIC: Log raw data from native calculation
+            Console.WriteLine($"=== NATIVE RESULTS DEBUG ===");
+            Console.WriteLine($"Deflections length: {deflections.Length}, values: [{string.Join(", ", deflections.Take(10))}]");
+            Console.WriteLine($"Vertical stresses length: {verticalStresses.Length}, values: [{string.Join(", ", verticalStresses.Take(10))}]");
+            Console.WriteLine($"Horizontal strains length: {horizontalStrains.Length}, values: [{string.Join(", ", horizontalStrains.Take(10))}]");
+            Console.WriteLine($"Radial strains length: {radialStrains.Length}, values: [{string.Join(", ", radialStrains.Take(10))}]");
+            Console.WriteLine($"Structure layers count: {structure.Layers.Count}");
+
             // Order layers same as in input preparation
             var orderedLayers = structure.Layers
                 .Where(l => l.Role != LayerRole.Plateforme)
@@ -315,20 +325,37 @@ namespace UI_ChausseeNeuve.Services
                 // Top of layer values
                 if (resultIndex < deflections.Length)
                 {
-                    layerResult.DeflectionTop = deflections[resultIndex];
-                    layerResult.SigmaZTop = verticalStresses[resultIndex] / 1000; // Convert kPa to MPa
+                    layerResult.DeflectionTop = deflections[resultIndex] / 1000.0; // Convert mm to m
+                    layerResult.SigmaZTop = verticalStresses[resultIndex] / 1000.0; // Convert kPa to MPa
+                    
+                    // Tensile strain (horizontal strain in microstrain)
                     layerResult.EpsilonTTop = horizontalStrains[resultIndex];
-                    layerResult.SigmaTTop = Math.Abs(shearStresses[resultIndex]) / 1000; // Convert kPa to MPa
+                    
+                    // Calculate tensile stress from strain using Young's modulus
+                    // σT = E * εT * 10^-6 (convert microstrain to strain)
+                    layerResult.SigmaTTop = layer.Modulus_MPa * horizontalStrains[resultIndex] * 1e-6;
+                    
+                    // DIAGNOSTIC: Log calculation details
+                    Console.WriteLine($"Layer {layerIndex} ({layer.MaterialName}): E={layer.Modulus_MPa} MPa, εT={horizontalStrains[resultIndex]} μstrain");
+                    Console.WriteLine($"  → σT = {layer.Modulus_MPa} × {horizontalStrains[resultIndex]} × 1e-6 = {layerResult.SigmaTTop} MPa");
+                    
+                    // Vertical strain (radial strain)
+                    layerResult.EpsilonZTop = resultIndex < radialStrains.Length ? radialStrains[resultIndex] : 0;
+                    
                     resultIndex++;
                 }
 
                 // Bottom of layer values (if available and not platform)
                 if (layer.Role != LayerRole.Plateforme && resultIndex < deflections.Length)
                 {
-                    layerResult.DeflectionBottom = deflections[resultIndex];
-                    layerResult.SigmaZBottom = verticalStresses[resultIndex] / 1000;
+                    layerResult.DeflectionBottom = deflections[resultIndex] / 1000.0; // Convert mm to m
+                    layerResult.SigmaZBottom = verticalStresses[resultIndex] / 1000.0;
                     layerResult.EpsilonTBottom = horizontalStrains[resultIndex];
-                    layerResult.SigmaTBottom = Math.Abs(shearStresses[resultIndex]) / 1000;
+                    
+                    // Calculate tensile stress from strain
+                    layerResult.SigmaTBottom = layer.Modulus_MPa * horizontalStrains[resultIndex] * 1e-6;
+                    
+                    layerResult.EpsilonZBottom = resultIndex < radialStrains.Length ? radialStrains[resultIndex] : 0;
                     resultIndex++;
                 }
                 else
@@ -338,13 +365,8 @@ namespace UI_ChausseeNeuve.Services
                     layerResult.SigmaZBottom = layerResult.SigmaZTop;
                     layerResult.EpsilonTBottom = layerResult.EpsilonTTop;
                     layerResult.SigmaTBottom = layerResult.SigmaTTop;
+                    layerResult.EpsilonZBottom = layerResult.EpsilonZTop;
                 }
-
-                // Set radial strain values (assuming similar to horizontal)
-                layerResult.EpsilonZTop = resultIndex - 2 >= 0 && resultIndex - 2 < radialStrains.Length 
-                    ? radialStrains[resultIndex - 2] : 0;
-                layerResult.EpsilonZBottom = resultIndex - 1 >= 0 && resultIndex - 1 < radialStrains.Length 
-                    ? radialStrains[resultIndex - 1] : layerResult.EpsilonZTop;
 
                 results.Add(layerResult);
             }
