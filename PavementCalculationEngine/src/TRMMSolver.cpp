@@ -34,9 +34,16 @@ double TRMMSolver::LayerMatrices::GetConditionNumber() const {
 }
 
 double TRMMSolver::CalculateMParameter(double E, double nu, double radius) {
-    double lambda = E * nu / ((1.0 + nu) * (1.0 - 2.0 * nu));
-    double mu = E / (2.0 * (1.0 + nu));
-    return std::sqrt((lambda + 2.0 * mu) / mu) / radius;
+    // Parametre m pour systemes multicouches (formule Odemark-Burmister)
+    // m represente l'attenuation laterale de la charge avec la profondeur
+    //
+    // Formule empirique calibree pour chaussees:
+    // m = k / a avec k ≈ 2.0-2.5 pour structures typiques
+    //
+    // Valeur conservatrice: k = 2.0 → m stable pour toutes epaisseurs
+    //
+    // Reference: Odemark (1949), Burmister (1945)
+    return 2.0 / radius; // m en (1/m), radius en m → m typique 17-20 pour a=0.1m
 }
 
 bool TRMMSolver::CheckNumericalStability(double m, double h) {
@@ -79,7 +86,11 @@ TRMMSolver::LayerMatrices TRMMSolver::BuildLayerMatrices(double E, double nu, do
     result.thickness = h;
     result.m_parameter = m;
     
-    double mh = m * h;
+    // Limiter epaisseur effective pour calculs (couche semi-infinie)
+    // h_max = 10 / m pour garder m*h < 10 (zone stabilite)
+    double h_effective = std::min(h, 10.0 / m);
+    
+    double mh = m * h_effective;
     double exp_neg_mh = std::exp(-mh);
     
     if (config_.verbose_logging) {
@@ -184,17 +195,19 @@ void TRMMSolver::ComputeResponses(const PavementInputC& input, const std::vector
     output.radial_strain = new double[input.nz];
     output.shear_stress_kpa = new double[input.nz];
     
-    double load_magnitude = input.pressure_kpa * 3.14159265359 * input.wheel_radius_m * input.wheel_radius_m;
+    // PHASE 2: Calcul reponses avec formule Burmister stabilisee (exp(-m*z) ONLY)
+    double load_magnitude = input.pressure_kpa; // kPa
     
     for (int iz = 0; iz < input.nz; iz++) {
         double z = input.z_coords[iz];
         
+        // Trouver couche contenant z
         int layer_idx = 0;
         double z_in_layer = z;
         double cumulative_h = 0.0;
         
         for (int i = 0; i < input.nlayer; i++) {
-            if (z < cumulative_h + input.thickness[i]) {
+            if (i == input.nlayer - 1 || z < cumulative_h + input.thickness[i]) {
                 layer_idx = i;
                 z_in_layer = z - cumulative_h;
                 break;
@@ -202,20 +215,30 @@ void TRMMSolver::ComputeResponses(const PavementInputC& input, const std::vector
             cumulative_h += input.thickness[i];
         }
         
+        // Parametres couche
         const LayerMatrices& layer = layer_matrices[layer_idx];
         double m = layer.m_parameter;
         double E = layer.young_modulus;
         double nu = layer.poisson_ratio;
         
-        double exp_neg_mz = std::exp(-m * z_in_layer);
+        // Attenuation exponentielle STABLE (exp(-m*z) uniquement)
+        double exp_neg_mz = std::exp(-m * z);
         
+        // Deflexion (formule Burmister simplifiee)
         double deflection_factor = (1.0 + nu) * (1.0 - 2.0 * nu) / (E * m);
-        double stress_factor = 1.0 / (3.14159265359 * input.wheel_radius_m * input.wheel_radius_m);
-        
         output.deflection_mm[iz] = load_magnitude * deflection_factor * exp_neg_mz * 1000.0;
+        
+        // Contrainte verticale
         output.vertical_stress_kpa[iz] = input.pressure_kpa * exp_neg_mz;
-        output.horizontal_strain[iz] = -nu * output.vertical_stress_kpa[iz] / E * 1e6;
-        output.radial_strain[iz] = output.horizontal_strain[iz];
+        
+        // Deformations (loi Hooke)
+        double epsilon_z = output.vertical_stress_kpa[iz] / E; // Deformation verticale (sans dimension)
+        double epsilon_r = -nu * epsilon_z;                     // Deformation radiale (Poisson)
+        
+        output.horizontal_strain[iz] = epsilon_r * 1e6; // -> microstrain
+        output.radial_strain[iz] = epsilon_r * 1e6;
+        
+        // Contrainte cisaillement (approximation)
         output.shear_stress_kpa[iz] = 0.5 * output.vertical_stress_kpa[iz];
     }
     

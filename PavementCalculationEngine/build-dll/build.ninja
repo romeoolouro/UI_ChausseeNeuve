@@ -81,6 +81,14 @@ build CMakeFiles/PavementCalculationEngine.dir/src/PavementAPI.cpp.obj: CXX_COMP
   OBJECT_DIR = CMakeFiles\PavementCalculationEngine.dir
   OBJECT_FILE_DIR = CMakeFiles\PavementCalculationEngine.dir\src
 
+build CMakeFiles/PavementCalculationEngine.dir/src/TRMMSolver.cpp.obj: CXX_COMPILER__PavementCalculationEngine_unscanned_Release C$:/Users/JOSAPHAT/source/repos/UI_ChausseeNeuve/PavementCalculationEngine/src/TRMMSolver.cpp || cmake_object_order_depends_target_PavementCalculationEngine
+  DEFINES = -DEIGEN_AVAILABLE -DPAVEMENT_EXPORTS -DPavementCalculationEngine_EXPORTS
+  DEP_FILE = CMakeFiles\PavementCalculationEngine.dir\src\TRMMSolver.cpp.obj.d
+  FLAGS = -O3 -DNDEBUG -std=gnu++17
+  INCLUDES = -IC:/Users/JOSAPHAT/source/repos/UI_ChausseeNeuve/PavementCalculationEngine/include -IC:/Users/JOSAPHAT/source/repos/UI_ChausseeNeuve/PavementCalculationEngine/src -IC:/Users/JOSAPHAT/source/repos/UI_ChausseeNeuve/PavementCalculationEngine/extern/eigen
+  OBJECT_DIR = CMakeFiles\PavementCalculationEngine.dir
+  OBJECT_FILE_DIR = CMakeFiles\PavementCalculationEngine.dir\src
+
 
 # =============================================================================
 # Link build statements for SHARED_LIBRARY target PavementCalculationEngine
@@ -89,7 +97,7 @@ build CMakeFiles/PavementCalculationEngine.dir/src/PavementAPI.cpp.obj: CXX_COMP
 #############################################
 # Link the shared library bin\PavementCalculationEngine.dll
 
-build bin/PavementCalculationEngine.dll lib/libPavementCalculationEngine.dll.a: CXX_SHARED_LIBRARY_LINKER__PavementCalculationEngine_Release CMakeFiles/PavementCalculationEngine.dir/src/PavementData.cpp.obj CMakeFiles/PavementCalculationEngine.dir/src/MatrixOperations.cpp.obj CMakeFiles/PavementCalculationEngine.dir/src/PavementCalculator.cpp.obj CMakeFiles/PavementCalculationEngine.dir/src/PavementAPI.cpp.obj
+build bin/PavementCalculationEngine.dll lib/libPavementCalculationEngine.dll.a: CXX_SHARED_LIBRARY_LINKER__PavementCalculationEngine_Release CMakeFiles/PavementCalculationEngine.dir/src/PavementData.cpp.obj CMakeFiles/PavementCalculationEngine.dir/src/MatrixOperations.cpp.obj CMakeFiles/PavementCalculationEngine.dir/src/PavementCalculator.cpp.obj CMakeFiles/PavementCalculationEngine.dir/src/PavementAPI.cpp.obj CMakeFiles/PavementCalculationEngine.dir/src/TRMMSolver.cpp.obj
   LANGUAGE_COMPILE_FLAGS = -O3 -DNDEBUG
   LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\PavementCalculationEngine.dir
