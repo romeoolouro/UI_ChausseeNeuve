@@ -388,20 +388,31 @@ namespace ChausseeNeuve.Domain.Models
             {
                 return (0.12, 0.35); // tolérance jusqu'à 35 cm (au besoin ajuster)
             }
-            // Si c'est une couche de fondation en GNT dans une structure souple en mode automatique,
-            // on ne met pas de limite maximale d'épaisseur
-            if (Mode == DimensionnementMode.Automatique && 
-                Role == LayerRole.Fondation && 
-                Family == MaterialFamily.GNT)
+            
+            // MODIFICATION FINALE : Pour les couches de fondation en GNT en mode automatique,
+            // ne plus imposer AUCUN minimum d'épaisseur individuelle
+            // La structuration automatique doit pouvoir créer des sous-couches de n'importe quelle épaisseur
+            // tant que l'épaisseur totale des fondations est ? 15cm (contrôlé au niveau global)
+            if (Role == LayerRole.Fondation && Family == MaterialFamily.GNT)
             {
-                return (0.15, double.MaxValue); // Minimum 15cm, pas de maximum
+                if (Mode == DimensionnementMode.Automatique)
+                {
+                    // AUCUN minimum : permettre même des sous-couches de 1cm, 4cm, etc.
+                    // La validation se fait uniquement sur l'épaisseur totale au niveau du ViewModel
+                    return (0.0, double.MaxValue);
+                }
+                else
+                {
+                    // En mode Expert, garder la règle normative classique de 15cm minimum
+                    return (0.15, 0.35);
+                }
             }
 
             return Role switch
             {
                 LayerRole.Roulement => (0.02, 0.08),
                 LayerRole.Base => (0.10, 0.35),
-                LayerRole.Fondation => (0.15, 0.35),
+                LayerRole.Fondation => (0.15, 0.35), // Cas général (non-GNT)
                 _ => (0.0, double.MaxValue)
             };
         }

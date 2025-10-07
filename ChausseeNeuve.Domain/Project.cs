@@ -16,4 +16,11 @@ public class Project
 
     // Valeurs admissibles calculées (persistantes, DTO)
     public ObservableCollection<ValeurAdmissibleCoucheDto> ValeursAdmissibles { get; set; } = new ObservableCollection<ValeurAdmissibleCoucheDto>();
+
+    // Paramètres trafic (persistés pour la note de calcul)
+    public double? TraficMJA { get; set; }
+    public double? TauxAccroissement { get; set; }
+    public string? TypeTauxAccroissement { get; set; }
+    public int? DureeService { get; set; }
+    public double? TraficCumuleNPL { get; set; }
 }

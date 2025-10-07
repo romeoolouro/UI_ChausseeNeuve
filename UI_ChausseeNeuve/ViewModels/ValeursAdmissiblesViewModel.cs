@@ -243,6 +243,8 @@ namespace UI_ChausseeNeuve.ViewModels
             set
             {
                 _traficMJA = value;
+                // Persist immediately in project for report
+                try { if (AppState.CurrentProject != null) AppState.CurrentProject.TraficMJA = _traficMJA; } catch { }
                 SafePropertyChanged();
                 CalculerTraficCumuleCommand?.RaiseCanExecuteChanged();
                 // Recalcul trafic cumulé puis CAM auto (CAM dépend classe de trafic)
@@ -257,6 +259,7 @@ namespace UI_ChausseeNeuve.ViewModels
             set
             {
                 _tauxAccroissement = value;
+                try { if (AppState.CurrentProject != null) AppState.CurrentProject.TauxAccroissement = _tauxAccroissement; } catch { }
                 SafePropertyChanged();
                 CalculerTraficCumuleCommand?.RaiseCanExecuteChanged();
                 // Calcul automatique
@@ -270,6 +273,7 @@ namespace UI_ChausseeNeuve.ViewModels
             set
             {
                 _dureeService = value;
+                try { if (AppState.CurrentProject != null) AppState.CurrentProject.DureeService = _dureeService; } catch { }
                 SafePropertyChanged();
                 CalculerTraficCumuleCommand?.RaiseCanExecuteChanged();
                 // Calcul automatique
@@ -283,6 +287,7 @@ namespace UI_ChausseeNeuve.ViewModels
             set
             {
                 _typeTauxAccroissement = value ?? "géométrique (%)";
+                try { if (AppState.CurrentProject != null) AppState.CurrentProject.TypeTauxAccroissement = _typeTauxAccroissement; } catch { }
                 SafePropertyChanged();
                 CalculerTraficCumuleCommand?.RaiseCanExecuteChanged();
                 // Calcul automatique
@@ -290,18 +295,13 @@ namespace UI_ChausseeNeuve.ViewModels
             }
         }
 
-        public ObservableCollection<string> TypesTauxAccroissement { get; } = new ObservableCollection<string>
-        {
-            "arithmétique (%)",
-            "géométrique (%)"
-        };
-
         public double TraficCumule
         {
             get => _traficCumule;
             set
             {
                 _traficCumule = value;
+                try { if (AppState.CurrentProject != null) AppState.CurrentProject.TraficCumuleNPL = _traficCumule; } catch { }
                 SafePropertyChanged();
                 SafePropertyChanged(nameof(TraficCumuleFormatted));
                 UpdateNeForAllCouches();
@@ -461,6 +461,19 @@ namespace UI_ChausseeNeuve.ViewModels
                 // MAJ contexte global
                 AppState.TraficCumuleGlobal = TraficCumule;
                 AppState.TypeAccroissementGlobal = TypeTauxAccroissement;
+                // Persist full traffic parameter set in Project for report
+                try
+                {
+                    if (AppState.CurrentProject != null)
+                    {
+                        AppState.CurrentProject.TraficMJA = _traficMJA;
+                        AppState.CurrentProject.TauxAccroissement = _tauxAccroissement;
+                        AppState.CurrentProject.DureeService = _dureeService;
+                        AppState.CurrentProject.TypeTauxAccroissement = _typeTauxAccroissement;
+                        AppState.CurrentProject.TraficCumuleNPL = _traficCumule; // already updated by TraficCumule setter but ensure consistency
+                    }
+                }
+                catch { }
             }
             catch (Exception ex)
             {
