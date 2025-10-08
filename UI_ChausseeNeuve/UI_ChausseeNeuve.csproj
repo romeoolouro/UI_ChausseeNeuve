@@ -27,24 +27,29 @@
     </Resource>
   </ItemGroup>
   
-  <!-- Native DLL deployment configuration -->
+  <!-- Native DLL deployment configuration (OPTIONAL - For experimental testing only) -->
+  <!-- Production uses PyMastic Python Bridge - DLL not required -->
   <ItemGroup>
-    <None Include="..\PavementCalculationEngine\build-dll\bin\PavementCalculationEngine.dll">
+    <None Include="..\PavementCalculationEngine\build-dll\bin\PavementCalculationEngine.dll"
+          Condition="Exists('..\PavementCalculationEngine\build-dll\bin\PavementCalculationEngine.dll')">
       <Link>PavementCalculationEngine.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   
-  <!-- Ensure native DLL is copied after build -->
+  <!-- Copy native DLL if available (optional for testing) -->
   <Target Name="CopyNativeDLL" AfterTargets="Build">
     <Copy 
       SourceFiles="..\PavementCalculationEngine\build-dll\bin\PavementCalculationEngine.dll"
       DestinationFolder="$(OutDir)"
       SkipUnchangedFiles="true"
-      Condition="Exists('..\PavementCalculationEngine\build-dll\bin\PavementCalculationEngine.dll')" />
-    <Message Text="Copied native DLL to $(OutDir)" Importance="high" 
-             Condition="Exists('..\PavementCalculationEngine\build-dll\bin\PavementCalculationEngine.dll')" />
-    <Warning Text="Native DLL not found at ..\PavementCalculationEngine\build-dll\bin\PavementCalculationEngine.dll" 
-             Condition="!Exists('..\PavementCalculationEngine\build-dll\bin\PavementCalculationEngine.dll')" />
+      Condition="Exists('..\PavementCalculationEngine\build-dll\bin\PavementCalculationEngine.dll')"
+      ContinueOnError="true" />
+    <Message Text="✅ Native DLL copied - Experimental C++ calculations available for testing" 
+             Condition="Exists('..\PavementCalculationEngine\build-dll\bin\PavementCalculationEngine.dll')" 
+             Importance="high" />
+    <Message Text="ℹ️ Native DLL not found - Using PyMastic Python Bridge (production mode) - This is normal!" 
+             Condition="!Exists('..\PavementCalculationEngine\build-dll\bin\PavementCalculationEngine.dll')" 
+             Importance="high" />
   </Target>
 </Project>
