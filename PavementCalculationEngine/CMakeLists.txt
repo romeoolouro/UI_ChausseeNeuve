@@ -11,7 +11,7 @@ option(BUILD_TESTS "Build unit tests" ON)
 option(BUILD_EXECUTABLE "Build test executable" ON)
 
 # Find dependencies via vcpkg (when available)
-find_package(Boost QUIET)
+find_package(Boost QUIET COMPONENTS math_tr1)
 find_package(Eigen3 QUIET)
 
 # Include directories
@@ -43,13 +43,15 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
-# Source files - Task 2.1/2.2: Added C API, Task 5.2: Added TRMM Solver
+# Source files - Task 2.1/2.2: Added C API, Task 5.2: Added TRMM Solver, Phase 2A: Added PyMastic
 set(LIBRARY_SOURCES
     src/PavementData.cpp
     src/MatrixOperations.cpp
     src/PavementCalculator.cpp
     src/PavementAPI.cpp
     src/TRMMSolver.cpp
+    src/PyMasticSolver.cpp
+    src/PyMasticPythonBridge.cpp
 )
 
 set(LIBRARY_HEADERS
@@ -60,6 +62,8 @@ set(LIBRARY_HEADERS
     include/Constants.h
     include/PavementAPI.h
     include/TRMMSolver.h
+    include/PyMasticSolver.h
+    include/PyMasticPythonBridge.h
 )
 
 set(EXECUTABLE_SOURCES

@@ -1,0 +1,9 @@
+{
+  "q_kpa": 667.0,
+  "a_m": 0.1125,
+  "z_depths_m": [0.04],
+  "H_thicknesses_m": [0.04, 0.15],
+  "E_moduli_mpa": [5500, 600, 50],
+  "nu_poisson": [0.35, 0.35, 0.35],
+  "bonded_interfaces": [1, 1]
+}
