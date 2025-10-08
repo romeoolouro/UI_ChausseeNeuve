@@ -330,7 +330,7 @@
             </Border>
 
             <!-- Indicateur de calcul en cours -->
-            <Border Visibility="{Binding IsCalculating, Converter={StaticResource BooleanToVisibilityConverter}}" Background="{DynamicResource HeaderBg}" CornerRadius="8" Padding="15">
+            <Border Visibility="{Binding IsCalculating, Converter={StaticResource BooleanToVisibilityConverter}}" Background="#FF3C3C3C" CornerRadius="8" Padding="15">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                     <TextBlock Text="⏳" FontSize="24" Margin="0,0,10,0" />
                     <TextBlock Text="Calcul des valeurs admissibles en cours..." Foreground="White" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" />

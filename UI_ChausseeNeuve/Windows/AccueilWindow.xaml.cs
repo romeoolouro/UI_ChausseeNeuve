@@ -12,6 +12,7 @@ namespace UI_ChausseeNeuve.Windows
         // Instance persistante pour la navigation
         private ValeursAdmissiblesViewModel _valeursAdmissiblesViewModel = new ValeursAdmissiblesViewModel();
         private ValeursAdmissiblesView _valeursAdmissiblesView;
+        private NoteDeCalculView? _noteDeCalculView; // ajout
 
         public AccueilWindow()
         {
@@ -58,6 +59,11 @@ namespace UI_ChausseeNeuve.Windows
                     break;
                 case "resultats":
                     MainContent.Content = new ResultatView();
+                    CenterLogo.Visibility = Visibility.Collapsed;
+                    break;
+                case "note": // nouvelle section
+                    _noteDeCalculView ??= new NoteDeCalculView();
+                    MainContent.Content = _noteDeCalculView;
                     CenterLogo.Visibility = Visibility.Collapsed;
                     break;
                 default:

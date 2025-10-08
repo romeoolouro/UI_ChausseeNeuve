@@ -54,6 +54,11 @@ namespace ChausseeNeuve.Domain.Models
             {
                 if (!IsThicknessOutOfNorm) return string.Empty;
                 var (min, max) = GetThicknessRange();
+                if (ShouldExemptMinThickness(min))
+                {
+                    // Si exemptée, pas de message (considérée conforme)
+                    return string.Empty;
+                }
                 return $"Épaisseur {Thickness_m:F3} m hors plage normative [{min:F3}; {max:F3}] (NF P98-086).";
             }
         }
@@ -109,7 +114,8 @@ namespace ChausseeNeuve.Domain.Models
             get => _t;
             set
             {
-                var validatedValue = ValidateThickness(value);
+                var previous = _t;
+                var validatedValue = ValidateThickness(value, previous);
                 if (Math.Abs(_t - validatedValue) > 1e-9)
                 {
                     _t = validatedValue;
@@ -253,7 +259,12 @@ namespace ChausseeNeuve.Domain.Models
             return value;
         }
 
-        private double ValidateThickness(double value)
+        // Interaction utilisateur (fournie par la couche UI)
+        public enum ThicknessCorrectionChoice { Apply, Keep, Cancel }
+        public static Func<double, double, double, ThicknessCorrectionChoice>? AskThicknessCorrection; // (newValue, min, max)
+        public static Func<Layer, bool>? IsSmallestFoundationProvider; // retourne true si cette couche est la plus mince des fondations
+
+        private double ValidateThickness(double value, double previousValue)
         {
             ClearErrors(nameof(Thickness_m));
 
@@ -265,18 +276,48 @@ namespace ChausseeNeuve.Domain.Models
 
             var (min, max) = GetThicknessRange();
 
+            // Exemption (mode Expert) : plus petite sous-couche de fondation pour structure Souple ou Bitumineuse épaisse
+            if (ShouldExemptMinThickness(min))
+            {
+                // Neutraliser le minimum pour la validation (on considère conforme)
+                min = 0.0;
+            }
+
+            // Mode Expert interactif: proposer correction
             if (Mode == DimensionnementMode.Expert)
             {
                 bool outNorm = value < min || value > max;
                 IsThicknessOutOfNorm = outNorm;
                 if (outNorm)
                 {
+                    // Si un gestionnaire interactif est defini on l utilise
+                    if (AskThicknessCorrection != null)
+                    {
+                        var choice = AskThicknessCorrection(value, min, max);
+                        switch (choice)
+                        {
+                            case ThicknessCorrectionChoice.Apply:
+                                double corrected = value < min ? min : (value > max ? max : value);
+                                AppendCorrectionNote($"Épaisseur ajustée manuellement à {corrected:F3} m (plage [{min:F3};{max:F3}])");
+                                NotifyToast?.Invoke($"Épaisseur couche {Role} ajustée à {corrected:F3} m (norme)", ToastType.Success);
+                                IsThicknessOutOfNorm = false;
+                                return corrected;
+                            case ThicknessCorrectionChoice.Keep:
+                                AddError(nameof(Thickness_m), $"Avertissement: épaisseur {value:F3} m hors plage [{min:F3};{max:F3}] conservée (Expert)");
+                                WarnOnce(nameof(Thickness_m), $"Épaisseur hors norme conservée ({value:F3} m)");
+                                return value;
+                            case ThicknessCorrectionChoice.Cancel:
+                                NotifyToast?.Invoke($"Modification épaisseur annulée (retour {previousValue:F3} m)", ToastType.Info);
+                                return previousValue;
+                        }
+                    }
                     AddError(nameof(Thickness_m), $"Avertissement: épaisseur {value:F3} m hors plage [{min:F3};{max:F3}] (Expert—non corrigée)");
                     WarnOnce(nameof(Thickness_m), $"Épaisseur hors norme conservée ({value:F3} m). Mode Automatique l'ajusterait.");
                 }
                 return value;
             }
 
+            // Mode automatique (inchangé)
             if (value < min)
             {
                 IsThicknessOutOfNorm = false;
@@ -309,7 +350,8 @@ namespace ChausseeNeuve.Domain.Models
             }
             _E = ValidateModulus(_E);
             _nu = ValidatePoisson(_nu);
-            _t = ValidateThickness(_t);
+            // passer previousValue = _t pour réévaluer (pas de changement effectif ici)
+            _t = ValidateThickness(_t, _t);
             OnPropertyChanged(nameof(Modulus_MPa));
             OnPropertyChanged(nameof(Poisson));
             OnPropertyChanged(nameof(Thickness_m));
@@ -341,22 +383,50 @@ namespace ChausseeNeuve.Domain.Models
 
         private (double min, double max) GetThicknessRange()
         {
-            // Si c'est une couche de fondation en GNT dans une structure souple en mode automatique,
-            // on ne met pas de limite maximale d'épaisseur
-            if (Mode == DimensionnementMode.Automatique && 
-                Role == LayerRole.Fondation && 
-                Family == MaterialFamily.GNT)
+            // Cas particulier : structure Bitumineuse épaisse -> couche de surface min 0.12 m, plus de plafond 0.08
+            if (string.Equals(CurrentStructureType, "Bitumineuse épaisse", StringComparison.OrdinalIgnoreCase) && Role == LayerRole.Roulement)
             {
-                return (0.15, double.MaxValue); // Minimum 15cm, pas de maximum
+                return (0.12, 0.35); // tolérance jusqu'à 35 cm (au besoin ajuster)
+            }
+            
+            // MODIFICATION FINALE : Pour les couches de fondation en GNT en mode automatique,
+            // ne plus imposer AUCUN minimum d'épaisseur individuelle
+            // La structuration automatique doit pouvoir créer des sous-couches de n'importe quelle épaisseur
+            // tant que l'épaisseur totale des fondations est ? 15cm (contrôlé au niveau global)
+            if (Role == LayerRole.Fondation && Family == MaterialFamily.GNT)
+            {
+                if (Mode == DimensionnementMode.Automatique)
+                {
+                    // AUCUN minimum : permettre même des sous-couches de 1cm, 4cm, etc.
+                    // La validation se fait uniquement sur l'épaisseur totale au niveau du ViewModel
+                    return (0.0, double.MaxValue);
+                }
+                else
+                {
+                    // En mode Expert, garder la règle normative classique de 15cm minimum
+                    return (0.15, 0.35);
+                }
             }
 
             return Role switch
             {
                 LayerRole.Roulement => (0.02, 0.08),
                 LayerRole.Base => (0.10, 0.35),
-                LayerRole.Fondation => (0.15, 0.35),
+                LayerRole.Fondation => (0.15, 0.35), // Cas général (non-GNT)
                 _ => (0.0, double.MaxValue)
             };
+        }
+
+        private bool ShouldExemptMinThickness(double currentMin)
+        {
+            if (Mode != DimensionnementMode.Expert) return false;
+            if (Role != LayerRole.Fondation) return false;
+            if (string.IsNullOrEmpty(CurrentStructureType)) return false;
+            if (!CurrentStructureType.Equals("Souple", StringComparison.OrdinalIgnoreCase) &&
+                !CurrentStructureType.Equals("Bitumineuse épaisse", StringComparison.OrdinalIgnoreCase)) return false;
+            if (IsSmallestFoundationProvider?.Invoke(this) != true) return false;
+            // Exemption seulement si la regle impose un min > 0 (ex: 0.15)
+            return currentMin > 0 && Thickness_m < currentMin;
         }
 
         // INotifyDataErrorInfo
@@ -454,6 +524,13 @@ namespace ChausseeNeuve.Domain.Models
             };
 
             return Math.Round(baseKd * thicknessMultiplier, 2);
+        }
+
+        private string? _currentStructureType;
+        public string? CurrentStructureType
+        {
+            get => _currentStructureType;
+            set { if (_currentStructureType != value) { _currentStructureType = value; OnPropertyChanged(); ValidateAll(); } }
         }
     }
 

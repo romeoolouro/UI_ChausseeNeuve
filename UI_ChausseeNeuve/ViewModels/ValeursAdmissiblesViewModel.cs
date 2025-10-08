@@ -243,6 +243,8 @@ namespace UI_ChausseeNeuve.ViewModels
             set
             {
                 _traficMJA = value;
+                // Persist immediately in project for report
+                try { if (AppState.CurrentProject != null) AppState.CurrentProject.TraficMJA = _traficMJA; } catch { }
                 SafePropertyChanged();
                 CalculerTraficCumuleCommand?.RaiseCanExecuteChanged();
                 // Recalcul trafic cumulé puis CAM auto (CAM dépend classe de trafic)
@@ -257,6 +259,7 @@ namespace UI_ChausseeNeuve.ViewModels
             set
             {
                 _tauxAccroissement = value;
+                try { if (AppState.CurrentProject != null) AppState.CurrentProject.TauxAccroissement = _tauxAccroissement; } catch { }
                 SafePropertyChanged();
                 CalculerTraficCumuleCommand?.RaiseCanExecuteChanged();
                 // Calcul automatique
@@ -270,6 +273,7 @@ namespace UI_ChausseeNeuve.ViewModels
             set
             {
                 _dureeService = value;
+                try { if (AppState.CurrentProject != null) AppState.CurrentProject.DureeService = _dureeService; } catch { }
                 SafePropertyChanged();
                 CalculerTraficCumuleCommand?.RaiseCanExecuteChanged();
                 // Calcul automatique
@@ -283,6 +287,7 @@ namespace UI_ChausseeNeuve.ViewModels
             set
             {
                 _typeTauxAccroissement = value ?? "géométrique (%)";
+                try { if (AppState.CurrentProject != null) AppState.CurrentProject.TypeTauxAccroissement = _typeTauxAccroissement; } catch { }
                 SafePropertyChanged();
                 CalculerTraficCumuleCommand?.RaiseCanExecuteChanged();
                 // Calcul automatique
@@ -290,18 +295,13 @@ namespace UI_ChausseeNeuve.ViewModels
             }
         }
 
-        public ObservableCollection<string> TypesTauxAccroissement { get; } = new ObservableCollection<string>
-        {
-            "arithmétique (%)",
-            "géométrique (%)"
-        };
-
         public double TraficCumule
         {
             get => _traficCumule;
             set
             {
                 _traficCumule = value;
+                try { if (AppState.CurrentProject != null) AppState.CurrentProject.TraficCumuleNPL = _traficCumule; } catch { }
                 SafePropertyChanged();
                 SafePropertyChanged(nameof(TraficCumuleFormatted));
                 UpdateNeForAllCouches();
@@ -458,6 +458,22 @@ namespace UI_ChausseeNeuve.ViewModels
                 }
 
                 System.Diagnostics.Debug.WriteLine($"Résultat TCPL: {TraficCumule}");
+                // MAJ contexte global
+                AppState.TraficCumuleGlobal = TraficCumule;
+                AppState.TypeAccroissementGlobal = TypeTauxAccroissement;
+                // Persist full traffic parameter set in Project for report
+                try
+                {
+                    if (AppState.CurrentProject != null)
+                    {
+                        AppState.CurrentProject.TraficMJA = _traficMJA;
+                        AppState.CurrentProject.TauxAccroissement = _tauxAccroissement;
+                        AppState.CurrentProject.DureeService = _dureeService;
+                        AppState.CurrentProject.TypeTauxAccroissement = _typeTauxAccroissement;
+                        AppState.CurrentProject.TraficCumuleNPL = _traficCumule; // already updated by TraficCumule setter but ensure consistency
+                    }
+                }
+                catch { }
             }
             catch (Exception ex)
             {
@@ -1384,6 +1400,14 @@ namespace UI_ChausseeNeuve.ViewModels
         private bool _kthetaAuto = false;
         public bool CamUserSet { get; private set; }
 
+        // Champs ajoutés pour calcul inverse (NEmax, réserve, etc.) conservés pour compatibilité ENC
+        private double _nEmax; // NE maximum admissible inverse
+        private double _nEReserve; // NEmax - NE
+        private double _tauxUtilInverse; // NE / NEmax
+        public double NEmax { get => _nEmax; set { _nEmax = value; SafePropertyChanged(); } }
+        public double NEReserve { get => _nEReserve; set { _nEReserve = value; SafePropertyChanged(); } }
+        public double TauxUtilInverse { get => _tauxUtilInverse; set { _tauxUtilInverse = value; SafePropertyChanged(); } }
+
         public string Materiau { get => _materiau; set { _materiau = value ?? ""; SafePropertyChanged(); } }
         public int Niveau { get => _niveau; set { _niveau = value; SafePropertyChanged(); } }
         public string Critere { get => _critere; set { _critere = value ?? "EpsiT"; SafePropertyChanged(); SafePropertyChanged(nameof(AmplitudeLabel)); SafePropertyChanged(nameof(IsEpsiZ)); SafePropertyChanged(nameof(IsEpsiT)); SafePropertyChanged(nameof(IsSigmaT)); SafePropertyChanged(nameof(CanEditSn)); SafePropertyChanged(nameof(CanEditSh)); SafePropertyChanged(nameof(CanEditKc)); SafePropertyChanged(nameof(CanEditKr)); SafePropertyChanged(nameof(CanEditKs)); SafePropertyChanged(nameof(CanEditKtheta)); SafePropertyChanged(nameof(CanEditKd)); SafePropertyChanged(nameof(CanEditRisque)); SafePropertyChanged(nameof(CanEditEpsilon6)); SafePropertyChanged(nameof(CanEditAmplitude)); } }
@@ -1391,17 +1415,17 @@ namespace UI_ChausseeNeuve.ViewModels
         public bool IsEpsiT => string.Equals(_critere, "EpsiT", StringComparison.OrdinalIgnoreCase);
         public bool IsSigmaT => string.Equals(_critere, "SigmaT", StringComparison.OrdinalIgnoreCase);
         private bool IsStructureSouple => string.Equals(AppState.CurrentProject?.PavementStructure?.StructureType, "Souple", StringComparison.OrdinalIgnoreCase);
-        public bool CanEditAmplitude => !(IsStructureSouple && IsEpsiZ); // verrou amplitude en structure souple pour EpsiZ
-        // Contrôles d'édition : interdits pour EpsiZ
-        public bool CanEditSn => !IsEpsiZ;
-        public bool CanEditSh => !IsEpsiZ;
-        public bool CanEditKc => !IsEpsiZ;
-        public bool CanEditKr => !IsEpsiZ;
-        public bool CanEditKs => !IsEpsiZ; // ks reste calculé / verrouillé
-        public bool CanEditKtheta => !IsEpsiZ; // idem
-        public bool CanEditKd => !IsEpsiZ;
-        public bool CanEditRisque => !IsEpsiZ; // Risque déjà forcé selon règle pour bitumineux / souple
-        public bool CanEditEpsilon6 => !IsEpsiZ; // inutilisé pour EpsiZ
+        public bool CanEditAmplitude => IsEpsiZ; // Amplitude (A) toujours editable pour EpsiZ
+        // Contrôles d'édition spécifiques aux critères
+        public bool CanEditSn => !IsEpsiZ;              // Pas utilisé pour EpsiZ
+        public bool CanEditSh => !IsEpsiZ;              // Pas utilisé pour EpsiZ
+        public bool CanEditKc => !IsEpsiZ;              // Pas utilisé pour EpsiZ
+        public bool CanEditKr => !IsEpsiZ;              // Pas utilisé pour EpsiZ
+        public bool CanEditKs => !IsEpsiZ && IsEpsiT;   // Ks uniquement pertinent pour EpsiT (fatigue en flexion)
+        public bool CanEditKtheta => IsEpsiT;           // kθ seulement pour EpsiT
+        public bool CanEditKd => !IsEpsiZ && (IsEpsiT || IsSigmaT); // Kd pas pour EpsiZ
+        public bool CanEditRisque => !IsEpsiZ;          // Risque pas pour EpsiZ
+        public bool CanEditEpsilon6 => IsEpsiT;         // ε6 uniquement pour EpsiT (SigmaT utilise σ6, EpsiZ utilise A)
         public double Sn { get => _sn; set { _sn = value; SafePropertyChanged(); } }
         public double Sh { get => _sh; set { _sh = value; SafePropertyChanged(); } }
         public double B { get => _b; set { _b = value; SafePropertyChanged(); } }
