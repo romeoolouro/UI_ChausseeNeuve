@@ -32,7 +32,8 @@ namespace UI_ChausseeNeuve
         }
 
         /// <summary>
-        /// Verify native DLL is available and functional
+        /// Verify native DLL is available and functional (SILENT MODE - Production)
+        /// Native DLL is OPTIONAL - Application uses PyMastic Python Bridge by default
         /// </summary>
         private void VerifyNativeLibrary()
         {
@@ -45,7 +46,8 @@ namespace UI_ChausseeNeuve
 
                 if (!File.Exists(dllPath))
                 {
-                    ShowNativeDllWarning($"PavementCalculationEngine.dll not found at: {dllPath}");
+                    // ✅ SILENT MODE: No warning - DLL is optional, PyMastic Python Bridge is production default
+                    // ShowNativeDllWarning($"PavementCalculationEngine.dll not found at: {dllPath}");
                     return;
                 }
 
@@ -54,7 +56,8 @@ namespace UI_ChausseeNeuve
                 
                 if (!testService.IsNativeCalculationAvailable)
                 {
-                    ShowNativeDllInfo("Native library is not available. Application will use legacy calculations.");
+                    // ✅ SILENT MODE: No info message - Application works perfectly without DLL
+                    // ShowNativeDllInfo("Native library is not available. Application will use legacy calculations.");
                     return;
                 }
 
@@ -62,7 +65,8 @@ namespace UI_ChausseeNeuve
                 var (testPassed, testResult) = testService.TestNativeLibrary();
                 if (!testPassed)
                 {
-                    ShowNativeDllWarning($"Native library test failed: {testResult}");
+                    // ✅ SILENT MODE: No warning - DLL test failure is not critical
+                    // ShowNativeDllWarning($"Native library test failed: {testResult}");
                     return;
                 }
 
@@ -71,9 +75,10 @@ namespace UI_ChausseeNeuve
                 // Console.WriteLine($"Native calculation engine loaded successfully: {testService.EngineInfo}");
                 // Console.WriteLine($"Test result: {testResult}");
             }
-            catch (Exception ex)
+            catch
             {
-                ShowNativeDllWarning($"Failed to verify native library: {ex.Message}");
+                // ✅ SILENT MODE: No warning on exception - Application continues normally
+                // DLL is optional, application works perfectly with PyMastic Python Bridge
             }
         }
 
