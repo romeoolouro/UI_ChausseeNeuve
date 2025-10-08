@@ -8,6 +8,10 @@ Cette section contient la documentation technique et fonctionnelle du projet UI_
 - **[DOCUMENTATION_DOMAINE.md](DOCUMENTATION_DOMAINE.md)** - Documentation du domaine métier et des modèles de données
 - **[PAVEMENT_CALCULATION_TECHNICAL_ACHIEVEMENTS.md](PAVEMENT_CALCULATION_TECHNICAL_ACHIEVEMENTS.md)** - Réalisations techniques du moteur de calcul
 
+## 🚨 IMPORTANT - Production
+
+- **[PRODUCTION_ALGORITHM_STATUS.md](PRODUCTION_ALGORITHM_STATUS.md)** - **À LIRE OBLIGATOIREMENT** - État actuel des algorithmes, ce qui est en production vs expérimental
+
 ## Développement Futur
 
 - **[PYMASTIC_CPP_DEBUG_PLAN.md](PYMASTIC_CPP_DEBUG_PLAN.md)** - Plan de débogage et d'optimisation C++ PyMastic (parallèle au bridge Python actuel)

@@ -17,10 +17,13 @@ Application WPF .NET 8 pour le calcul et dimensionnement de structures de chauss
 - **Fenêtre 3** : Interface principale avec barre latérale expandable et calculs
 
 ### Moteur de Calcul
-- **PavementCalculationEngine** : Moteur C++ haute performance
-- **PyMastic Python Bridge** : Interface validée pour calculs PyMastic (précision 0.01%)
-- **TRMM Solver** : Implémentation des calculs TRMM
-- **API C** : Interface pour intégration .NET
+- **PavementCalculationEngine** : Moteur C++ avec intégration Python
+- **PyMastic Python Bridge** : Interface subprocess vers [PyMastic](https://github.com/Mostafa-Nakhaei/PyMastic) (précision validée 0.01%)
+  - **Actuellement en production** : Seul algorithme validé et déployé
+- **Développements futurs** :
+  - TRMM Solver C++ : Erreurs de précision à résoudre
+  - PyMastic C++ port : Erreurs de précision à corriger
+  - Voir `docs/PYMASTIC_CPP_DEBUG_PLAN.md` pour les plans d'optimisation
 
 ### Domaine Métier
 - **Modèles de données** : Structures de chaussée, charges, paramètres matériaux
@@ -44,9 +47,8 @@ UI_ChausseeNeuve/
 ### Prérequis
 - Visual Studio 2022 ou plus récent
 - .NET 8 SDK
-- CMake 3.20+
-- Python 3.8+ (pour PyMastic bridge)
-- vcpkg (gestion des dépendances C++)
+- Python 3.8+ (pour PyMastic bridge - **REQUIS pour la production**)
+- CMake 3.20+ (pour compilation moteur C++)
 
 ### Compilation
 
@@ -56,16 +58,30 @@ UI_ChausseeNeuve/
    cd UI_ChausseeNeuve
    ```
 
-2. **Compiler le moteur de calcul**
+2. **Installer PyMastic Python** (REQUIS)
+   ```bash
+   cd PavementCalculationEngine/extern
+   git clone https://github.com/Mostafa-Nakhaei/PyMastic.git
+   cd PyMastic
+   pip install -r requirements.txt
+   ```
+
+3. **Compiler le moteur de calcul**
    ```bash
    cd PavementCalculationEngine
    build_dll_clean.bat
    ```
 
-3. **Compiler l'application**
+4. **Compiler l'application**
    ```bash
-   dotnet build UI_ChausseeNeuve.sln
+   dotnet build UI_ChausseeNeuve.sln -c Release
    ```
+
+### Configuration Production
+
+- ✅ Console désactivée : `OutputType` = `WinExe`
+- ✅ Tests exclus : Non inclus dans `UI_ChausseeNeuve.sln`
+- ✅ Build Release : Optimisé pour déploiement
 
 ## 🚦 Utilisation
 
@@ -81,9 +97,14 @@ dotnet run --project UI_ChausseeNeuve
 
 ## 📊 Validation et Précision
 
-- **PyMastic Python Bridge** : Validé contre Tableau I.1 avec erreur de 0.01%
-- **Calculs de contraintes** : Résultats conformes aux références techniques
-- **Tests automatisés** : Suite de tests pour validation continue
+- **PyMastic Python Bridge** : 
+  - Utilise le repos officiel [PyMastic de Mostafa Nakhaei](https://github.com/Mostafa-Nakhaei/PyMastic)
+  - Validé contre Tableau I.1 avec erreur de 0.01% (711.6 μɛ vs 711.5±4 μɛ attendu)
+  - **Seul algorithme actuellement en production**
+- **Développements expérimentaux** :
+  - TRMM Solver C++ : Erreurs de précision non résolues
+  - PyMastic C++ : Port avec erreurs de précision significatives (>1500×)
+  - Plans de debug documentés dans `docs/PYMASTIC_CPP_DEBUG_PLAN.md`
 
 ## 📖 Documentation
 
@@ -105,10 +126,11 @@ Voir `PavementCalculationEngine/debug-scripts/` pour les outils de développemen
 ## 📈 Statut du Projet
 
 ✅ **Interface WPF** : Complète et fonctionnelle  
-✅ **PyMastic Bridge** : Production-ready (précision validée)  
-✅ **TRMM Solver** : Implémenté et testé  
-✅ **Integration .NET** : API C complète  
-🔄 **Optimisation C++** : Planifiée (voir plan de debug)
+✅ **PyMastic Python Bridge** : **EN PRODUCTION** - Seul algorithme validé (0.01% erreur)  
+❌ **TRMM Solver C++** : Erreurs de précision - Développement futur  
+❌ **PyMastic C++ Port** : Erreurs de précision - Développement futur  
+✅ **Integration .NET** : API C complète avec subprocess Python  
+🔄 **Optimisation C++** : Planifiée (voir `docs/PYMASTIC_CPP_DEBUG_PLAN.md`)
 
 ## 🤝 Contribution
 
