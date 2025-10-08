@@ -290,13 +290,13 @@ namespace UI_ChausseeNeuve.Services
             var radialStrains = nativeOutput.GetRadialStrains();
             var shearStresses = nativeOutput.GetShearStresses();
 
-            // DIAGNOSTIC: Log raw data from native calculation
-            Console.WriteLine($"=== NATIVE RESULTS DEBUG ===");
-            Console.WriteLine($"Deflections length: {deflections.Length}, values: [{string.Join(", ", deflections.Take(10))}]");
-            Console.WriteLine($"Vertical stresses length: {verticalStresses.Length}, values: [{string.Join(", ", verticalStresses.Take(10))}]");
-            Console.WriteLine($"Horizontal strains length: {horizontalStrains.Length}, values: [{string.Join(", ", horizontalStrains.Take(10))}]");
-            Console.WriteLine($"Radial strains length: {radialStrains.Length}, values: [{string.Join(", ", radialStrains.Take(10))}]");
-            Console.WriteLine($"Structure layers count: {structure.Layers.Count}");
+            // Debug logging disabled for production
+            // Console.WriteLine($"=== NATIVE RESULTS DEBUG ===");
+            // Console.WriteLine($"Deflections length: {deflections.Length}, values: [{string.Join(", ", deflections.Take(10))}]");
+            // Console.WriteLine($"Vertical stresses length: {verticalStresses.Length}, values: [{string.Join(", ", verticalStresses.Take(10))}]");
+            // Console.WriteLine($"Horizontal strains length: {horizontalStrains.Length}, values: [{string.Join(", ", horizontalStrains.Take(10))}]");
+            // Console.WriteLine($"Radial strains length: {radialStrains.Length}, values: [{string.Join(", ", radialStrains.Take(10))}]");
+            // Console.WriteLine($"Structure layers count: {structure.Layers.Count}");
 
             // Order layers same as in input preparation
             var orderedLayers = structure.Layers
@@ -335,9 +335,9 @@ namespace UI_ChausseeNeuve.Services
                     // σT = E * εT * 10^-6 (convert microstrain to strain)
                     layerResult.SigmaTTop = layer.Modulus_MPa * horizontalStrains[resultIndex] * 1e-6;
 
-                    // DIAGNOSTIC: Log calculation details
-                    Console.WriteLine($"Layer {layerIndex} ({layer.MaterialName}): E={layer.Modulus_MPa} MPa, εT={horizontalStrains[resultIndex]} μstrain");
-                    Console.WriteLine($"  → σT = {layer.Modulus_MPa} × {horizontalStrains[resultIndex]} × 1e-6 = {layerResult.SigmaTTop} MPa");
+                    // Debug logging disabled for production
+                    // Console.WriteLine($"Layer {layerIndex} ({layer.MaterialName}): E={layer.Modulus_MPa} MPa, εT={horizontalStrains[resultIndex]} μstrain");
+                    // Console.WriteLine($"  → σT = {layer.Modulus_MPa} × {horizontalStrains[resultIndex]} × 1e-6 = {layerResult.SigmaTTop} MPa");
 
                     // Vertical strain (radial strain)
                     layerResult.EpsilonZTop = resultIndex < radialStrains.Length ? radialStrains[resultIndex] : 0;

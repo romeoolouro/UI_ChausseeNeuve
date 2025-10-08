@@ -129,23 +129,25 @@ namespace UI_ChausseeNeuve.Services.PavementCalculation
             if (_nativeCalculator == null || !_nativeCalculator.IsNativeLibraryAvailable)
                 throw new NativeLibraryUnavailableException("Native calculation library is not available");
 
-            Console.WriteLine($"=== HYBRID SERVICE: Using NATIVE calculation ===");
-            Console.WriteLine($"Structure: {structure.Layers.Count} layers");
-            foreach (var layer in structure.Layers)
-            {
-                Console.WriteLine($"  - {layer.MaterialName}: E={layer.Modulus_MPa} MPa, ν={layer.Poisson}, h={layer.Thickness_m}m");
-            }
+            // Debug logging disabled for production
+            // Console.WriteLine($"=== HYBRID SERVICE: Using NATIVE calculation ===");
+            // Console.WriteLine($"Structure: {structure.Layers.Count} layers");
+            // foreach (var layer in structure.Layers)
+            // {
+            //     Console.WriteLine($"  - {layer.MaterialName}: E={layer.Modulus_MPa} MPa, ν={layer.Poisson}, h={layer.Thickness_m}m");
+            // }
             
             var result = _nativeCalculator.CalculateSolicitations(structure);
             result.Message = $"[NATIVE] {result.Message}";
             
-            Console.WriteLine($"Native calculation complete: {result.LayerResults.Count} layer results");
-            foreach (var layerResult in result.LayerResults)
-            {
-                Console.WriteLine($"  Layer {layerResult.Layer.MaterialName}:");
-                Console.WriteLine($"    σT_top={layerResult.SigmaTTop}, εT_top={layerResult.EpsilonTTop}");
-                Console.WriteLine($"    σZ_top={layerResult.SigmaZTop}, εZ_top={layerResult.EpsilonZTop}");
-            }
+            // Debug logging disabled for production
+            // Console.WriteLine($"Native calculation complete: {result.LayerResults.Count} layer results");
+            // foreach (var layerResult in result.LayerResults)
+            // {
+            //     Console.WriteLine($"  Layer {layerResult.Layer.MaterialName}:");
+            //     Console.WriteLine($"    σT_top={layerResult.SigmaTTop}, εT_top={layerResult.EpsilonTTop}");
+            //     Console.WriteLine($"    σZ_top={layerResult.SigmaZTop}, εZ_top={layerResult.EpsilonZTop}");
+            // }
             
             return result;
         }

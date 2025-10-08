@@ -19,14 +19,11 @@ namespace UI_ChausseeNeuve
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            // Attacher une console pour voir les logs Console.WriteLine
-            if (!AttachConsole(-1)) // -1 = ATTACH_PARENT_PROCESS
-            {
-                AllocConsole(); // Créer une nouvelle console si échec
-            }
-            
-            Console.WriteLine("=== APPLICATION WPF DÉMARRÉE AVEC CONSOLE ===");
-            Console.WriteLine($"Heure de démarrage: {DateTime.Now:HH:mm:ss.fff}");
+            // ✅ PRODUCTION MODE: Console logging disabled for clean deployment
+            // Uncomment lines below for debugging if needed:
+            // if (!AttachConsole(-1)) { AllocConsole(); }
+            // Console.WriteLine("=== APPLICATION WPF DÉMARRÉE AVEC CONSOLE ===");
+            // Console.WriteLine($"Heure de démarrage: {DateTime.Now:HH:mm:ss.fff}");
             
             // Perform native library verification on startup
             VerifyNativeLibrary();
@@ -70,8 +67,9 @@ namespace UI_ChausseeNeuve
                 }
 
                 // Success - native calculations available
-                Console.WriteLine($"Native calculation engine loaded successfully: {testService.EngineInfo}");
-                Console.WriteLine($"Test result: {testResult}");
+                // Debug logging disabled for production
+                // Console.WriteLine($"Native calculation engine loaded successfully: {testService.EngineInfo}");
+                // Console.WriteLine($"Test result: {testResult}");
             }
             catch (Exception ex)
             {
