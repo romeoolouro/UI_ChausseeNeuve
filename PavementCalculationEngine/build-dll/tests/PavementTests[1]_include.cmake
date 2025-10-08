@@ -1,0 +1,5 @@
+if(EXISTS "C:/Users/JOSAPHAT/source/repos/UI_ChausseeNeuve/PavementCalculationEngine/build-dll/tests/PavementTests[1]_tests.cmake")
+  include("C:/Users/JOSAPHAT/source/repos/UI_ChausseeNeuve/PavementCalculationEngine/build-dll/tests/PavementTests[1]_tests.cmake")
+else()
+  add_test(PavementTests_NOT_BUILT PavementTests_NOT_BUILT)
+endif()

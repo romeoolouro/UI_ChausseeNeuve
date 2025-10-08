@@ -160,7 +160,7 @@ namespace UI_ChausseeNeuve.Services.PavementCalculation
                 // Try to call the version function as a simple availability test
                 IntPtr versionPtr = PavementGetVersion();
                 string version = PtrToString(versionPtr);
-                
+
                 // Version should be non-empty if the DLL loaded correctly
                 return !string.IsNullOrEmpty(version);
             }
@@ -183,10 +183,10 @@ namespace UI_ChausseeNeuve.Services.PavementCalculation
             {
                 const int bufferSize = 512;
                 StringBuilder errorBuffer = new StringBuilder(bufferSize);
-                
+
                 int result = PavementValidateInput(ref input, errorBuffer, bufferSize);
                 errorMessage = errorBuffer.ToString();
-                
+
                 return (PavementErrorCode)result;
             }
             catch (Exception ex)

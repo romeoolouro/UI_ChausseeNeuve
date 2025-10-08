@@ -68,13 +68,13 @@ namespace UI_ChausseeNeuve.Services
 
                 // Prepare input for native calculation
                 using var nativeInput = PrepareNativeInput(structure);
-                
+
                 // Perform native calculation
                 using var nativeOutput = PerformNativeCalculation(nativeInput);
-                
+
                 // Convert results back to managed format
                 var results = ConvertNativeResults(nativeOutput, structure);
-                
+
                 var duration = DateTime.Now - startTime;
 
                 return new SolicitationCalculationResult
@@ -135,10 +135,10 @@ namespace UI_ChausseeNeuve.Services
             {
                 if (layer.Modulus_MPa <= 0)
                     throw new ArgumentException($"Invalid Young's modulus for layer {layer.MaterialName}: {layer.Modulus_MPa}");
-                
+
                 if (layer.Poisson <= 0 || layer.Poisson >= 0.5)
                     throw new ArgumentException($"Invalid Poisson ratio for layer {layer.MaterialName}: {layer.Poisson}");
-                
+
                 if (layer.Role != LayerRole.Plateforme && layer.Thickness_m <= 0)
                     throw new ArgumentException($"Invalid thickness for layer {layer.MaterialName}: {layer.Thickness_m}");
             }
@@ -166,22 +166,22 @@ namespace UI_ChausseeNeuve.Services
             orderedLayers.Add(platformLayer);
 
             var input = new ManagedPavementInput();
-            
+
             // Layer configuration
             input.LayerCount = orderedLayers.Count;
-            
+
             var poissonRatios = orderedLayers.Select(l => l.Poisson).ToArray();
             var youngModuli = orderedLayers.Select(l => l.Modulus_MPa).ToArray();
             var thicknesses = orderedLayers.Select(l => l.Thickness_m).ToArray();
-            
+
             // Interface bonding: assume fully bonded for now (can be enhanced later)
             var bondedInterfaces = Enumerable.Repeat(1, orderedLayers.Count - 1).ToArray();
-            
+
             input.SetLayerProperties(poissonRatios, youngModuli, thicknesses, bondedInterfaces);
 
             // Load configuration
-            input.WheelType = structure.ChargeReference.Type == ChargeType.RoueIsolee 
-                ? WheelType.Simple 
+            input.WheelType = structure.ChargeReference.Type == ChargeType.RoueIsolee
+                ? WheelType.Simple
                 : WheelType.Twin;
             input.PressureKPa = structure.ChargeReference.PressionMPa * 1000; // Convert MPa to kPa
             input.WheelRadiusM = structure.ChargeReference.RayonMetres;
@@ -190,11 +190,11 @@ namespace UI_ChausseeNeuve.Services
             // Calculation points: top and bottom of each layer
             var zCoords = new List<double>();
             double currentDepth = 0;
-            
+
             foreach (var layer in orderedLayers)
             {
                 zCoords.Add(currentDepth); // Top of layer
-                
+
                 if (layer.Role != LayerRole.Plateforme)
                 {
                     currentDepth += layer.Thickness_m;
@@ -225,37 +225,37 @@ namespace UI_ChausseeNeuve.Services
             var validationResult = NativeInterop.ValidateInputNative(ref input.GetNativeStruct(), out string validationError);
             if (validationResult != PavementErrorCode.Success)
             {
-                throw new PavementCalculationException(validationResult, 
+                throw new PavementCalculationException(validationResult,
                     $"Input validation failed: {validationError}");
             }
 
             // Initialize output structure
             var nativeOutput = new PavementOutputC();
-            
+
             try
             {
                 // Call native TRMM calculation for numerical stability
                 // TRMM (Transmission and Reflection Matrix Method) avoids exponential overflow
                 // issues in standard TMM for high m*h values (stiff/thick layers)
                 int result = NativeInterop.PavementCalculateStable(
-                    ref input.GetNativeStruct(), 
+                    ref input.GetNativeStruct(),
                     ref nativeOutput);
 
                 var managedOutput = new ManagedPavementOutput(nativeOutput);
 
                 if (result != (int)PavementErrorCode.Success)
                 {
-                    string errorMessage = !string.IsNullOrEmpty(managedOutput.ErrorMessage) 
-                        ? managedOutput.ErrorMessage 
+                    string errorMessage = !string.IsNullOrEmpty(managedOutput.ErrorMessage)
+                        ? managedOutput.ErrorMessage
                         : NativeInterop.GetLastErrorString();
-                    
-                    throw new PavementCalculationException((PavementErrorCode)result, 
+
+                    throw new PavementCalculationException((PavementErrorCode)result,
                         $"Native calculation failed: {errorMessage}");
                 }
 
                 if (!managedOutput.Success)
                 {
-                    throw new PavementCalculationException(managedOutput.ErrorCode, 
+                    throw new PavementCalculationException(managedOutput.ErrorCode,
                         $"Calculation unsuccessful: {managedOutput.ErrorMessage}");
                 }
 
@@ -271,7 +271,7 @@ namespace UI_ChausseeNeuve.Services
             {
                 // Free output and wrap in native calculation exception
                 NativeInterop.PavementFreeOutput(ref nativeOutput);
-                throw new PavementCalculationException(PavementErrorCode.Unknown, 
+                throw new PavementCalculationException(PavementErrorCode.Unknown,
                     $"Unexpected error during native calculation: {ex.Message}", ex);
             }
         }
@@ -282,7 +282,7 @@ namespace UI_ChausseeNeuve.Services
         private List<LayerSolicitationResult> ConvertNativeResults(ManagedPavementOutput nativeOutput, PavementStructure structure)
         {
             var results = new List<LayerSolicitationResult>();
-            
+
             // Get result arrays
             var deflections = nativeOutput.GetDeflections();
             var verticalStresses = nativeOutput.GetVerticalStresses();
@@ -303,17 +303,17 @@ namespace UI_ChausseeNeuve.Services
                 .Where(l => l.Role != LayerRole.Plateforme)
                 .OrderBy(l => l.Order)
                 .ToList();
-            
+
             var platformLayer = structure.Layers.First(l => l.Role == LayerRole.Plateforme);
             orderedLayers.Add(platformLayer);
 
             // Map results to layers (simplified - assumes 2 points per layer except platform)
             int resultIndex = 0;
-            
+
             for (int layerIndex = 0; layerIndex < orderedLayers.Count; layerIndex++)
             {
                 var layer = orderedLayers[layerIndex];
-                
+
                 if (resultIndex >= deflections.Length)
                     break;
 
@@ -327,21 +327,21 @@ namespace UI_ChausseeNeuve.Services
                 {
                     layerResult.DeflectionTop = deflections[resultIndex] / 1000.0; // Convert mm to m
                     layerResult.SigmaZTop = verticalStresses[resultIndex] / 1000.0; // Convert kPa to MPa
-                    
+
                     // Tensile strain (horizontal strain in microstrain)
                     layerResult.EpsilonTTop = horizontalStrains[resultIndex];
-                    
+
                     // Calculate tensile stress from strain using Young's modulus
                     // σT = E * εT * 10^-6 (convert microstrain to strain)
                     layerResult.SigmaTTop = layer.Modulus_MPa * horizontalStrains[resultIndex] * 1e-6;
-                    
+
                     // DIAGNOSTIC: Log calculation details
                     Console.WriteLine($"Layer {layerIndex} ({layer.MaterialName}): E={layer.Modulus_MPa} MPa, εT={horizontalStrains[resultIndex]} μstrain");
                     Console.WriteLine($"  → σT = {layer.Modulus_MPa} × {horizontalStrains[resultIndex]} × 1e-6 = {layerResult.SigmaTTop} MPa");
-                    
+
                     // Vertical strain (radial strain)
                     layerResult.EpsilonZTop = resultIndex < radialStrains.Length ? radialStrains[resultIndex] : 0;
-                    
+
                     resultIndex++;
                 }
 
@@ -351,10 +351,10 @@ namespace UI_ChausseeNeuve.Services
                     layerResult.DeflectionBottom = deflections[resultIndex] / 1000.0; // Convert mm to m
                     layerResult.SigmaZBottom = verticalStresses[resultIndex] / 1000.0;
                     layerResult.EpsilonTBottom = horizontalStrains[resultIndex];
-                    
+
                     // Calculate tensile stress from strain
                     layerResult.SigmaTBottom = layer.Modulus_MPa * horizontalStrains[resultIndex] * 1e-6;
-                    
+
                     layerResult.EpsilonZBottom = resultIndex < radialStrains.Length ? radialStrains[resultIndex] : 0;
                     resultIndex++;
                 }
@@ -417,9 +417,9 @@ namespace UI_ChausseeNeuve.Services
                 // Perform calculation
                 var nativeOutput = new PavementOutputC();
                 int calcResult = NativeInterop.PavementCalculate(ref testInput.GetNativeStruct(), ref nativeOutput);
-                
+
                 using var managedOutput = new ManagedPavementOutput(nativeOutput);
-                
+
                 if (calcResult != (int)PavementErrorCode.Success || !managedOutput.Success)
                 {
                     testResult = $"Test calculation failed: {managedOutput.ErrorMessage}";
@@ -429,7 +429,7 @@ namespace UI_ChausseeNeuve.Services
 
                 var deflections = managedOutput.GetDeflections();
                 testResult = $"Test successful - Version: {_libraryVersion}, Calculation time: {managedOutput.CalculationTimeMs:F2}ms, Results: {deflections.Length} points";
-                
+
                 NativeInterop.PavementFreeOutput(ref nativeOutput);
                 return true;
             }

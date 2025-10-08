@@ -29,6 +29,7 @@ add_executable(PavementTests
     test_pavement_data.cpp
     test_matrix_operations.cpp
     test_pavement_calculator.cpp
+    test_pymastic_port.cpp
 )
 
 # Include directories
@@ -39,6 +40,7 @@ target_include_directories(PavementTests PRIVATE
 
 # Link libraries
 target_link_libraries(PavementTests PRIVATE
+    PavementCalculationEngine
     GTest::gtest_main
 )
 
@@ -92,7 +94,50 @@ if(BUILD_SHARED_LIBS)
     # Add as test
     add_test(NAME CAPITest COMMAND c_api_test)
     
+    # PyMastic simple test
+    add_executable(pymastic_simple_test test_pymastic_simple.cpp)
+    target_link_libraries(pymastic_simple_test PRIVATE PavementCalculationEngine)
+    target_include_directories(pymastic_simple_test PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    add_test(NAME PyMasticSimpleTest COMMAND pymastic_simple_test)
+    
+    # PyMastic minimal test
+    add_executable(pymastic_minimal_test test_pymastic_minimal.cpp)
+    target_link_libraries(pymastic_minimal_test PRIVATE PavementCalculationEngine)
+    target_include_directories(pymastic_minimal_test PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    add_test(NAME PyMasticMinimalTest COMMAND pymastic_minimal_test)
+    
+    # PyMastic diagnostic test
+    add_executable(pymastic_diagnostic_test test_pymastic_diagnostic.cpp)
+    target_link_libraries(pymastic_diagnostic_test PRIVATE PavementCalculationEngine)
+    target_include_directories(pymastic_diagnostic_test PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    add_test(NAME PyMasticDiagnosticTest COMMAND pymastic_diagnostic_test)
+    
+    # Bessel validation test
+    add_executable(bessel_validation_test test_bessel_validation.cpp)
+    target_link_libraries(bessel_validation_test PRIVATE PavementCalculationEngine)
+    target_include_directories(bessel_validation_test PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    add_test(NAME BesselValidationTest COMMAND bessel_validation_test)
+    
+    # PyMastic C API test
+    add_executable(pymastic_c_api_test test_pymastic_c_api.c)
+    target_link_libraries(pymastic_c_api_test PRIVATE PavementCalculationEngine)
+    target_include_directories(pymastic_c_api_test PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    add_test(NAME PyMasticCAPITest COMMAND pymastic_c_api_test)
+    
+    # PyMastic Tableaux validation test - PRIORITY
+    add_executable(pymastic_tableaux_test test_pymastic_tableaux.cpp)
+    target_link_libraries(pymastic_tableaux_test PRIVATE PavementCalculationEngine)
+    target_include_directories(pymastic_tableaux_test PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    add_test(NAME PyMasticTableauxTest COMMAND pymastic_tableaux_test)
+    
+    # PyMastic C++ Debug test - UNIT COMPARISON
+    add_executable(test_pymastic_cpp_debug test_pymastic_cpp_debug.cpp)
+    target_link_libraries(test_pymastic_cpp_debug PRIVATE PavementCalculationEngine)
+    target_include_directories(test_pymastic_cpp_debug PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    
     message(STATUS "C API test configured: c_api_test")
+    message(STATUS "PyMastic simple test configured: pymastic_simple_test")
+    message(STATUS "PyMastic Tableaux validation test configured: pymastic_tableaux_test")
 else()
     message(STATUS "Skipping C API test (BUILD_SHARED_LIBS is OFF)")
 endif()
