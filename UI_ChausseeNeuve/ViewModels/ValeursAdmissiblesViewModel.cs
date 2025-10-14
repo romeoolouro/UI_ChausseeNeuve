@@ -209,6 +209,8 @@ namespace UI_ChausseeNeuve.ViewModels
                 var auto = ComputeAutoCam(c.SourceLayer, _traficMJA);
                 c.SetCamAuto(auto);
                 c.Ne = Math.Round(TraficCumule * c.Cam, 0);
+                // Appliquer le risque normatif si applicable
+                ApplyNfpRiskIfApplicable(c);
             }
         }
         #endregion
@@ -250,6 +252,8 @@ namespace UI_ChausseeNeuve.ViewModels
                 // Recalcul trafic cumulé puis CAM auto (CAM dépend classe de trafic)
                 CalculerTraficCumule();
                 RecomputeAutoCamForAll();
+                // Re-appliquer les risques normatifs pour toutes les couches
+                ReapplyAutoRiskForAll();
             }
         }
 
@@ -847,13 +851,16 @@ namespace UI_ChausseeNeuve.ViewModels
                         // Affectation CAM initiale via SetCamAuto pour ne pas marquer CamUserSet
                         ligne.SetCamAuto(ComputeAutoCam(layer, _traficMJA));
                         ligne.Ne = Math.Round(TraficCumule * ligne.Cam, 0);
-                        EnforceRisqueSoupleBitumineux(ligne);
+                        // Risques normatifs selon type de structure
+                        ApplyNfpRiskIfApplicable(ligne);
                         UpdateKr(ligne);
                         if (string.Equals(ligne.Critere, "EpsiZ", StringComparison.OrdinalIgnoreCase)) { }
                         // Recalcule ks (cas où l'ordre dépend de la couche sous-jacente déjà ajoutée)
                         ligne.Ks = ComputeAutoKsFor(ligne);
                         // Ktheta auto bitume
                         ComputeAutoKtheta(ligne);
+                        // Sigma6 auto pour MTLH/Béton si applicable
+                        ComputeAutoSigma6(ligne);
                     }
                     else
                     {
@@ -911,11 +918,14 @@ namespace UI_ChausseeNeuve.ViewModels
                         {
                             ligne.SetCamAuto(ComputeAutoCam(layer, _traficMJA));
                             ligne.Ne = Math.Round(TraficCumule * ligne.Cam, 0);
-                            EnforceRisqueSoupleBitumineux(ligne);
+                            // Risque normatif si applicable (structure, famille)
+                            ApplyNfpRiskIfApplicable(ligne);
                             // Recalcul ks car le module sous-jacent peut avoir changé (ou la famille)
                             ligne.Ks = ComputeAutoKsFor(ligne);
                             // Recalcul ktheta si bitume
                             ComputeAutoKtheta(ligne);
+                            // Recalcul sigma6 si MTLH/Béton et critère SigmaT
+                            ComputeAutoSigma6(ligne);
                         }
                     }
                     catch (Exception ex)
@@ -934,16 +944,16 @@ namespace UI_ChausseeNeuve.ViewModels
             }
         }
 
-         private void Couche_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-         {
-             try
-             {
-                 if (sender is ValeurAdmissibleCouche couche)
-                 {
-                     if (e.PropertyName == nameof(ValeurAdmissibleCouche.Cam))
-                     {
-                         // NE = TraficCumule (NPL) * CAM
-                         couche.Ne = Math.Round(TraficCumule * couche.Cam, 0);
+        private void Couche_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            try
+            {
+                if (sender is ValeurAdmissibleCouche couche)
+                {
+                    if (e.PropertyName == nameof(ValeurAdmissibleCouche.Cam))
+                    {
+                        // NE = TraficCumule (NPL) * CAM
+                        couche.Ne = Math.Round(TraficCumule * couche.Cam, 0);
                      
                     }
 
@@ -973,9 +983,9 @@ namespace UI_ChausseeNeuve.ViewModels
                         e.PropertyName == nameof(ValeurAdmissibleCouche.B) ||
                         e.PropertyName == nameof(ValeurAdmissibleCouche.Critere))
                     {
-                        // Empêcher modification du risque pour bitumineux en structure souple
-                        if (e.PropertyName == nameof(ValeurAdmissibleCouche.Risque))
-                            EnforceRisqueSoupleBitumineux(couche);
+                        // Appliquer/forcer le risque normatif en mode automatique
+                        if (IsAutomaticMode)
+                            ApplyNfpRiskIfApplicable(couche);
                         UpdateKr(couche);
                     }
 
@@ -1016,7 +1026,8 @@ namespace UI_ChausseeNeuve.ViewModels
                  foreach (var c in ValeursAdmissibles)
                  {
                      c.Ne = Math.Round(TraficCumule * c.Cam, 0);
-                     // maj kr
+                     // MAJ risque normatif et kr
+                     ApplyNfpRiskIfApplicable(c);
                      UpdateKr(c);
                      if (string.Equals(c.Critere, "EpsiZ", StringComparison.OrdinalIgnoreCase))
                      {
@@ -1287,8 +1298,8 @@ namespace UI_ChausseeNeuve.ViewModels
                 if (!IsStructureSouple()) return;
                 if (c.SourceLayer.Family == MaterialFamily.BetonBitumineux)
                 {
-                    if (Math.Abs(c.Risque - 25.0) > 0.0001)
-                        c.Risque = 25.0; // force
+                    if (!c.RisqueUserSet && Math.Abs(c.Risque - 25.0) > 0.0001)
+                        c.SetRisqueAuto(25.0); // force seulement si non saisi par utilisateur
                 }
             }
             catch { }
@@ -1306,7 +1317,9 @@ namespace UI_ChausseeNeuve.ViewModels
                 var dataService = new UI_ChausseeNeuve.Services.MaterialDataService();
                 MaterialItem? best = null; double bestRel = double.MaxValue; double bestE34 = 0; double bestE10 = 0;
 
-                foreach (var lib in BitumeLibraries)
+                // On utilise en priorité la bibliothèque NFP
+                string[] libs = { "NFP98_086_2019", "CatalogueFrancais1998" };
+                foreach (var lib in libs)
                 {
                     List<MaterialItem> mats;
                     try { mats = dataService.LoadMaterialsAsync(lib).GetAwaiter().GetResult(); } catch { continue; }
@@ -1366,6 +1379,273 @@ namespace UI_ChausseeNeuve.ViewModels
             }
             catch { }
         }
+
+        private void ComputeAutoSigma6(ValeurAdmissibleCouche ligne)
+        {
+            try
+            {
+                if (ligne == null || ligne.SourceLayer == null) return;
+                if (!IsAutomaticMode) return;
+                if (!string.Equals(ligne.Critere, "SigmaT", StringComparison.OrdinalIgnoreCase)) return;
+                if (ligne.Sigma6UserSet) return; // respecter saisie utilisateur
+
+                var layer = ligne.SourceLayer;
+                var structureType = AppState.CurrentProject?.PavementStructure?.StructureType ?? string.Empty;
+                // Applicable aux familles MTLH et BétonCiment uniquement
+                if (layer.Family != MaterialFamily.MTLH && layer.Family != MaterialFamily.BetonCiment) return;
+
+                // Pour structure mixte, matcher la bibliothèque et appliquer les valeurs normatives mixtes
+                bool isMixte = structureType.Equals("Mixte", StringComparison.OrdinalIgnoreCase);
+                var (mat, sigma6, rel) = IdentifyRigidMaterialForLayer(layer);
+                if (mat != null && sigma6 > 0)
+                {
+                    ligne.SetSigma6Auto(sigma6);
+                    // Remplissage des constantes normatives associées
+                    if (mat.InverseB.HasValue) ligne.B = Math.Abs(mat.InverseB.Value); // -1/b toujours positif
+                    if (mat.SN.HasValue) ligne.Sn = mat.SN.Value;
+                    if (mat.Sh.HasValue) ligne.Sh = mat.Sh.Value;
+                    if (mat.Kc.HasValue) ligne.Kc = mat.Kc.Value;
+                    if (mat.Kd.HasValue) ligne.Kd = mat.Kd.Value;
+                    // Si structure mixte, appliquer la table mixte si disponible
+                    if (isMixte)
+                    {
+                        // Forcer les valeurs normatives mixtes si elles existent dans la bibliothèque
+                        // (ex: Kc, Kd, Sn, Sh, etc. peuvent être différents pour Mixte)
+                        // Ici, on peut ajouter une logique pour matcher une table spécifique ou surcharger les valeurs
+                        // Exemple: ligne.Kc = ValeurNormativeMixte.Kc; etc.
+                        // (À compléter selon la table métier ou la bibliothèque)
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private (MaterialItem? material, double sigma6, double relError) IdentifyRigidMaterialForLayer(Layer layer)
+        {
+            try
+            {
+                if (layer == null) return (null, 0, 1);
+                if (layer.Family != MaterialFamily.MTLH && layer.Family != MaterialFamily.BetonCiment) return (null, 0, 1);
+                double targetE = layer.Modulus_MPa;
+                if (targetE <= 0) return (null, 0, 1);
+
+                var dataService = new UI_ChausseeNeuve.Services.MaterialDataService();
+                MaterialItem? best = null; double bestRel = double.MaxValue; double bestSigma = 0;
+
+                // On utilise en priorité la bibliothèque NFP
+                string[] libs = { "NFP98_086_2019", "CatalogueFrancais1998" };
+                foreach (var lib in libs)
+                {
+                    List<MaterialItem> mats;
+                    try { mats = dataService.LoadMaterialsAsync(lib).GetAwaiter().GetResult(); } catch { continue; }
+                    foreach (var m in mats)
+                    {
+                        if (layer.Family == MaterialFamily.MTLH && !string.Equals(m.Category, "MTLH", StringComparison.OrdinalIgnoreCase)) continue;
+                        if (layer.Family == MaterialFamily.BetonCiment && !string.Equals(m.Category, "Beton", StringComparison.OrdinalIgnoreCase)) continue;
+                        double e = m.Modulus_MPa;
+                        if (e <= 0) continue;
+                        double rel = Math.Abs(e - targetE) / e;
+                        if (rel < bestRel)
+                        {
+                            bestRel = rel; best = m; bestSigma = m.Sigma6 ?? 0;
+                        }
+                    }
+                }
+                if (best != null)
+                {
+                    return (best, bestSigma, bestRel);
+                }
+                return (null, 0, 1);
+            }
+            catch { return (null, 0, 1); }
+        }
+
+        private void ApplyNfpRiskIfApplicable(ValeurAdmissibleCouche c)
+        {
+            try
+            {
+                if (c == null || c.SourceLayer == null) return;
+                if (!IsAutomaticMode) return;
+                // Si critère EpsiZ: ne rien imposer
+                if (string.Equals(c.Critere, "EpsiZ", StringComparison.OrdinalIgnoreCase)) return;
+                // Ne pas écraser une saisie utilisateur
+                if (c.RisqueUserSet) return;
+
+                string structureType = AppState.CurrentProject?.PavementStructure?.StructureType ?? string.Empty;
+                var r = ComputeNfpRiskForLayer(structureType, c.SourceLayer);
+                if (r.HasValue)
+                {
+                    if (Math.Abs(c.Risque - r.Value) > 0.0001)
+                    {
+                        c.SetRisqueAuto(r.Value);
+                        // Kr mise à jour sera faite par les handlers appelants
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private void ReapplyAutoRiskForAll()
+        {
+            try
+            {
+                if (!IsAutomaticMode || ValeursAdmissibles == null) return;
+                string st = AppState.CurrentProject?.PavementStructure?.StructureType ?? string.Empty;
+                foreach (var c in ValeursAdmissibles)
+                {
+                    if (c.SourceLayer == null) continue;
+                    if (string.Equals(c.Critere, "EpsiZ", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (c.RisqueUserSet) continue; // respecter la saisie utilisateur
+                    var r = ComputeNfpRiskForLayer(st, c.SourceLayer);
+                    if (r.HasValue)
+                    {
+                        if (Math.Abs(c.Risque - r.Value) > 0.0001)
+                            c.SetRisqueAuto(r.Value);
+                        UpdateKr(c);
+                    }
+                }
+                SaveToProject();
+                AppState.RaiseValeursAdmissiblesUpdated();
+            }
+            catch { }
+        }
+
+        private enum NfpTrafficClass { T5, T4, T3, T2, T1, T0, TS, TEX }
+        private NfpTrafficClass GetTrafficClassFromMja(double mja)
+        {
+            if (mja < 25) return NfpTrafficClass.T5;
+            if (mja < 50) return NfpTrafficClass.T4;
+            if (mja < 150) return NfpTrafficClass.T3;   // regroupe T3- et T3+
+            if (mja < 300) return NfpTrafficClass.T2;   // T2- / T2+
+            if (mja < 750) return NfpTrafficClass.T1;   // T1- / T1+
+            if (mja < 2000) return NfpTrafficClass.T0;  // T0- / T0+
+            if (mja < 5000) return NfpTrafficClass.TS;  // TS- / TS+
+            return NfpTrafficClass.TEX;
+        }
+
+        private static readonly Dictionary<string, double[]> _riskRow_MB_BituEpaisse_SemiRigide = new()
+        {
+            // MB pour "Structures bitumineuses épaisses et semi-rigides"
+            { "row", new double[]{30,30,25,12,5,2,1,1} }
+        };
+        private static readonly Dictionary<string, double[]> _riskRow_MTLH_BituEpaisse_SemiRigide = new()
+        {
+            { "row", new double[]{25,25,12,7.5,5,2.5,1,1} }
+        };
+        private static readonly Dictionary<string, double[]> _riskRow_MB_Inversee = new()
+        {
+            { "row", new double[]{30,30,25,12,5,2,1,1} }
+        };
+        private static readonly Dictionary<string, double[]> _riskRow_MTLH_Inversee = new()
+        {
+            { "row", new double[]{25,25,24,15,5,2,1,1} }
+        };
+        private static readonly Dictionary<string, double[]> _riskRow_MB_Mixte = new()
+        {
+            { "row", new double[]{30,30,25,12,5,2,1,1} }
+        };
+        private static readonly Dictionary<string, double[]> _riskRow_MTLH_Mixte = new()
+        {
+            { "row", new double[]{50,50,35,20,10,3,2,1} }
+        };
+        private static readonly Dictionary<string, double[]> _riskRow_Beton_Base_Roulement = new()
+        {
+            { "row", new double[]{25,25,15,7.5,2.8,1,1,1} }
+        };
+        private static readonly Dictionary<string, double[]> _riskRow_Beton_Fond_NoBAC = new()
+        {
+            { "row", new double[]{25,25,25,15,10,5.6,2,1} }
+        };
+        private static readonly Dictionary<string, double[]> _riskRow_Beton_Fond_BAC = new()
+        {
+            { "row", new double[]{50,50,50,50,50,50,50,50} }
+        };
+
+        private double? ComputeNfpRiskForLayer(string? structureType, Layer layer)
+        {
+            if (layer == null) return null;
+            // EpsiZ: risque non utilisé => ne rien imposer
+            if (string.Equals(GetDefaultCritereFor(layer), "EpsiZ", StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            // Souple: règle existante MB = 25%
+            if (!string.IsNullOrWhiteSpace(structureType) && structureType.Equals("Souple", StringComparison.OrdinalIgnoreCase))
+            {
+                if (layer.Family == MaterialFamily.BetonBitumineux) return 25.0;
+                return null;
+            }
+
+            // Déterminer classe trafic
+            var cls = GetTrafficClassFromMja(_traficMJA);
+            int idx = cls switch
+            {
+                NfpTrafficClass.T5 => 0,
+                NfpTrafficClass.T4 => 1,
+                NfpTrafficClass.T3 => 2,
+                NfpTrafficClass.T2 => 3,
+                NfpTrafficClass.T1 => 4,
+                NfpTrafficClass.T0 => 5,
+                NfpTrafficClass.TS => 6,
+                NfpTrafficClass.TEX => 7,
+                _ => 0
+            };
+
+            structureType = structureType ?? string.Empty;
+
+            // Bitumineuse épaisse ou Semi‑rigide
+            if (structureType.Equals("Semi-rigide", StringComparison.OrdinalIgnoreCase) ||
+                structureType.Equals("Bitumineuse épaisse", StringComparison.OrdinalIgnoreCase))
+            {
+                if (layer.Family == MaterialFamily.BetonBitumineux)
+                    return _riskRow_MB_BituEpaisse_SemiRigide["row"][idx];
+                if (layer.Family == MaterialFamily.MTLH || layer.Family == MaterialFamily.BetonCiment)
+                    return _riskRow_MTLH_BituEpaisse_SemiRigide["row"][idx];
+                return null;
+            }
+
+            // Inversée
+            if (structureType.Equals("Inversée", StringComparison.OrdinalIgnoreCase))
+            {
+                if (layer.Family == MaterialFamily.BetonBitumineux)
+                    return _riskRow_MB_Inversee["row"][idx];
+                if (layer.Family == MaterialFamily.MTLH || layer.Family == MaterialFamily.BetonCiment)
+                    return _riskRow_MTLH_Inversee["row"][idx];
+                return null;
+            }
+
+            // Mixte
+            if (structureType.Equals("Mixte", StringComparison.OrdinalIgnoreCase))
+            {
+                if (layer.Family == MaterialFamily.BetonBitumineux)
+                    return _riskRow_MB_Mixte["row"][idx];
+                if (layer.Family == MaterialFamily.MTLH || layer.Family == MaterialFamily.BetonCiment)
+                    return _riskRow_MTLH_Mixte["row"][idx];
+                return null;
+            }
+
+            // Rigide (béton)
+            if (structureType.Equals("Rigide", StringComparison.OrdinalIgnoreCase))
+            {
+                if (layer.Family == MaterialFamily.BetonCiment)
+                {
+                    if (layer.Role == LayerRole.Roulement || layer.Role == LayerRole.Base)
+                        return _riskRow_Beton_Base_Roulement["row"][idx];
+                    if (layer.Role == LayerRole.Fondation)
+                    {
+                        // BAC/BCg => 50%
+                        string mat = layer.MaterialName ?? string.Empty;
+                        if (mat.IndexOf("BAC", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                            mat.IndexOf("BCg", StringComparison.OrdinalIgnoreCase) >= 0)
+                            return _riskRow_Beton_Fond_BAC["row"][idx];
+                        return _riskRow_Beton_Fond_NoBAC["row"][idx];
+                    }
+                }
+                return null;
+            }
+
+            // Autres: pas d'application
+            return null;
+        }
     }
 
     /// <summary>
@@ -1399,6 +1679,8 @@ namespace UI_ChausseeNeuve.ViewModels
         private double _eteq10Hz = 0.0;
         private bool _kthetaAuto = false;
         public bool CamUserSet { get; private set; }
+        public bool RisqueUserSet { get; private set; }
+        public bool Sigma6UserSet { get; private set; }
 
         // Champs ajoutés pour calcul inverse (NEmax, réserve, etc.) conservés pour compatibilité ENC
         private double _nEmax; // NE maximum admissible inverse
@@ -1434,18 +1716,28 @@ namespace UI_ChausseeNeuve.ViewModels
         public double Ks { get => _ks; set { _ks = value; SafePropertyChanged(); } }
         public double Ktheta { get => _kthetaAuto && E10C10Hz > 0 && Eteq10Hz > 0 ? Math.Sqrt(E10C10Hz / Eteq10Hz) : _ktheta; set { _ktheta = value; SafePropertyChanged(); } }
         public double Kd { get => _kd; set { _kd = value; SafePropertyChanged(); } }
-        public double Risque { get => _risque; set { _risque = value; SafePropertyChanged(); } }
+        public double Risque { get => _risque; set { _risque = value; RisqueUserSet = true; SafePropertyChanged(); SafePropertyChanged(nameof(RisqueUserSet)); } }
         public double Ne { get => _ne; set { _ne = value; SafePropertyChanged(); } }
         public double Epsilon6 { get => _epsilon6; set { _epsilon6 = value; SafePropertyChanged(); } }
         public double ValeurAdmissible { get => _valeurAdmissible; set { _valeurAdmissible = value; SafePropertyChanged(); } }
         public double AmplitudeValue { get => _amplitudeValue; set { _amplitudeValue = value; SafePropertyChanged(); } }
-        public double Sigma6 { get => _sigma6; set { _sigma6 = value; SafePropertyChanged(); } }
+        public double Sigma6 { get => _sigma6; set { _sigma6 = value; Sigma6UserSet = true; SafePropertyChanged(); SafePropertyChanged(nameof(Sigma6UserSet)); } }
         public string AmplitudeLabel => _critere switch { "EpsiZ" => "A", "SigmaT" => "ε6", _ => "ε6" };
         public double Cam { get => _cam; set { _cam = value; CamUserSet = true; SafePropertyChanged(); SafePropertyChanged(nameof(CamUserSet)); } }
         internal void SetCamAuto(double value)
         {
             _cam = value; // ne marque pas CamUserSet
             SafePropertyChanged(nameof(Cam));
+        }
+        internal void SetRisqueAuto(double value)
+        {
+            _risque = value; // ne marque pas RisqueUserSet
+            SafePropertyChanged(nameof(Risque));
+        }
+        internal void SetSigma6Auto(double value)
+        {
+            _sigma6 = value; // ne marque pas Sigma6UserSet
+            SafePropertyChanged(nameof(Sigma6));
         }
         public double E10C10Hz { get => _e10C10Hz; set { _e10C10Hz = value; SafePropertyChanged(); if (KthetaAuto) UpdateKtheta(); } }
         public double Eteq10Hz { get => _eteq10Hz; set { _eteq10Hz = value; SafePropertyChanged(); if (KthetaAuto) UpdateKtheta(); } }

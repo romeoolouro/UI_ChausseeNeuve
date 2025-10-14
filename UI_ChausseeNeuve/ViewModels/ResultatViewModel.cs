@@ -9,12 +9,13 @@ using ChausseeNeuve.Domain.Models;
 using UI_ChausseeNeuve.Services;
 using UI_ChausseeNeuve.ViewModels;
 using System.Collections.Specialized;
+using System.Collections.Generic;
 
 namespace UI_ChausseeNeuve.ViewModels
 {
     public enum CritereVerification { EpsiZ, SigmaT, EpsiT }
 
-    public class ResultatViewModel : INotifyPropertyChanged, IDisposable
+    public partial class ResultatViewModel : INotifyPropertyChanged, IDisposable
     {
         #region Champs privés
         private bool _isCalculationInProgress;
@@ -29,6 +30,8 @@ namespace UI_ChausseeNeuve.ViewModels
         private ObservableCollection<ValeurAdmissibleCouche>? _lastValeursAdmissiblesViewModel;
         private ObservableCollection<ResultatInverseItem> _resultatsInverse = new();
         private string _performanceInfo = "";
+        // Abonnements aux couches pour suivre les changements de Mode
+        private readonly List<Layer> _subscribedLayers = new();
         #endregion
 
         #region Événements
@@ -50,6 +53,10 @@ namespace UI_ChausseeNeuve.ViewModels
             HideHelpCommand = new RelayCommand(HideHelp);
             ToggleDetailedInfoCommand = new RelayCommand(ToggleDetailedInfo);
 
+            ShowMixedStep1Command = new RelayCommand(ShowMixedStep1);
+            ShowMixedStep2Command = new RelayCommand(ShowMixedStep2);
+            ShowMixedSynthesisCommand = new RelayCommand(ShowMixedSynthesis);
+
             // S'abonner aux changements de structure pour synchronisation automatique
             SubscribeToStructureChanges();
 
@@ -61,6 +68,9 @@ namespace UI_ChausseeNeuve.ViewModels
 
             // Charger la structure actuelle au démarrage
             LoadCurrentStructure();
+
+            // S'abonner aux changements de Mode des couches
+            SubscribeToLayersModeChanges();
         }
         #endregion
 
@@ -214,6 +224,11 @@ namespace UI_ChausseeNeuve.ViewModels
             set { _resultatsInverse = value; OnPropertyChanged(); }
         }
 
+        /// <summary>
+        /// Afficher les résultats inverses: toujours en Expert; en Automatique uniquement si structure Mixte
+        /// </summary>
+        public bool ShowInverseResults => ComputeShowInverseResults();
+
         #endregion
 
         #region Commandes
@@ -237,6 +252,10 @@ namespace UI_ChausseeNeuve.ViewModels
         /// Commande pour basculer l'affichage des détails de calcul
         /// </summary>
         public RelayCommand ToggleDetailedInfoCommand { get; }
+
+        public RelayCommand ShowMixedStep1Command { get; }
+        public RelayCommand ShowMixedStep2Command { get; }
+        public RelayCommand ShowMixedSynthesisCommand { get; }
 
         #endregion
 
@@ -286,6 +305,13 @@ namespace UI_ChausseeNeuve.ViewModels
 
                     // Forcer la synchronisation des valeurs admissibles dans les résultats
                     InjectValeursAdmissiblesDansResultats();
+
+                    // Snapshot pour la note de calcul
+                    PersistResultsSnapshot();
+
+                    // MAJ visibilité résultats inverses
+                    OnPropertyChanged(nameof(ShowInverseResults));
+                    InvalidateMixedBindings();
                 }
                 else
                 {
@@ -372,6 +398,9 @@ namespace UI_ChausseeNeuve.ViewModels
             InjectValeursAdmissiblesDansResultats();
             // Mise à jour du tableau inverse après chaque recalcul complet
             PopulateInverseResults();
+
+            // MAJ visibilité résultats inverses
+            OnPropertyChanged(nameof(ShowInverseResults));
         }
 
         /// <summary>
@@ -704,10 +733,19 @@ namespace UI_ChausseeNeuve.ViewModels
         /// </summary>
         private void OnStructureChanged()
         {
-            // Exécuter sur le thread UI si nécessaire
             System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
             {
-                LoadCurrentStructure();
+                try
+                {
+                    LoadCurrentStructure();
+                }
+                finally
+                {
+                    // Réabonner aux changements de Mode des couches et MAJ visibilité
+                    SubscribeToLayersModeChanges();
+                    OnPropertyChanged(nameof(ShowInverseResults));
+                    InvalidateMixedBindings();
+                }
             });
         }
 
@@ -728,12 +766,18 @@ namespace UI_ChausseeNeuve.ViewModels
                 }
                 // Toujours rafraîchir le tableau inverse pour refléter le nombre de couches
                 PopulateInverseResults();
+
+                // S'abonner aux changements de Mode
+                SubscribeToLayersModeChanges();
+                OnPropertyChanged(nameof(ShowInverseResults));
             }
             catch (Exception ex)
             {
                 LoadSampleData();
                 System.Diagnostics.Debug.WriteLine($"Erreur lors du chargement de la structure: {ex.Message}");
                 PopulateInverseResults();
+                SubscribeToLayersModeChanges();
+                OnPropertyChanged(nameof(ShowInverseResults));
             }
         }
 
@@ -798,6 +842,9 @@ namespace UI_ChausseeNeuve.ViewModels
             InjectValeursAdmissiblesDansResultats();
             PopulateInverseResults();
             UpdateValidationStatus();
+
+            // MAJ visibilité résultats inverses
+            OnPropertyChanged(nameof(ShowInverseResults));
         }
 
         /// <summary>
@@ -961,7 +1008,7 @@ namespace UI_ChausseeNeuve.ViewModels
 
         private void ValeurAdmissible_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == "ValeurAdmissible" || e.PropertyName == "Materiau" || e.PropertyName == "Niveau")
+            if ( e.PropertyName == "ValeurAdmissible" || e.PropertyName == "Materiau" || e.PropertyName == "Niveau")
                 InjectValeursAdmissiblesDansResultats();
         }
 
@@ -1026,9 +1073,96 @@ namespace UI_ChausseeNeuve.ViewModels
         {
             System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
             {
-                InjectValeursAdmissiblesDansResultats();
-                PopulateInverseResults(); // rafraîchir aussi le tableau inverse
+                try
+                {
+                    InjectValeursAdmissiblesDansResultats();
+                    PopulateInverseResults(); // rafraîchir aussi le tableau inverse
+                }
+                finally
+                {
+                    OnPropertyChanged(nameof(ShowInverseResults));
+                    InvalidateMixedBindings();
+                }
             }));
+        }
+
+        // Détermine le mode global (si au moins une couche en Expert, on considère Expert)
+        private DimensionnementMode GetGlobalMode()
+        {
+            try
+            {
+                var layersSnapshot = AppState.CurrentProject?.PavementStructure?.Layers?.ToList();
+                if (layersSnapshot == null || layersSnapshot.Count == 0) return DimensionnementMode.Automatique;
+                return layersSnapshot.Any(l => l.Mode == DimensionnementMode.Expert)
+                    ? DimensionnementMode.Expert
+                    : DimensionnementMode.Automatique;
+            }
+            catch
+            {
+                // En cas d'accès concurrent à la collection (changement de type), fallback Automatique
+                return DimensionnementMode.Automatique;
+            }
+        }
+
+        private bool IsStructureMixte()
+        {
+            try
+            {
+                var type = AppState.CurrentProject?.PavementStructure?.StructureType ?? string.Empty;
+                return type.Equals("Mixte", StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool ComputeShowInverseResults()
+        {
+            try
+            {
+                var mode = GetGlobalMode();
+                // Afficher toujours en Expert; en Automatique uniquement si structure Mixte
+                return mode == DimensionnementMode.Expert || (mode == DimensionnementMode.Automatique && IsStructureMixte());
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private void SubscribeToLayersModeChanges()
+        {
+            // désabonner anciens
+            foreach (var l in _subscribedLayers)
+                l.PropertyChanged -= Layer_PropertyChanged;
+            _subscribedLayers.Clear();
+
+            try
+            {
+                var layersSnapshot = AppState.CurrentProject?.PavementStructure?.Layers?.ToList();
+                if (layersSnapshot == null) return;
+
+                foreach (var l in layersSnapshot)
+                {
+                    if (l == null) continue;
+                    l.PropertyChanged -= Layer_PropertyChanged;
+                    l.PropertyChanged += Layer_PropertyChanged;
+                    _subscribedLayers.Add(l);
+                }
+            }
+            catch
+            {
+                // Ignorer si la collection est en mutation; on réessaiera sur prochain OnStructureChanged
+            }
+        }
+
+        private void Layer_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(Layer.Mode))
+            {
+                OnPropertyChanged(nameof(ShowInverseResults));
+            }
         }
 
         #endregion
@@ -1039,6 +1173,9 @@ namespace UI_ChausseeNeuve.ViewModels
         {
             AppState.StructureChanged -= OnStructureChanged;
             AppState.ValeursAdmissiblesUpdated -= OnValeursAdmissiblesUpdated;
+            foreach (var l in _subscribedLayers)
+                l.PropertyChanged -= Layer_PropertyChanged;
+            _subscribedLayers.Clear();
         }
         
         #endregion
@@ -1127,6 +1264,8 @@ namespace UI_ChausseeNeuve.ViewModels
                     ResultatsInverse.Add(item);
                     numero++;
                 }
+                OnPropertyChanged(nameof(ShowInverseResults));
+                InvalidateMixedBindings();
             }
             catch (Exception ex)
             {
@@ -1138,30 +1277,24 @@ namespace UI_ChausseeNeuve.ViewModels
         {
             try
             {
-                if (Math.Abs(item.B) < 1e-9) return 0;
-                double bReel = -1.0 / item.B; // b réel (souvent négatif)
-                double kc = Math.Max(item.Kc, 1e-9);
-                double kr = Math.Max(item.Kr, 1e-9);
-                double ks = Math.Max(item.Ks, 1e-9);
-                double kt = Math.Max(item.Ktheta, 1e-9);
-                double kd = Math.Max(item.Kd, 1e-9);
+                if (item.B <= 0) return 0;
                 switch (item.Critere)
                 {
                     case "EpsiT":
-                        if (item.EpsilonT <= 0 || item.Epsilon6 <= 0) return 0;
-                        double ratioEpsiT = item.EpsilonT / (item.Epsilon6 * kc * kr * ks * kt);
-                        if (ratioEpsiT <= 0) return 0;
-                        return 1e6 * Math.Pow(ratioEpsiT, 1.0 / bReel);
+                        if (item.EpsilonT <= 0 || item.Epsilon6 <= 0 || item.Kc <= 0 || item.Kr <= 0 || item.Ks <= 0 || item.Ktheta <= 0) return 0;
+                        return ComputeNEFromEpsiT(item.EpsilonT, item.Epsilon6, item.B, item.Kc, item.Kr, item.Ks, item.Ktheta);
+
                     case "SigmaT":
-                        if (Math.Abs(item.SigmaT) <= 0 || item.Sigma6 <= 0) return 0;
-                        double ratioSigmaT = Math.Abs(item.SigmaT) / (item.Sigma6 * kc * kr * ks * kd);
-                        if (ratioSigmaT <= 0) return 0;
-                        return 1e6 * Math.Pow(ratioSigmaT, 1.0 / bReel);
+                        if (Math.Abs(item.SigmaT) <= 0 || item.Sigma6 <= 0 || item.Kc <= 0 || item.Kr <= 0 || item.Ks <= 0 || item.Kd <= 0) return 0;
+                        return ComputeNEFromSigmaT(item.SigmaT, item.Sigma6, item.B, item.Kc, item.Kr, item.Ks, item.Kd);
+
                     case "EpsiZ":
                         if (Math.Abs(item.EpsilonZ) <= 0 || item.AAmplitude <= 0) return 0;
-                        double ratioEpsiZ = Math.Abs(item.EpsilonZ) / item.AAmplitude;
-                        if (ratioEpsiZ <= 0) return 0;
-                        return Math.Pow(ratioEpsiZ, 1.0 / bReel);
+                        {
+                            double ratio = Math.Abs(item.EpsilonZ) / item.AAmplitude;
+                            return Math.Pow(ratio, -item.B);
+                        }
+
                     default:
                         return 0;
                 }
@@ -1180,43 +1313,39 @@ namespace UI_ChausseeNeuve.ViewModels
                 item.NEmax = 0;
                 item.TauxUtilisation = 0;
                 item.NEReserve = 0;
-                if (Math.Abs(item.B) < 1e-9) return;
-                double bReel = -1.0 / item.B; // b réel
-                double kc = Math.Max(item.Kc, 1e-9);
-                double kr = Math.Max(item.Kr, 1e-9);
-                double ks = Math.Max(item.Ks, 1e-9);
-                double kt = Math.Max(item.Ktheta, 1e-9);
-                double kd = Math.Max(item.Kd, 1e-9);
+                if (item.B <= 0) return;
 
                 double adm = item.ValeurAdmissible;
-                if (adm <= 0)
-                {
-                    // fallback: si pas de valeur admissible on s'arrête
-                    return;
-                }
+                if (adm <= 0) return;
 
                 switch (item.Critere)
                 {
                     case "EpsiT":
-                        if (item.Epsilon6 <= 0) return;
-                        // adm = εt_adm = ε6 * (NEmax/1e6)^{bReel} * kc*kr*ks*kt
-                        double ratioAdmEpsiT = adm / (item.Epsilon6 * kc * kr * ks * kt);
-                        if (ratioAdmEpsiT <= 0) return;
-                        item.NEmax = 1e6 * Math.Pow(ratioAdmEpsiT, 1.0 / bReel);
+                        if (item.Epsilon6 <= 0 || item.Kc <= 0 || item.Kr <= 0 || item.Ks <= 0 || item.Ktheta <= 0) return;
+                        {
+                            double denom = item.Epsilon6 * item.Kc * item.Kr * item.Ks * item.Ktheta;
+                            if (denom <= 0) return;
+                            double ratio = adm / denom;
+                            item.NEmax = 1e6 * Math.Pow(ratio, -item.B);
+                        }
                         break;
+
                     case "SigmaT":
-                        if (item.Sigma6 <= 0) return;
-                        // adm = σt_adm = σ6 * (NEmax/1e6)^{bReel} * kc*kr*ks*kd
-                        double ratioAdmSigmaT = adm / (item.Sigma6 * kc * kr * ks * kd);
-                        if (ratioAdmSigmaT <= 0) return;
-                        item.NEmax = 1e6 * Math.Pow(ratioAdmSigmaT, 1.0 / bReel);
+                        if (item.Sigma6 <= 0 || item.Kc <= 0 || item.Kr <= 0 || item.Ks <= 0 || item.Kd <= 0) return;
+                        {
+                            double denom = item.Sigma6 * item.Kc * item.Kr * item.Ks * item.Kd;
+                            if (denom <= 0) return;
+                            double ratio = adm / denom;
+                            item.NEmax = 1e6 * Math.Pow(ratio, -item.B);
+                        }
                         break;
+
                     case "EpsiZ":
                         if (item.AAmplitude <= 0) return;
-                        // adm = εz_adm = A * NEmax^{bReel}
-                        double ratioAdmEpsiZ = adm / item.AAmplitude;
-                        if (ratioAdmEpsiZ <= 0) return;
-                        item.NEmax = Math.Pow(ratioAdmEpsiZ, 1.0 / bReel);
+                        {
+                            double ratio = adm / item.AAmplitude;
+                            item.NEmax = Math.Pow(ratio, -item.B);
+                        }
                         break;
                 }
 
@@ -1250,6 +1379,7 @@ namespace UI_ChausseeNeuve.ViewModels
                         resultat.EstValide = true;
                     }
                     UpdateValidationStatus();
+                    OnPropertyChanged(nameof(ShowInverseResults));
                 }
                 else
                 {
@@ -1264,6 +1394,106 @@ namespace UI_ChausseeNeuve.ViewModels
             {
                 IsCalculationInProgress = false;
             }
+        }
+
+        /// <summary>
+        /// Persiste un snapshot des résultats pour la note de calcul
+        /// </summary>
+        private void PersistResultsSnapshot()
+        {
+            try
+            {
+                var project = AppState.CurrentProject;
+                if (project == null) return;
+                project.DerniersResultats.Clear();
+                var vaList = project.ValeursAdmissibles?.ToList() ?? new();
+                var layerMap = project.PavementStructure?.Layers?.ToDictionary(l => l.Order, l => l) ?? new Dictionary<int, Layer>();
+
+                double neGlobal = project.PavementStructure?.NE > 0 ? project.PavementStructure.NE : (vaList.Count > 0 ? vaList.Max(v => v.Ne) : 0);
+                bool seuilSouple = neGlobal > 250_000;
+                bool isSouple = project.PavementStructure?.StructureType?.Equals("Souple", StringComparison.OrdinalIgnoreCase) == true;
+
+                foreach (var rc in Resultats.OfType<ResultatCouche>())
+                {
+                    layerMap.TryGetValue(rc.Numero, out var layerRef);
+                    var va = vaList.FirstOrDefault(v => v.Niveau == rc.Numero) ??
+                             vaList.FirstOrDefault(v => string.Equals(v.Materiau?.Trim(), rc.Materiau?.Trim(), StringComparison.InvariantCultureIgnoreCase));
+                    double valAdm = va?.ValeurAdmissible ?? rc.ValeurAdmissible;
+                    double valCrit = rc.Critere switch
+                    {
+                        "SigmaT" => Math.Abs(rc.SigmaTInf),
+                        "EpsiZ" => Math.Abs(rc.EpsilonZSup),
+                        _ => Math.Abs(rc.EpsilonTInf)
+                    };
+                    double taux = (valAdm > 0) ? valCrit / valAdm * 100.0 : 0;
+
+                    bool isPlateforme = string.Equals(layerRef?.Role.ToString(), "Plateforme", StringComparison.OrdinalIgnoreCase);
+                    bool isGnt = layerRef?.Family == MaterialFamily.GNT;
+                    bool isUnbound = isGnt || isPlateforme; // extension possible
+                    bool epsiZCriterion = string.Equals(rc.Critere, "EpsiZ", StringComparison.OrdinalIgnoreCase);
+
+                    bool applicable = true;
+                    if (isSouple && epsiZCriterion && isUnbound)
+                    {
+                        // NE > 250k : toutes couches unbound + PF ; sinon seulement PF
+                        applicable = seuilSouple || isPlateforme;
+                    }
+
+                    bool estValide = true;
+                    if (applicable)
+                    {
+                        estValide = (valAdm <= 0) || valCrit <= valAdm;
+                    }
+
+                    project.DerniersResultats.Add(new ChausseeNeuve.Domain.Models.ResultatCoucheSnapshotDto
+                    {
+                        Niveau = rc.Numero,
+                        Role = rc.Interface,
+                        Materiau = rc.Materiau,
+                        Famille = layerRef?.Family.ToString() ?? "NA",
+                        Critere = rc.Critere,
+                        ValeurCritique = valCrit,
+                        ValeurAdmissible = valAdm,
+                        EstValide = estValide,
+                        TauxUtilisation = taux,
+                        CAM = va?.Cam ?? 0,
+                        NE = va?.Ne ?? 0,
+                        Epaisseur_m = layerRef?.Thickness_m ?? (rc.NiveauInf - rc.NiveauSup) / 100.0,
+                        SoupleEpsiZApplicable = applicable
+                    });
+                }
+            }
+            catch { }
+        }
+
+        private void ShowMixedStep1()
+        {
+            if (!MixedVerificationVisible) return;
+            var d = MixedDetails;
+            var win = new UI_ChausseeNeuve.Windows.MixedStepWindow();
+            if (System.Windows.Application.Current?.MainWindow != null) win.Owner = System.Windows.Application.Current.MainWindow;
+            win.SetStep1(d);
+            win.ShowDialog();
+        }
+
+        private void ShowMixedStep2()
+        {
+            if (!MixedVerificationVisible) return;
+            var d = MixedDetails;
+            var win = new UI_ChausseeNeuve.Windows.MixedStepWindow();
+            if (System.Windows.Application.Current?.MainWindow != null) win.Owner = System.Windows.Application.Current.MainWindow;
+            win.SetStep2(d);
+            win.ShowDialog();
+        }
+
+        private void ShowMixedSynthesis()
+        {
+            if (!MixedVerificationVisible) return;
+            var d = MixedDetails;
+            var win = new UI_ChausseeNeuve.Windows.MixedStepWindow();
+            if (System.Windows.Application.Current?.MainWindow != null) win.Owner = System.Windows.Application.Current.MainWindow;
+            win.SetSynthesis(d);
+            win.ShowDialog();
         }
     }
 

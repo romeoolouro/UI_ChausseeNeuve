@@ -83,8 +83,11 @@ public static class NoteDeCalculGenerator
             .Add(new ExecutiveSummarySection())
             .Add(new MethodologieSection())
             .Add(new ParametresChargementSection())
+            .Add(new ValidationSection())
             .Add(new StructureDetailSection())
-            .Add(new ValeursAdmissiblesSection());
+            .Add(new ValeursAdmissiblesSection())
+            .Add(new ResultatsVerificationSection())
+            .Add(new GraphContraintesSection());
 
         if (includeDebug)
             builder.Add(new LayersDebugSection());

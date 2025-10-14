@@ -1,11 +1,19 @@
 using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Documents;
 using UI_ChausseeNeuve.Reports;
 using ChausseeNeuve.Domain.Models;
 using Microsoft.Win32;
 using System.Windows;
+using System.IO;
+using PdfSharpCore.Pdf;
+using PdfSharpCore.Drawing;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Wordprocessing;
+using RunOpenXml = DocumentFormat.OpenXml.Wordprocessing.Run;
+using ParagraphOpenXml = DocumentFormat.OpenXml.Wordprocessing.Paragraph;
 
 namespace UI_ChausseeNeuve.ViewModels
 {
@@ -25,7 +33,7 @@ namespace UI_ChausseeNeuve.ViewModels
         public bool IsBusy
         {
             get => _isBusy;
-            private set { _isBusy = value; OnPropertyChanged(); RefreshCommand.RaiseCanExecuteChanged(); ExportXpsCommand.RaiseCanExecuteChanged(); }
+            private set { _isBusy = value; OnPropertyChanged(); RefreshCommand.RaiseCanExecuteChanged(); ExportPdfCommand.RaiseCanExecuteChanged(); ExportWordCommand.RaiseCanExecuteChanged(); }
         }
 
         public string Status
@@ -41,14 +49,83 @@ namespace UI_ChausseeNeuve.ViewModels
         }
 
         public RelayCommand RefreshCommand { get; }
-        public RelayCommand ExportXpsCommand { get; }
+        public RelayCommand ExportPdfCommand { get; }
+        public RelayCommand ExportWordCommand { get; }
+
+        // ================= Bandeau Mode Dimensionnement =================
+        public string StructureType => AppState.CurrentProject?.PavementStructure?.StructureType ?? "Structure n/d";
+
+        public string ModeDimensionnement
+        {
+            get
+            {
+                var modeStr = AppState.CurrentProject?.Mode switch
+                {
+                    DimensionnementMode.Automatique => "MODE AUTOMATIQUE",
+                    DimensionnementMode.Expert => "MODE EXPERT",
+                    _ => "MODE INCONNU"
+                };
+                var structStr = StructureType;
+                return $"{modeStr}  •  {structStr.ToUpperInvariant()}";
+            }
+        }
+
+        public string ModeDescription => AppState.CurrentProject?.Mode switch
+        {
+            DimensionnementMode.Automatique => "Paramètres & coefficients issus des règles et bibliothèques.",
+            DimensionnementMode.Expert => "Valeurs ajustées manuellement (responsabilité utilisateur).",
+            _ => "Projet sans mode défini."
+        };
+
+        public string ModeBannerColor => AppState.CurrentProject?.Mode switch
+        {
+            DimensionnementMode.Automatique => "#2F80ED",
+            DimensionnementMode.Expert => "#C0392B",
+            _ => "#616161"
+        };
+
+        // Nouveau : statut global validation (toutes valeurs admissibles)
+        public string ValidationGlobalText
+        {
+            get
+            {
+                var res = AppState.CurrentProject?.DerniersResultats;
+                if (res == null || res.Count == 0) return "VALIDATION: NC";
+                bool allValid = res.All(r => r.EstValide || !r.SoupleEpsiZApplicable);
+                return allValid ? "VALIDATION: OK" : "VALIDATION: NON CONFORME";
+            }
+        }
+        public string ValidationGlobalColor
+        {
+            get
+            {
+                var t = ValidationGlobalText;
+                if (t.Contains("OK")) return "#27AE60"; // vert
+                if (t.Contains("NON")) return "#E74C3C"; // rouge
+                return "#F1C40F"; // jaune / neutre
+            }
+        }
+
+        private void RaiseModeProperties()
+        {
+            OnPropertyChanged(nameof(ModeDimensionnement));
+            OnPropertyChanged(nameof(ModeDescription));
+            OnPropertyChanged(nameof(ModeBannerColor));
+            OnPropertyChanged(nameof(StructureType));
+            OnPropertyChanged(nameof(ValidationGlobalText));
+            OnPropertyChanged(nameof(ValidationGlobalColor));
+        }
 
         public NoteDeCalculViewModel()
         {
             RefreshCommand = new RelayCommand(Generate, () => !IsBusy);
-            ExportXpsCommand = new RelayCommand(ExportXps, () => Document != null && !IsBusy);
+            ExportPdfCommand = new RelayCommand(ExportPdf, () => Document != null && !IsBusy);
+            ExportWordCommand = new RelayCommand(ExportWord, () => Document != null && !IsBusy);
+            try { AppState.StructureChanged += OnStructureChanged; } catch { }
             Generate();
         }
+
+        private void OnStructureChanged() => Application.Current?.Dispatcher.BeginInvoke(new Action(RaiseModeProperties));
 
         private void Generate()
         {
@@ -57,8 +134,6 @@ namespace UI_ChausseeNeuve.ViewModels
             {
                 IsBusy = true;
                 Status = "Génération...";
-
-                // IMPORTANT : construire le FlowDocument UNIQUEMENT sur le thread UI
                 var project = AppState.CurrentProject;
                 if (project?.PavementStructure == null)
                 {
@@ -66,8 +141,6 @@ namespace UI_ChausseeNeuve.ViewModels
                     Document = CreateErrorDocument("Structure absente");
                     return;
                 }
-
-                // Utiliser le générateur (qui prend maintenant un snapshot interne) – aucune énumération live
                 var doc = NoteDeCalculGenerator.Generate(project, null, "Normal", CreateFingerprint(project), includeDebug: ShowDebug);
                 Document = doc;
                 Status = "Note générée";
@@ -76,10 +149,10 @@ namespace UI_ChausseeNeuve.ViewModels
             {
                 Status = "Erreur: " + ex.Message;
                 Document = CreateErrorDocument(ex.Message);
-                System.Diagnostics.Debug.WriteLine("NoteDeCalcul - Exception: " + ex);
             }
             finally
             {
+                RaiseModeProperties();
                 IsBusy = false;
             }
         }
@@ -97,31 +170,75 @@ namespace UI_ChausseeNeuve.ViewModels
         private FlowDocument CreateErrorDocument(string msg)
         {
             var fd = new FlowDocument();
-            fd.Blocks.Add(new Paragraph(new Bold(new Run("Erreur de génération"))) { Foreground = System.Windows.Media.Brushes.Red, FontSize = 18 });
-            fd.Blocks.Add(new Paragraph(new Run("Détails: " + msg)) { Margin = new Thickness(0,8,0,0) });
+            fd.Blocks.Add(new System.Windows.Documents.Paragraph(new System.Windows.Documents.Bold(new System.Windows.Documents.Run("Erreur de génération"))) { Foreground = System.Windows.Media.Brushes.Red, FontSize = 18 });
+            fd.Blocks.Add(new System.Windows.Documents.Paragraph(new System.Windows.Documents.Run("Détails: " + msg)) { Margin = new Thickness(0,8,0,0) });
             return fd;
         }
 
-        private void ExportXps()
+        private void ExportPdf()
         {
             try
             {
                 if (Document == null) { Status = "Aucun document"; return; }
-                var dlg = new SaveFileDialog
-                {
-                    Filter = "Document XPS (*.xps)|*.xps",
-                    FileName = $"NoteCalcul_{DateTime.Now:yyyyMMdd_HHmm}.xps"
-                };
+                var dlg = new SaveFileDialog { Filter = "PDF (*.pdf)|*.pdf", FileName = $"NoteCalcul_{DateTime.Now:yyyyMMdd_HHmm}.pdf" };
                 if (dlg.ShowDialog() != true) return;
-                using var xpsDoc = new System.Windows.Xps.Packaging.XpsDocument(dlg.FileName, System.IO.FileAccess.ReadWrite);
-                var writer = System.Windows.Xps.Packaging.XpsDocument.CreateXpsDocumentWriter(xpsDoc);
-                if (Document is IDocumentPaginatorSource dps)
-                    writer.Write(dps.DocumentPaginator);
-                Status = "Export XPS OK";
+
+                using var pdf = new PdfDocument();
+                var font = new XFont("Arial", 10);
+                foreach (var block in Document.Blocks)
+                {
+                    var page = pdf.AddPage();
+                    page.Size = PdfSharpCore.PageSize.A4;
+                    var gfx = XGraphics.FromPdfPage(page);
+                    string text = new TextRange(block.ContentStart, block.ContentEnd).Text;
+                    if (string.IsNullOrWhiteSpace(text)) continue;
+                    var lines = text.Replace("\r", "").Split('\n');
+                    double y = 40;
+                    foreach (var line in lines)
+                    {
+                        if (y > page.Height - 40) break; // simple overflow cut
+                        gfx.DrawString(line, font, XBrushes.Black, new XPoint(40, y));
+                        y += 14;
+                    }
+                }
+                pdf.Save(dlg.FileName);
+                Status = "PDF exporté";
             }
             catch (Exception ex)
             {
-                Status = "Erreur export: " + ex.Message;
+                Status = "Erreur PDF: " + ex.Message;
+            }
+        }
+
+        private void ExportWord()
+        {
+            try
+            {
+                if (Document == null) { Status = "Aucun document"; return; }
+                var dlg = new SaveFileDialog { Filter = "Word (*.docx)|*.docx", FileName = $"NoteCalcul_{DateTime.Now:yyyyMMdd_HHmm}.docx" };
+                if (dlg.ShowDialog() != true) return;
+
+                using var stream = new FileStream(dlg.FileName, FileMode.Create, FileAccess.ReadWrite);
+                using var wordDoc = WordprocessingDocument.Create(stream, DocumentFormat.OpenXml.WordprocessingDocumentType.Document);
+                var mainPart = wordDoc.AddMainDocumentPart();
+                mainPart.Document = new Document();
+                var body = new Body();
+                mainPart.Document.Append(body);
+
+                foreach (var block in Document.Blocks)
+                {
+                    string text = new TextRange(block.ContentStart, block.ContentEnd).Text;
+                    if (string.IsNullOrWhiteSpace(text)) continue;
+                    var p = new ParagraphOpenXml();
+                    p.Append(new RunOpenXml(new Text(text))); 
+                    body.Append(p);
+                }
+                mainPart.Document.Save();
+                Status = "DOCX exporté";
+            }
+            catch (Exception ex)
+            {
+                Status = "Erreur DOCX: " + ex.Message;
             }
         }
 

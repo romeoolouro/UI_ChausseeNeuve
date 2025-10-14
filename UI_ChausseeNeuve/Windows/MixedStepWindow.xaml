@@ -1,0 +1,301 @@
+<Window x:Class="UI_ChausseeNeuve.Windows.MixedStepWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:UI_ChausseeNeuve.ViewModels"
+        xmlns:w="clr-namespace:UI_ChausseeNeuve.Windows"
+        Title="Verification Mixte - Detail"
+        Height="760"
+        Width="940"
+        MinHeight="620"
+        MinWidth="820"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResizeWithGrip"
+        Background="#ffffff">
+    <Window.Resources>
+        <w:BoolToBrushConverter x:Key="BoolToBrushConverter" />
+        <Style x:Key="ChangedTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#0D6EFD"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <!-- Styles simples pour le tableau des resultats recalcules -->
+        <Style x:Key="TblCell" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="2"/>
+        </Style>
+        <Style x:Key="TblNum" TargetType="TextBlock" BasedOn="{StaticResource TblCell}">
+            <Setter Property="FontFamily" Value="Consolas, Courier New"/>
+            <Setter Property="FontSize" Value="10"/>
+        </Style>
+    </Window.Resources>
+    <Border Margin="10" Padding="12" Background="#ffffff" CornerRadius="8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <StackPanel>
+                        <TextBlock Text="Etape Mixte" FontSize="20" FontWeight="Bold" Margin="0,0,0,6"/>
+                        <TextBlock x:Name="StepTitle" FontSize="18" FontWeight="SemiBold" Foreground="#007ACC"/>
+                        <Separator Margin="0,8,0,8"/>
+
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Couche" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="LayerName" TextWrapping="Wrap"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Ordre" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="LayerOrder"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Sollicitation" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="Solicitation" TextWrapping="Wrap"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Parametres fatigue" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="FatigueParams" TextWrapping="Wrap"/>
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="NE (inverse)" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Row="4" Grid.Column="1" x:Name="NEValue" TextWrapping="Wrap" FontSize="18" FontWeight="Bold" Foreground="#0D6EFD"/>
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Formule" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Row="5" Grid.Column="1" x:Name="Formula" TextWrapping="Wrap"/>
+
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="NPL = NE / CAM" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Row="6" Grid.Column="1" x:Name="NPLValue" TextWrapping="Wrap" FontSize="18" FontWeight="Bold" Foreground="#28a745"/>
+
+                            <TextBlock Grid.Row="7" Grid.Column="0" Text="Remarques" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Row="7" Grid.Column="1" x:Name="Remarks" TextWrapping="Wrap"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <Grid Margin="0,10,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="Modeliser la structure (residuel)" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl x:Name="RowsList" AlternationCount="2">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:MixedModeledRowDto}">
+                                        <Border Background="{Binding IsInterface, Converter={StaticResource BoolToBrushConverter}}" CornerRadius="4" Margin="0,2" Padding="6">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="40"/>
+                                                    <ColumnDefinition Width="120"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="100"/>
+                                                    <ColumnDefinition Width="100"/>
+                                                    <ColumnDefinition Width="80"/>
+                                                    <ColumnDefinition Width="160"/>
+                                                </Grid.ColumnDefinitions>
+                                                <!-- Numero -->
+                                                <TextBlock Grid.Column="0">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="{Binding Numero}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsInterface}" Value="True">
+                                                                    <Setter Property="Text" Value=""/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <!-- Nature -->
+                                                <TextBlock Grid.Column="1" Text="{Binding Nature}"/>
+                                                <!-- Materiau (Famille) pour couches; cache pour interfaces -->
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                                    <StackPanel.Style>
+                                                        <Style TargetType="StackPanel">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsInterface}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </StackPanel.Style>
+                                                    <TextBlock Text="{Binding Materiau}"/>
+                                                    <TextBlock Text=" ("/>
+                                                    <TextBlock Text="{Binding Famille}"/>
+                                                    <TextBlock Text=")"/>
+                                                </StackPanel>
+                                                <!-- Epaisseur / Module / Poisson : vides pour interfaces; Module en surbrillance si change, PF = ? -->
+                                                <TextBlock Grid.Column="3">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="{Binding Epaisseur_m, StringFormat=0.000}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsInterface}" Value="True">
+                                                                    <Setter Property="Text" Value=""/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsPlateforme}" Value="True">
+                                                                    <Setter Property="Text" Value="?"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBlock Grid.Column="4">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="{Binding Module_MPa, StringFormat=0}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsInterface}" Value="True">
+                                                                    <Setter Property="Text" Value=""/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding ModuleChanged}" Value="True">
+                                                                    <Setter Property="Foreground" Value="#0D6EFD"/>
+                                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                    <Setter Property="ToolTip" Value="{Binding OriginalModule_MPa, StringFormat=Valeur nominale: {0:0}}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBlock Grid.Column="5">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="{Binding Poisson, StringFormat=0.##}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsInterface}" Value="True">
+                                                                    <Setter Property="Text" Value=""/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <!-- Interface: texte seul; bleu si modifiee -->
+                                                <TextBlock Grid.Column="6" Text="{Binding InterfaceWithBelow}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsInterface}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding InterfaceChanged}" Value="True">
+                                                                    <Setter Property="Foreground" Value="#0D6EFD"/>
+                                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                    <Setter Property="ToolTip" Value="{Binding OriginalInterfaceWithBelow, StringFormat=Valeur nominale: {0}}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- NOUVEAU: Tableau des resultats recalcules (structure residuelle) -->
+                    <Border x:Name="ResidualResultsSection" Margin="0,16,0,0" Padding="8" Background="#F8F9FA" CornerRadius="6">
+                        <StackPanel>
+                            <TextBlock Text="Resultats recalcules (structure residuelle)" FontWeight="SemiBold"/>
+                            <Border Background="#E9ECEF" CornerRadius="6,6,0,0" Padding="5" Margin="0,8,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="40"/>
+                                        <ColumnDefinition Width="85"/>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="70"/>
+                                        <ColumnDefinition Width="70"/>
+                                        <ColumnDefinition Width="70"/>
+                                        <ColumnDefinition Width="70"/>
+                                        <ColumnDefinition Width="70"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="N" Style="{StaticResource TblCell}" FontWeight="Bold"/>
+                                    <TextBlock Grid.Column="1" Text="Nature" Style="{StaticResource TblCell}" FontWeight="Bold"/>
+                                    <TextBlock Grid.Column="2" Text="Materiau" Style="{StaticResource TblCell}" FontWeight="Bold"/>
+                                    <TextBlock Grid.Column="3" Text="Niv. sup (cm)" Style="{StaticResource TblCell}" FontWeight="Bold"/>
+                                    <TextBlock Grid.Column="4" Text="Niv. inf (cm)" Style="{StaticResource TblCell}" FontWeight="Bold"/>
+                                    <TextBlock Grid.Column="5" Text="E (MPa)" Style="{StaticResource TblCell}" FontWeight="Bold"/>
+                                    <TextBlock Grid.Column="6" Text="nu" Style="{StaticResource TblCell}" FontWeight="Bold"/>
+                                    <TextBlock Grid.Column="7" Text="sigT sup/inf" Style="{StaticResource TblCell}" FontWeight="Bold"/>
+                                    <TextBlock Grid.Column="8" Text="epsT sup/inf" Style="{StaticResource TblCell}" FontWeight="Bold"/>
+                                    <TextBlock Grid.Column="9" Text="sigZ sup/inf" Style="{StaticResource TblCell}" FontWeight="Bold"/>
+                                    <TextBlock Grid.Column="10" Text="epsZ sup/inf" Style="{StaticResource TblCell}" FontWeight="Bold"/>
+                                </Grid>
+                            </Border>
+
+                            <ItemsControl x:Name="ResidualResultsTable" Margin="0,2,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:ResultatCouche}">
+                                        <Border Background="#FFFFFF" CornerRadius="4" Padding="3" Margin="0,1,0,1">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="40"/>
+                                                    <ColumnDefinition Width="85"/>
+                                                    <ColumnDefinition Width="140"/>
+                                                    <ColumnDefinition Width="80"/>
+                                                    <ColumnDefinition Width="80"/>
+                                                    <ColumnDefinition Width="60"/>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="70"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding Numero}" Style="{StaticResource TblNum}"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Nature}" Style="{StaticResource TblCell}"/>
+                                                <TextBlock Grid.Column="2" Text="{Binding Materiau}" Style="{StaticResource TblCell}" TextAlignment="Left"/>
+                                                <TextBlock Grid.Column="3" Text="{Binding NiveauSup, StringFormat={}{0:F0}}" Style="{StaticResource TblNum}"/>
+                                                <TextBlock Grid.Column="4" Text="{Binding NiveauInf, StringFormat={}{0:F0}}" Style="{StaticResource TblNum}"/>
+                                                <TextBlock Grid.Column="5" Text="{Binding Module, StringFormat={}{0:F0}}" Style="{StaticResource TblNum}"/>
+                                                <TextBlock Grid.Column="6" Text="{Binding CoefficientPoisson, StringFormat={}{0:F2}}" Style="{StaticResource TblNum}"/>
+                                                <StackPanel Grid.Column="7">
+                                                    <TextBlock Text="{Binding SigmaTSup, StringFormat={}{0:F3}}" Style="{StaticResource TblNum}"/>
+                                                    <TextBlock Text="{Binding SigmaTInf, StringFormat={}{0:F3}}" Style="{StaticResource TblNum}"/>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="8">
+                                                    <TextBlock Text="{Binding EpsilonTSup, StringFormat={}{0:F1}}" Style="{StaticResource TblNum}"/>
+                                                    <TextBlock Text="{Binding EpsilonTInf, StringFormat={}{0:F1}}" Style="{StaticResource TblNum}"/>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="9">
+                                                    <TextBlock Text="{Binding SigmaZSup, StringFormat={}{0:F3}}" Style="{StaticResource TblNum}"/>
+                                                    <TextBlock Text="{Binding SigmaZInf, StringFormat={}{0:F3}}" Style="{StaticResource TblNum}"/>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="10">
+                                                    <TextBlock Text="{Binding EpsilonZSup, StringFormat={}{0:F1}}" Style="{StaticResource TblNum}"/>
+                                                    <TextBlock Text="{Binding EpsilonZInf, StringFormat={}{0:F1}}" Style="{StaticResource TblNum}"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                <Button Content="Fermer" Width="100" Height="28" IsDefault="True" Click="OnClose"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

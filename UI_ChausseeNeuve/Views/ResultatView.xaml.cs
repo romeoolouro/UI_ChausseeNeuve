@@ -14,24 +14,41 @@ namespace UI_ChausseeNeuve.Views
     /// </summary>
     public partial class ResultatView : UserControl
     {
+        private ResultatViewModel? _vm;
+
         public ResultatView()
         {
             InitializeComponent();
 
             // Créer le ViewModel et connecter les toasts
-            var viewModel = new ResultatViewModel();
-            viewModel.ToastRequested += (message, type) =>
+            _vm = new ResultatViewModel();
+            _vm.ToastRequested += (message, type) =>
             {
                 ToastService.ShowToast(message, type);
             };
 
-            DataContext = viewModel;
+            DataContext = _vm;
         }
 
         /// <summary>
         /// Accès au ViewModel depuis le code-behind si nécessaire
         /// </summary>
-        public ResultatViewModel? ViewModel => DataContext as ResultatViewModel;
+        public ResultatViewModel? ViewModel => _vm;
+
+        // Libération des abonnements pour éviter fuites et doublons lors des navigations
+        private void UserControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_vm != null)
+                {
+                    _vm.Dispose();
+                    _vm = null;
+                }
+                DataContext = null;
+            }
+            catch { }
+        }
     }
 
     // Converter pour afficher le texte du tooltip des détails

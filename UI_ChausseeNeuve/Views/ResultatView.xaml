@@ -6,11 +6,8 @@
              xmlns:c="clr-namespace:UI_ChausseeNeuve.Converters"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              MinWidth="1000"
-             MinHeight="700">
-
-    <UserControl.DataContext>
-        <vm:ResultatViewModel/>
-    </UserControl.DataContext>
+             MinHeight="700"
+             Unloaded="UserControl_Unloaded">
 
     <UserControl.Resources>
         <!-- Styles locaux -->
@@ -466,10 +463,20 @@
                 </Border>
 
                 <!-- Nouveau tableau calcul inverse -->
-                <Border Style="{StaticResource CardStyle}">
+                <Border Style="{StaticResource CardStyle}"
+                        Visibility="{Binding ShowInverseResults, Converter={StaticResource BoolToVis}}">
                     <StackPanel>
                         <TextBlock Text="Calcul Inverse - Capacite Fatigue / Ornierage" Style="{StaticResource TitleStyle}"/>
                         <TextBlock Text="Determination de NEmax a partir des sollicitations calculees et des parametres fatigue" Style="{StaticResource InfoStyle}"/>
+
+                        <!-- Boutons etapes Mixte (Automatique) -->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,6,0,6"
+                                    Visibility="{Binding MixedVerificationVisible, Converter={StaticResource BoolToVis}}">
+                            <Button Style="{StaticResource HelpButtonStyle}" Content="Etape 1 (Fondation sigT)" Command="{Binding ShowMixedStep1Command}" Margin="4,0"/>
+                            <Button Style="{StaticResource HelpButtonStyle}" Content="Etape 2 (Base epsT residuel)" Command="{Binding ShowMixedStep2Command}" Margin="4,0"/>
+                            <Button Style="{StaticResource ActionButtonStyle}" Content="Synthese NPL1+NPL2" Command="{Binding ShowMixedSynthesisCommand}" Margin="12,0,4,0"/>
+                        </StackPanel>
+
                         <ScrollViewer HorizontalScrollBarVisibility="Auto">
                             <ItemsControl ItemsSource="{Binding ResultatsInverse}">
                                 <ItemsControl.Resources>

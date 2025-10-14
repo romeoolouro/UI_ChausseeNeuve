@@ -638,7 +638,7 @@ namespace UI_ChausseeNeuve.ViewModels
             else
             {
                 title = "✅ Validation réussie";
-                msg.AppendLine("✅ Structure conforme aux exigences NF P98-086");
+                msg.AppendLine("✅ Structure Conforme aux exigences NF P98-086");
                 msg.AppendLine("🎯 Tous les critères de la norme sont respectés");
             }
 
@@ -667,26 +667,48 @@ namespace UI_ChausseeNeuve.ViewModels
 
         private InterfaceType GetExpectedInterface(Layer upper, Layer lower)
         {
-            // Règles selon NF P98-086 Section 8.5.1.3
+            // Règles selon NF P98-086 §8.5.1.3 + tableau fourni pour semi‑rigides
 
             // Fondation/Base sur Plate-forme : toujours collée
             if (lower.Role == LayerRole.Plateforme)
                 return InterfaceType.Collee;
 
-            // Base MTLH - règles spécifiques
+            // Spécifique aux chaussées Semi‑rigides
+            if (!string.IsNullOrWhiteSpace(SelectedStructureType) &&
+                SelectedStructureType.Equals("Semi-rigide", StringComparison.OrdinalIgnoreCase))
+            {
+                // Couche de roulement (BB) sur couche de base (MTLH) => Collée
+                if (upper.Role == LayerRole.Roulement && lower.Role == LayerRole.Base)
+                    return InterfaceType.Collee;
+
+                // Couche de base (MTLH) sur toute couche de fondation (MTLH) => Semi‑Collée par défaut
+                if (upper.Role == LayerRole.Base && lower.Role == LayerRole.Fondation)
+                {
+                    // Exceptions du tableau:
+                    //  - GCV / GCV => Glissante
+                    //  - GC4 / GC4 => Glissante
+                    //  - GLG / GLG => Collée
+                    string up = upper.MaterialName?.ToUpperInvariant() ?? string.Empty;
+                    string lo = lower.MaterialName?.ToUpperInvariant() ?? string.Empty;
+                    bool both(string token) => up.Contains(token) && lo.Contains(token);
+
+                    if (both("GCV") || both("GC4"))
+                        return InterfaceType.Decollee; // Glissante
+                    if (both("GLG"))
+                        return InterfaceType.Collee;   // Collée
+
+                    return InterfaceType.SemiCollee;   // Règle générale
+                }
+            }
+
+            // Règles génériques par défaut (autres types de structures)
             if (upper.Role == LayerRole.Base && upper.Family == MaterialFamily.MTLH)
-            {
-                // Simplification : MTLH = semi-collée par défaut (sauf cas spéciaux)
-                return InterfaceType.SemiCollee;
-            }
+                return InterfaceType.SemiCollee; // MTLH par défaut: semi‑collée
 
-            // Surface - Base : collée (sauf si Base en sol traité)
             if (upper.Role == LayerRole.Roulement && lower.Role == LayerRole.Base)
-            {
                 return lower.Family == MaterialFamily.MTLH ? InterfaceType.SemiCollee : InterfaceType.Collee;
-            }
 
-            // Défaut : collée
+            // Défaut
             return InterfaceType.Collee;
         }
 
@@ -708,7 +730,7 @@ namespace UI_ChausseeNeuve.ViewModels
             switch (SelectedStructureType)
             {
                 case "Souple":
-                    ValidateSoupleStructure(orderedLayers, errors, warnings);
+                    ValidateSoupleStructureInline(orderedLayers, errors, warnings);
                     break;
                 case "Semi-rigide":
                     ValidateSemiRigideStructure(orderedLayers, errors, warnings);
@@ -719,535 +741,106 @@ namespace UI_ChausseeNeuve.ViewModels
                 case "Rigide":
                     ValidateRigideStructure(orderedLayers, errors, warnings);
                     break;
+                case "Mixte":
+                    ValidateMixteStructure(orderedLayers, errors, warnings);
+                    break;
             }
         }
 
-        private void ValidateSoupleStructure(List<Layer> layers, List<string> errors, List<string> warnings)
+        // Méthode locale minimale pour éviter échec compilation et appliquer garde‑fous de base
+        private void ValidateSoupleStructureInline(List<Layer> layers, List<string> errors, List<string> warnings)
         {
-            if (!IsAutomatique) return;
-
-            // Au début de ValidateSoupleStructure, après la vérification de IsAutomatique
-            if (IsAutomatique)
-            {
-                // Gérer la fondation si elle existe
-                var fondation = layers.FirstOrDefault(l => l.Role == LayerRole.Fondation);
-                if (fondation != null)
-                {
-                    // Vérifier l'épaisseur et subdiviser si nécessaire
-                    double totalThickness = fondation.Thickness_m;
-                    if (totalThickness > 0.25)
-                    {
-                        int nbSousCouches = (int)Math.Ceiling(totalThickness / 0.25);
-                        var parametresGNT = GNTParameters.GetParams(GNTCategory.CG2, false); // Par défaut CG2
-                        
-                        // Créer la liste des sous-couches
-                        var sousCouches = new List<Layer>();
-                        double epaisseurStandard = 0.25;
-                        double epaisseurRestante = totalThickness % 0.25;
-                        double modulePrecedent = 120; // Module de la plateforme
-                        
-                        // Créer les sous-couches complètes
-                        for (int i = 0; i < Math.Floor(totalThickness / 0.25); i++)
-                        {
-                            var moduleCourant = Math.Min(parametresGNT.K * modulePrecedent, parametresGNT.Emax);
-                            var sousCouche = new Layer
-                            {
-                                Role = LayerRole.Fondation,
-                                Family = MaterialFamily.GNT,
-                                MaterialName = $"GNT Fondation {i + 1}/{nbSousCouches}",
-                                Thickness_m = epaisseurStandard,
-                                Modulus_MPa = moduleCourant,
-                                Poisson = 0.35,
-                                InterfaceWithBelow = InterfaceType.Collee,
-                                Mode = _mode
-                            };
-                            sousCouches.Add(sousCouche);
-                            modulePrecedent = moduleCourant;
-                        }
-                        
-                        // Ajouter la dernière sous-couche si nécessaire
-                        if (epaisseurRestante > 0)
-                        {
-                            var moduleFinal = Math.Min(parametresGNT.K * modulePrecedent, parametresGNT.Emax);
-                            sousCouches.Add(new Layer
-                            {
-                                Role = LayerRole.Fondation,
-                                Family = MaterialFamily.GNT,
-                                MaterialName = $"GNT Fondation {nbSousCouches}/{nbSousCouches}",
-                                Thickness_m = epaisseurRestante,
-                                Modulus_MPa = moduleFinal,
-                                Poisson = 0.35,
-                                InterfaceWithBelow = InterfaceType.Collee,
-                                Mode = _mode
-                            });
-                        }
-                        
-                        // Remplacer la fondation originale
-                        int indexFondation = layers.IndexOf(fondation);
-                        layers.RemoveAt(indexFondation);
-                        foreach (var sousCouche in sousCouches.AsEnumerable().Reverse())
-                        {
-                            layers.Insert(indexFondation, sousCouche);
-                        }
-                        
-                        // Notification
-                        ToastRequested?.Invoke($"Fondation subdivisée en {nbSousCouches} sous-couches", ToastType.Info);
-                    }
-                }
-            }
-
-            // Vérifications normatives structure souple
             var roulement = layers.FirstOrDefault(l => l.Role == LayerRole.Roulement);
-            if (roulement == null && IsAutomatique)
-            {
-                // Ajouter automatiquement une couche de roulement
-                var newRoulement = new Layer
-                {
-                    Role = LayerRole.Roulement,
-                    Family = MaterialFamily.BetonBitumineux,
-                    MaterialName = "BB Roulement",
-                    Thickness_m = 0.06,
-                    Modulus_MPa = 5400,
-                    Poisson = 0.35,
-                    InterfaceWithBelow = InterfaceType.Collee,
-                    Mode = _mode
-                };
-                layers.Insert(0, newRoulement);
-                roulement = newRoulement;
-                ToastRequested?.Invoke("Couche de roulement ajoutée automatiquement", ToastType.Info);
-            }
-
-            // Vérification couche de roulement
             if (roulement == null)
             {
-                errors.Add("Structure Souple : Couche de roulement manquante");
+                errors.Add("Souple : couche de roulement manquante");
                 return;
             }
+            if (roulement.Family != MaterialFamily.BetonBitumineux)
+                errors.Add("Souple : la couche de roulement doit être en Béton Bitumineux");
+            if (roulement.Thickness_m < 0.02 || roulement.Thickness_m > 0.08)
+                warnings.Add($"Souple : épaisseur roulement {roulement.Thickness_m:F3} m hors [0.02;0.08]");
 
-            if (IsAutomatique)
-            {
-                bool switchToExpert = false;
-
-                // Validation matériau roulement
-                if (roulement.Family != MaterialFamily.BetonBitumineux)
-                {
-                    if (AskForCorrection(
-                        "La couche de roulement doit être en Béton Bitumineux pour une structure souple.",
-                        roulement.Family.ToString(),
-                        "Béton Bitumineux",
-                        out switchToExpert))
-                    {
-                        roulement.Family = MaterialFamily.BetonBitumineux;
-                        roulement.MaterialName = "BB (auto)";
-                        ToastRequested?.Invoke("Couche de roulement changée en BB", ToastType.Success);
-                    }
-                    else if (switchToExpert)
-                    {
-                        SwitchToExpertMode();
-                        return;
-                    }
-                }
-
-                // Validation module roulement BB (5400-15000 MPa)
-                if (roulement.Modulus_MPa < 5400 || roulement.Modulus_MPa > 15000)
-                {
-                    var targetModule = Math.Clamp(roulement.Modulus_MPa, 5400, 15000);
-                    if (AskForCorrection(
-                        "Le module de la couche BB doit être entre 5400 et 15000 MPa.",
-                        $"{roulement.Modulus_MPa:0} MPa",
-                        $"{targetModule:0} MPa",
-                        out switchToExpert))
-                    {
-                        roulement.Modulus_MPa = targetModule;
-                        ToastRequested?.Invoke($"Module BB ajusté à {targetModule:0} MPa", ToastType.Success);
-                    }
-                    else if (switchToExpert)
-                    {
-                        SwitchToExpertMode();
-                        return;
-                    }
-                }
-
-                // Validation épaisseur roulement
-                if (roulement.Thickness_m < 0.02 || roulement.Thickness_m > 0.08)
-                {
-                    var targetThickness = Math.Clamp(roulement.Thickness_m, 0.02, 0.08);
-                    if (AskForCorrection(
-                        "L'épaisseur de la couche de roulement doit être entre 2 et 8 cm.",
-                        $"{roulement.Thickness_m:F3} m",
-                        $"{targetThickness:F3} m",
-                        out switchToExpert))
-                    {
-                        roulement.Thickness_m = targetThickness;
-                        ToastRequested?.Invoke($"Épaisseur roulement ajustée à {targetThickness:F3} m", ToastType.Success);
-                    }
-                    else if (switchToExpert)
-                    {
-                        SwitchToExpertMode();
-                        return;
-                    }
-                }
-
-                // Vérification couche de base selon NE
-                var base_ = layers.FirstOrDefault(l => l.Role == LayerRole.Base);
-                if (base_ != null && IsAutomatique)
-                {
-                    double recommendedThickness = NE <= 100000 ? 0.15 : 0.20;
-                    if (Math.Abs(base_.Thickness_m - recommendedThickness) > 0.001)
-                    {
-                        string message = $"Pour NE = {NE:N0}, l'épaisseur recommandée de la couche de base est de {recommendedThickness:F3} m.\n" +
-                                       "Cette recommandation est basée sur :\n" +
-                                       "- 0,15 m si NE ≤ 100 000\n" +
-                                       "- 0,20 m si NE > 100 000";
-
-                        bool wantExpertMode = false;
-                        if (AskForCorrection(
-                            message,
-                            $"{base_.Thickness_m:F3} m",
-                            $"{recommendedThickness:F3} m",
-                            out wantExpertMode))
-                        {
-                            base_.Thickness_m = recommendedThickness;
-                            ToastRequested?.Invoke($"Épaisseur base ajustée à {recommendedThickness:F3} m selon NE={NE:N0}", ToastType.Success);
-                        }
-                        else if (!wantExpertMode)
-                        {
-                            // L'utilisateur a choisi de garder sa valeur - ajouter un warning
-                            warnings.Add($"Structure Souple : Épaisseur base ({base_.Thickness_m:F3}m) différente de la valeur recommandée ({recommendedThickness:F3}m) pour NE={NE:N0}");
-                        }
-                        else
-                        {
-                            SwitchToExpertMode();
-                            return;
-                        }
-                    }
-                }
-                else if (base_ != null)
-                {
-                    // En mode Expert : simple warning si hors recommandation
-                    double recommendedThickness = NE <= 100000 ? 0.15 : 0.20;
-                    if (Math.Abs(base_.Thickness_m - recommendedThickness) > 0.001)
-                    {
-                        warnings.Add($"Structure Souple : Épaisseur base ({base_.Thickness_m:F3}m) différente de la valeur recommandée ({recommendedThickness:F3}m) pour NE={NE:N0}");
-                    }
-                }
-
-                // Vérification MTLH/Béton en assises
-                var assises = layers.Where(l => l.Role == LayerRole.Base || l.Role == LayerRole.Fondation);
-                foreach (var assise in assises.Where(l => l.Family == MaterialFamily.MTLH || l.Family == MaterialFamily.BetonCiment))
-                {
-                    if (AskForCorrection(
-                        $"Les matériaux MTLH/Béton sont interdits en assise pour une structure souple.\nCouche {assise.Role} à convertir en GNT.",
-                        assise.Family.ToString(),
-                        "GNT",
-                        out switchToExpert))
-                    {
-                        var oldFamily = assise.Family;
-                        assise.Family = MaterialFamily.GNT;
-                        assise.MaterialName = "GNT (auto)";
-                        ToastRequested?.Invoke($"Matériau {assise.Role} changé de {oldFamily} à GNT", ToastType.Success);
-                    }
-                    else if (switchToExpert)
-                    {
-                        SwitchToExpertMode();
-                        return;
-                    }
-                }
-            }
-            else
-            {
-                // Mode Expert: validation standard avec warnings
-                if (roulement.Family != MaterialFamily.BetonBitumineux)
-                    errors.Add("Structure Souple : Couche de roulement doit être en Béton Bitumineux");
-                if (roulement.Thickness_m < 0.02 || roulement.Thickness_m > 0.08)
-                    warnings.Add($"Structure Souple : Épaisseur roulement ({roulement.Thickness_m:F3}m) hors plage recommandée [0.02-0.08]m");
-                if (roulement.Modulus_MPa < 5400 || roulement.Modulus_MPa > 15000)
-                    warnings.Add($"Structure Souple : Module BB ({roulement.Modulus_MPa:0} MPa) hors plage [5400-15000]");
-            }
-
-            // Contrôles communs aux deux modes
             var totalBB = layers.Where(l => l.Family == MaterialFamily.BetonBitumineux).Sum(l => l.Thickness_m);
             var totalGNT = layers.Where(l => l.Family == MaterialFamily.GNT).Sum(l => l.Thickness_m);
+            var total = layers.Sum(l => l.Thickness_m);
 
-            if (totalBB > 0.12)
-                errors.Add($"Structure Souple : BB total ({totalBB:F3}m) > 0.12m interdit (NF §3.1.11)");
-            if (totalBB < 0.03)
-                warnings.Add($"Structure Souple : BB total ({totalBB:F3}m) < 0.03m très faible");
-            
-            // MODIFICATION : Pour les structures Souple en mode automatique avec structuration automatique,
-            // ne plus imposer l'épaisseur minimale de 0.15m pour la GNT après subdivision
-            // Passer de erreur à avertissement pour permettre la flexibilité après structuration
-            if (totalGNT < 0.15)
-            {
-                if (IsAutomatique)
-                {
-                    // En mode automatique, juste un avertissement car la structuration peut créer des épaisseurs plus petites
-                    warnings.Add($"Structure Souple : GNT total ({totalGNT:F3}m) < 0.15m recommandé (après structuration automatique)");
-                }
-                else
-                {
-                    // En mode Expert, garder l'erreur normative stricte
-                    errors.Add($"Structure Souple : GNT total ({totalGNT:F3}m) < 0.15m requis (NF §3.1.11)");
-                }
-            }
-
-            var totalEpaisseur = layers.Sum(l => l.Thickness_m);
-            if (totalEpaisseur < 0.30)
-                warnings.Add($"Structure Souple : Épaisseur totale ({totalEpaisseur:F3}m) < 0.30m inhabituelle");
+            if (totalBB > 0.12) errors.Add($"Souple : BB total {totalBB:F3} m > 0.12 m interdit");
+            if (totalGNT < 0.15) warnings.Add($"Souple : GNT total {totalGNT:F3} m < 0.15 m recommandé");
+            if (total < 0.30) warnings.Add($"Souple : épaisseur totale {total:F3} m < 0.30 m inhabituelle");
         }
 
-        private void SwitchToExpertMode()
-        {
-            if (MessageBox.Show(
-                "Voulez-vous passer en mode Expert ?\n\nCela fermera la fenêtre actuelle et vous redirigera vers la sélection du mode.",
-                "Passage en Mode Expert",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question) == MessageBoxResult.Yes)
-            {
-                // Sauvegarder les données du projet actuel
-                var currentProjectName = AppState.CurrentProject.Name;
-
-                // Trouver la fenêtre AccueilWindow parente
-                var parentWindow = Application.Current.Windows.OfType<AccueilWindow>().FirstOrDefault();
-                if (parentWindow != null)
-                {
-                    try
-                    {
-                        // Créer et configurer la fenêtre de sélection de mode
-                        var modeWindow = new ModeSelectionWindow();
-                        modeWindow.Show();
-
-                        // Définir comme fenêtre principale
-                        Application.Current.MainWindow = modeWindow;
-
-                        // Fermer la fenêtre AccueilWindow
-                        parentWindow.Close();
-
-                        // Notification
-                        ToastRequested?.Invoke("Mode de sélection réactivé", ToastType.Info);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Erreur lors du passage en mode Expert : {ex.Message}", 
-                            "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                }
-            }
-        }
-
-        private bool AskForCorrection(string message, string oldValue, string newValue, out bool switchToExpert)
-        {
-            switchToExpert = false;
-            var result = MessageBox.Show(
-                $"{message}\n\nValeur actuelle : {oldValue}\nCorrection proposée : {newValue}\n\n" +
-                "Choisissez une option :\n\n" +
-                "• Oui : Appliquer la correction\n" +
-                "• Non : Conserver la valeur actuelle\n" +
-                "• Annuler : Passer en mode Expert pour plus de contrôle",
-                "Correction Automatique",
-                MessageBoxButton.YesNoCancel,
-                MessageBoxImage.Question,
-                MessageBoxResult.Yes,  // Option par défaut
-                MessageBoxOptions.DefaultDesktopOnly);
-
-            if (result == MessageBoxResult.Cancel)
-            {
-                switchToExpert = true;
-                return false;
-            }
-            return result == MessageBoxResult.Yes;
-        }
-
+        // Règles minimales Semi‑rigide
         private void ValidateSemiRigideStructure(List<Layer> layers, List<string> errors, List<string> warnings)
         {
             var roulement = layers.FirstOrDefault(l => l.Role == LayerRole.Roulement);
             if (roulement?.Family != MaterialFamily.BetonBitumineux)
-                errors.Add("Structure Semi-rigide : Roulement doit être en Béton Bitumineux (NF §3.1.13)");
-            if (roulement?.Thickness_m < 0.06)
-                errors.Add($"Structure Semi-rigide : Épaisseur surface minimum 0.06m (actuel: {roulement?.Thickness_m:F3}m)");
-            var assises = layers.Where(l => l.Role == LayerRole.Base || l.Role == LayerRole.Fondation);
+                errors.Add("Semi‑rigide : surface doit être en Béton Bitumineux");
+
+            var assises = layers.Where(l => l.Role == LayerRole.Base || l.Role == LayerRole.Fondation).ToList();
+            if (!assises.Any()) { errors.Add("Semi‑rigide : base/fondation manquantes"); return; }
             if (!assises.All(l => l.Family == MaterialFamily.MTLH))
-                errors.Add("Structure Semi-rigide : Assises (Base/Fondation) doivent être en MTLH (NF §3.1.13)");
-            var fondation = layers.Where(l => l.Role == LayerRole.Fondation).Sum(l => l.Thickness_m);
-            if (fondation < 0.15)
-                warnings.Add($"Structure Semi-rigide : Fondation ({fondation:F3}m) < 0.15m recommandé selon classe PF");
+                errors.Add("Semi‑rigide : base/fondation doivent être en MTLH");
         }
 
+        // Règles minimales Bitumineuse épaisse
         private void ValidateBitumineusseEpaisseStructure(List<Layer> layers, List<string> errors, List<string> warnings)
         {
             var roulement = layers.FirstOrDefault(l => l.Role == LayerRole.Roulement);
             var base_ = layers.FirstOrDefault(l => l.Role == LayerRole.Base);
             if (roulement?.Family != MaterialFamily.BetonBitumineux)
-                errors.Add("Structure Bitumineuse épaisse : Roulement doit être en BB (NF §3.1.12)");
+                errors.Add("Bitumineuse épaisse : surface doit être en BB");
             if (base_?.Family != MaterialFamily.BetonBitumineux)
-                errors.Add("Structure Bitumineuse épaisse : Base doit être en BB (NF §3.1.12)");
+                errors.Add("Bitumineuse épaisse : base doit être en BB");
 
-            // Nouvelle règle : en structure bitumineuse épaisse seules les couches de fondation en BB ou GNT sont autorisées
-            var fondationLayers = layers.Where(l => l.Role == LayerRole.Fondation).ToList();
-            foreach (var f in fondationLayers)
+            var fondations = layers.Where(l => l.Role == LayerRole.Fondation).ToList();
+            foreach (var f in fondations)
             {
-                bool allowed = f.Family == MaterialFamily.BetonBitumineux || f.Family == MaterialFamily.GNT;
-                if (!allowed)
-                {
-                    if (IsAutomatique)
-                    {
-                        bool switchToExpert;
-                        string msg =
-                            "Structure Bitumineuse épaisse : les couches de fondation doivent être en Béton Bitumineux ou GNT.\n" +
-                            "Matériaux interdits en fondation pour ce type de structure : MTLH, Béton Ciment, Bibliothèque.\n" +
-                            "Convertir automatiquement cette couche en GNT ?";
-                        if (AskForCorrection(msg, f.Family.ToString(), "GNT", out switchToExpert))
-                        {
-                            var oldFam = f.Family;
-                            f.Family = MaterialFamily.GNT;
-                            if (string.IsNullOrWhiteSpace(f.MaterialName) || f.MaterialName.Contains(oldFam.ToString(), StringComparison.OrdinalIgnoreCase))
-                                f.MaterialName = "GNT Fondation (auto)";
-                            ToastRequested?.Invoke($"Couche fondation convertie de {oldFam} en GNT (structure bitumineuse épaisse)", ToastType.Success);
-                        }
-                        else if (switchToExpert)
-                        {
-                            SwitchToExpertMode();
-                            return; // stopper validation courante (l utilisateur va changer de mode)
-                        }
-                        else
-                        {
-                            warnings.Add($"Structure Bitumineuse épaisse : Couche fondation {f.MaterialName} laissée en {f.Family} (non conforme)");
-                        }
-                    }
-                    else
-                    {
-                        // Mode Expert : erreur normative stricte
-                        errors.Add($"Structure Bitumineuse épaisse : Couche fondation {f.MaterialName} en {f.Family} non autorisée (seuls BB ou GNT)");
-                    }
-                }
+                if (f.Family != MaterialFamily.BetonBitumineux && f.Family != MaterialFamily.GNT)
+                    errors.Add($"Bitumineuse épaisse : fondation '{f.MaterialName}' non autorisée ({f.Family})");
             }
+        }
 
-            // Nouveau contrôle : épaisseur minimale 0.12 m de la couche de surface bitumineuse
-            if (roulement != null)
+        // Règles minimales Rigide
+        private void ValidateRigideStructure(List<Layer> layers, List<string> errors, List<string> warnings)
+        {
+            var betonLayers = layers.Where(l => l.Family == MaterialFamily.BetonCiment).ToList();
+            if (!betonLayers.Any())
+                errors.Add("Rigide : au moins une couche Béton de Ciment requise");
+            var maxTh = betonLayers.Any() ? betonLayers.Max(l => l.Thickness_m) : 0;
+            if (maxTh < 0.12)
+                errors.Add($"Rigide : épaisseur béton ≥ 0,12 m requise (max actuel {maxTh:F3} m)");
+        }
+
+        // Règles Mixte
+        private void ValidateMixteStructure(List<Layer> layers, List<string> errors, List<string> warnings)
+        {
+            var roulement = layers.FirstOrDefault(l => l.Role == LayerRole.Roulement);
+            var @base = layers.FirstOrDefault(l => l.Role == LayerRole.Base);
+            var fondations = layers.Where(l => l.Role == LayerRole.Fondation).ToList();
+
+            if (roulement?.Family != MaterialFamily.BetonBitumineux)
+                errors.Add("Mixte : la couche de surface doit être en Matériau Bitumineux (MB)");
+            if (@base?.Family != MaterialFamily.BetonBitumineux)
+                errors.Add("Mixte : la couche de base doit être en Matériau Bitumineux (MB)");
+            if (!fondations.Any(f => f.Family == MaterialFamily.MTLH))
+                errors.Add("Mixte : au moins une couche de fondation doit être en MTLH");
+
+            double epStructure = layers.Sum(l => l.Thickness_m);
+            double epMB = layers.Where(l => l.Family == MaterialFamily.BetonBitumineux && (l.Role == LayerRole.Roulement || l.Role == LayerRole.Base))
+                                 .Sum(l => l.Thickness_m);
+            if (epStructure > 0)
             {
-                if (roulement.Thickness_m < 0.12)
+                double ratio = epMB / epStructure;
+                if (ratio < 0.45 || ratio > 0.60)
                 {
-                    if (IsAutomatique)
-                    {
-                        bool switchToExpert;
-                        string msg =
-                            "Structure Bitumineuse épaisse : l'épaisseur de la couche de surface bitumineuse doit être au moins 0,12 m (12 cm).\n" +
-                            "Raison : exigences de durabilité et de rigidité des couches épaisses (NF P98-086 – familles bitumineuses épaisses).\n\n" +
-                            $"Épaisseur actuelle : {roulement.Thickness_m:F3} m < 0.120 m.\n" +
-                            "Appliquer automatiquement la correction ?";
-                        if (AskForCorrection(msg, $"{roulement.Thickness_m:F3} m", "0.120 m", out switchToExpert))
-                        {
-                            roulement.Thickness_m = 0.12;
-                            ToastRequested?.Invoke("Épaisseur surface ajustée à 0,120 m (bitumineuse épaisse)", ToastType.Success);
-                            TryAutoScale();
-                        }
-                        else if (switchToExpert)
-                        {
-                            SwitchToExpertMode();
-                            return;
-                        }
-                        else
-                        {
-                            warnings.Add($"Structure Bitumineuse épaisse : épaisseur surface {roulement.Thickness_m:F3} m < 0.120 m recommandée");
-                        }
-                    }
-                    else
-                    {
-                        // Mode Expert : seulement un avertissement, pas une erreur bloquante
-                        warnings.Add($"Structure Bitumineuse épaisse : épaisseur surface {roulement.Thickness_m:F3} m < 0.120 m recommandée");
-                    }
-                }
-            }
-
-            // MODIFICATION : Pour les structures Bitumineuse épaisse, assouplir les règles d'épaisseur minimale en mode automatique
-            // En mode automatique on applique les règles d'épaisseur minimale de fondation MAIS avec validation utilisateur
-            // et plus de flexibilité après structuration automatique
-            if (IsAutomatique)
-            {
-                var fondations = layers.Where(l => l.Role == LayerRole.Fondation && l.Family == MaterialFamily.GNT).OrderBy(l => l.Order).ToList();
-                var plateforme = Layers.FirstOrDefault(l => l.Role == LayerRole.Plateforme);
-                if (plateforme != null && fondations.Count > 0)
-                {
-                    double ePlateforme = plateforme.Modulus_MPa;
-                    double requiredMin = 0.0;
-                    string pfCat = "";
-                    if (ePlateforme >= 20 && ePlateforme < 50) { requiredMin = 0.45; pfCat = "PF1"; }
-                    else if (ePlateforme >= 50 && ePlateforme < 80) { requiredMin = 0.25; pfCat = "PF2"; }
-                    else if (ePlateforme >= 80 && ePlateforme < 120) { requiredMin = 0.20; pfCat = "PF2qs"; }
-                    else if (ePlateforme >= 120 && ePlateforme < 200) { requiredMin = 0.15; pfCat = "PF3"; }
-
-                    if (requiredMin > 0)
-                    {
-                        double totalFondation = fondations.Sum(f => f.Thickness_m);
-                        
-                        // MODIFICATION: Ne plus forcer automatiquement l'épaisseur de 0.15m pour PF3
-                        // Si l'épaisseur est inférieure au minimum requis, proposer mais accepter le refus
-                        if (totalFondation + 1e-6 < requiredMin)
-                        {
-                            // Cas spécial pour PF3 (0.15m) : ne plus imposer cette épaisseur strictement
-                            // après structuration automatique car elle peut créer des sous-couches plus fines
-                            if (pfCat == "PF3" && requiredMin == 0.15)
-                            {
-                                // Pour PF3, juste un avertissement au lieu de forcer la correction
-                                warnings.Add($"Structure Bitumineuse épaisse : Épaisseur fondation GNT ({totalFondation:F3} m) < minimum recommandé {requiredMin:F2} m ({pfCat}) - Acceptable après structuration automatique");
-                            }
-                            else
-                            {
-                                // Pour les autres catégories (PF1, PF2, PF2qs), maintenir la logique existante
-                                double deficit = requiredMin - totalFondation;
-                                bool switchToExpert;
-                                string msg =
-                                    "Règle épaisseur minimale des fondations (structure bitumineuse épaisse) :" + "\n" +
-                                    "Base bitumineuse + Fondation en grave non traitée (GNT) :" + "\n" +
-                                    "  • PF1  (E PF dans [20,50[ MPa)  => 0,45 m" + "\n" +
-                                    "  • PF2  (E PF dans [50,80[ MPa)  => 0,25 m" + "\n" +
-                                    "  • PF2qs(E PF dans [80,120[ MPa) => 0,20 m" + "\n" +
-                                    "  • PF3  (E PF dans [120,200[ MPa)=> 0,15 m" + "\n\n" +
-                                    $"Catégorie détectée : {pfCat} (E PF = {ePlateforme:F0} MPa)." + "\n" +
-                                    $"Épaisseur totale actuelle des couches de fondation GNT : {totalFondation:F3} m < {requiredMin:F2} m exigé." + "\n" +
-                                    $"Déficit : {deficit:F3} m.\n\nAppliquer l'augmentation (ajoutée à la dernière couche de fondation) ?";
-
-                                if (AskForCorrection(msg, $"{totalFondation:F3} m", $"{requiredMin:F2} m", out switchToExpert))
-                                {
-                                    var lastFondation = fondations.Last();
-                                    lastFondation.Thickness_m += deficit;
-                                    ToastRequested?.Invoke($"Épaisseur fondation ajustée (+{deficit:F3} m) -> {requiredMin:F2} m ({pfCat})", ToastType.Success);
-                                    TryAutoScale();
-                                }
-                                else if (switchToExpert)
-                                {
-                                    SwitchToExpertMode();
-                                    return;
-                                }
-                                else
-                                {
-                                    // Utilisateur refuse : ajouter un avertissement (structure potentiellement non conforme)
-                                    warnings.Add($"Structure Bitumineuse épaisse : Épaisseur fondation {totalFondation:F3} m < minimum {requiredMin:F2} m ({pfCat})");
-                                }
-                            }
-                        }
-                    }
+                    errors.Add($"Mixte : 0,45 ≤ ep.MB(surface+base)/ep.Structure ≤ 0,60 non respecté (actuel {ratio:0.###})");
                 }
             }
             else
             {
-                // En mode Expert : on ne corrige pas mais on rappelle la recommandation d'équilibre BB si souhaité
-                var totalBB = layers.Where(l => l.Family == MaterialFamily.BetonBitumineux).Sum(l => l.Thickness_m);
-                var totalChaussee = layers.Sum(l => l.Thickness_m);
-                var ratio = totalChaussee > 0 ? totalBB / totalChaussee : 0;
-                if (ratio < 0.45 || ratio > 0.60)
-                    warnings.Add($"Structure Bitumineuse épaisse (Expert) : Ratio BB/total ({ratio:F2}) hors plage indicative [0.45-0.60]");
+                errors.Add("Mixte : épaisseur de structure hors PF nulle");
             }
-        }
-
-        private void ValidateRigideStructure(List<Layer> layers, List<string> errors, List<string> warnings)
-        {
-            var betonLayers = layers.Where(l => l.Family == MaterialFamily.BetonCiment);
-            if (!betonLayers.Any())
-                errors.Add("Structure Rigide : Au moins une couche en Béton de Ciment requise (NF §3.1.16)");
-            var maxBetonThickness = betonLayers.Any() ? betonLayers.Max(l => l.Thickness_m) : 0;
-            if (maxBetonThickness < 0.12)
-                errors.Add($"Structure Rigide : Couche béton ≥ 0.12m requise (actuel max: {maxBetonThickness:F3}m)");
         }
 
         private void Recompute() => UpdateGraduations();

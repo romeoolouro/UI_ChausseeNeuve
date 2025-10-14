@@ -23,4 +23,7 @@ public class Project
     public string? TypeTauxAccroissement { get; set; }
     public int? DureeService { get; set; }
     public double? TraficCumuleNPL { get; set; }
+
+    // Snapshot des résultats calculés (utilisé pour la section 7 de la note de calcul)
+    public ObservableCollection<ResultatCoucheSnapshotDto> DerniersResultats { get; set; } = new();
 }
